@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import logging
 import pickle
+import traceback
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -53,6 +54,7 @@ state = EngineState()
 def warm_up(force_retrain: bool = False) -> None:
     """Run or reuse the Azim engine. Idempotent."""
 
+    logger.info("warm_up() called — starting...")
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     config = default_system_config()
 
@@ -91,9 +93,14 @@ def warm_up(force_retrain: bool = False) -> None:
 
         state.ready = True
         state.warmed_at = datetime.utcnow()
-        logger.info("Liquidity engine ready.")
+        logger.info(
+            "warm_up() complete — accounts=%d, transactions=%d, forecasts=%d",
+            len(state.daily_balances.account_id.unique()) if state.daily_balances is not None else 0,
+            len(state.transactions) if state.transactions is not None else 0,
+            len(state.forecasts),
+        )
     except Exception as exc:
-        logger.exception("Engine warm-up failed")
+        logger.error("Engine warm-up FAILED: %s\n%s", exc, traceback.format_exc())
         state.error = str(exc)
         state.ready = False
 

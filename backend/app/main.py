@@ -1,4 +1,15 @@
+import logging
+import sys
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    stream=sys.stdout,
+    force=True,
+)
+
 from contextlib import asynccontextmanager
+import asyncio
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,9 +21,11 @@ from app.services.engine_state import warm_up, state
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    import asyncio
-    await asyncio.to_thread(warm_up, False)
+    logging.getLogger("startup").info("Lifespan begin — scheduling warm_up in background")
+    loop = asyncio.get_event_loop()
+    loop.create_task(asyncio.to_thread(warm_up, False))
     yield
+    logging.getLogger("startup").info("Lifespan end")
 
 
 app = FastAPI(
