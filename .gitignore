@@ -34,6 +34,7 @@ Thumbs.db
 *.sqlite
 *.sqlite3
 data/cache/
+backend/data/cache/
 
 # Docker
 .dockerignore
