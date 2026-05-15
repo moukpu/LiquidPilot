@@ -29,10 +29,11 @@ out/
 .DS_Store
 Thumbs.db
 
-# DB
+# DB / Cache
 *.db
 *.sqlite
 *.sqlite3
+data/cache/
 
 # Docker
 .dockerignore

@@ -5,10 +5,13 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import health, accounts, transactions, recommendations, contagion, timemachine
 from app.config import settings
+from app.services.engine_state import warm_up, state
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    import asyncio
+    await asyncio.to_thread(warm_up, False)
     yield
 
 
