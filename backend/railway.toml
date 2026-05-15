@@ -2,8 +2,11 @@
 builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 
+# No startCommand here: Railway runs startCommand via exec (not a shell),
+# so $PORT does not expand and uvicorn crashes with
+# "Invalid value for '--port': '$PORT' is not a valid integer".
+# Instead we rely on the Dockerfile CMD, which uses `sh -c` and expands ${PORT}.
 [deploy]
-startCommand = "uv run uvicorn app.main:app --host 0.0.0.0 --port $PORT"
 healthcheckPath = "/health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
