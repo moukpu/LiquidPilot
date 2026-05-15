@@ -37,3 +37,4 @@ data/cache/
 
 # Docker
 .dockerignore
+.venv_real/
