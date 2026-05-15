@@ -15,6 +15,10 @@ dependencies = [
     "numpy>=2.1",
     "pandas>=2.2",
     "networkx>=3.4",
+    "scikit-learn>=1.5",
+    "xgboost>=2.1",
+    "matplotlib>=3.9",
+    "pyarrow>=17",
 ]
 
 [project.optional-dependencies]
