@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRadarPolling } from "@/hooks/use-radar-polling";
 import type { TooltipData } from "@/components/radar/globe-3d";
@@ -8,6 +8,26 @@ import AccountCard from "@/components/radar/account-card";
 import { useLocale } from "@/i18n/locale-context";
 import { formatTime, formatNumber } from "@/lib/format";
 import { localeToIntl } from "@/i18n/locale-context";
+
+// Two-column row for tooltip values — keeps every line in lockstep.
+function Row({
+  label,
+  value,
+  valueClass = "text-foreground font-semibold",
+}: {
+  label: string;
+  value: string;
+  valueClass?: string;
+}) {
+  return (
+    <div className="flex justify-between items-center gap-3">
+      <span className="text-muted-foreground uppercase tracking-widest text-[10px] min-w-[120px]">
+        {label}
+      </span>
+      <span className={`font-mono text-xs ${valueClass}`}>{value}</span>
+    </div>
+  );
+}
 
 // 3D globe is client-only (uses three.js / WebGL)
 const Globe3D = dynamic(() => import("@/components/radar/globe-3d"), {
@@ -22,14 +42,46 @@ const Globe3D = dynamic(() => import("@/components/radar/globe-3d"), {
 export default function RadarPage() {
   const { data, lastSync, error, loading } = useRadarPolling(2000);
   const [tooltip, setTooltip] = useState<TooltipData | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { t, locale } = useLocale();
   const intl = localeToIntl(locale);
+
+  const closeTooltip = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    setTooltip(null);
+  }, []);
+
+  const openTooltip = useCallback((data: TooltipData, remainingMs: number) => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setTooltip(data);
+    timeoutRef.current = setTimeout(() => {
+      setTooltip(null);
+      timeoutRef.current = null;
+    }, Math.max(500, remainingMs));
+  }, []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeTooltip();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [closeTooltip]);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   return (
     <div className="w-full h-full relative overflow-hidden bg-background">
       {/* Background 3D Globe — full screen, interactive (drag to rotate, scroll to zoom) */}
       <div className="absolute inset-0 z-0 pointer-events-auto">
-        <Globe3D transactions={data.transactions} onHoverPlane={setTooltip} />
+        <Globe3D transactions={data.transactions} onSelectPlane={openTooltip} />
       </div>
 
       {/* Floating Status Bar (Top Left) */}
@@ -68,10 +120,21 @@ export default function RadarPage() {
         <span className="mt-1 text-[10px] text-muted-foreground/50 border-t border-slate-200/50 pt-2">{t("radar.legend.hoverHint")}</span>
       </div>
 
-      {/* Floating Tooltip */}
+      {/* Pinned Tooltip — left dead-space, click-to-open, X / Esc / auto-close */}
       {tooltip && (
-        <div className="absolute top-6 left-1/2 -translate-x-1/2 glass-card rounded-2xl p-4 shadow-xl z-30 min-w-[280px] pointer-events-none">
-          <div className="flex items-center justify-between mb-3 border-b border-slate-200/50 pb-3">
+        <div
+          className="absolute top-24 left-6 z-30 glass-card rounded-2xl p-5 shadow-xl w-[300px] pointer-events-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            type="button"
+            onClick={closeTooltip}
+            aria-label={t("radar.tooltip.close")}
+            className="absolute top-3 right-3 w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 text-sm transition-colors"
+          >
+            ✕
+          </button>
+          <div className="flex items-center justify-between mb-4 border-b border-slate-200/50 pb-3 pr-9">
             <span className="text-[10px] font-mono uppercase text-muted-foreground tracking-widest">
               {t("radar.tooltip.direction")}
             </span>
@@ -85,29 +148,21 @@ export default function RadarPage() {
               {tooltip.direction === "IN" ? t("radar.direction.IN") : t("radar.direction.OUT")}
             </span>
           </div>
-          <div className="space-y-2.5 font-mono text-xs">
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground uppercase tracking-widest text-[10px]">{t("radar.tooltip.amount")}</span>
-              <span className="font-bold text-foreground text-sm">{formatNumber(tooltip.amount, 0, intl)}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground uppercase tracking-widest text-[10px]">{t("radar.tooltip.paymentType")}</span>
-              <span className="text-primary/90">{tooltip.payment_type}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground uppercase tracking-widest text-[10px]">{t("radar.tooltip.valueDate")}</span>
-              <span className="text-foreground/80">{tooltip.value_date}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground uppercase tracking-widest text-[10px]">{t("radar.tooltip.delay")}</span>
-              <span className="text-warning font-semibold">{tooltip.clearing_delay_days}d</span>
-            </div>
-            <div className="flex justify-between items-center pt-3 border-t border-slate-200/50 mt-3">
-              <span className="text-muted-foreground uppercase tracking-widest text-[10px]">{t("radar.tooltip.from")} → {t("radar.tooltip.to")}</span>
-              <span className="font-semibold text-foreground">
-                {tooltip.src} → {tooltip.dst}
-              </span>
-            </div>
+          <div className="space-y-3">
+            <Row
+              label={t("radar.tooltip.amount")}
+              value={formatNumber(tooltip.amount, 0, intl)}
+              valueClass="text-foreground font-bold text-sm"
+            />
+            <Row label={t("radar.tooltip.paymentType")} value={tooltip.payment_type} />
+            <Row label={t("radar.tooltip.valueDate")} value={tooltip.value_date} />
+            <Row
+              label={t("radar.tooltip.delay")}
+              value={`${tooltip.clearing_delay_days}d`}
+              valueClass="text-warning font-semibold"
+            />
+            <Row label={t("radar.tooltip.from")} value={tooltip.src} />
+            <Row label={t("radar.tooltip.to")} value={tooltip.dst} />
           </div>
         </div>
       )}

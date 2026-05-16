@@ -116,7 +116,7 @@ export interface TooltipData {
 
 export interface Globe3DProps {
   transactions: Transaction[];
-  onHoverPlane: (data: TooltipData | null) => void;
+  onSelectPlane: (data: TooltipData, remainingMs: number) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -262,11 +262,11 @@ function Earth() {
 // ---------------------------------------------------------------------------
 function World({
   transactions,
-  onHoverPlane,
+  onSelectPlane,
   t,
 }: {
   transactions: Transaction[];
-  onHoverPlane: (d: TooltipData | null) => void;
+  onSelectPlane: (d: TooltipData, remainingMs: number) => void;
   t: (k: MessageKey) => string;
 }) {
   const groupRef = useRef<THREE.Group>(null);
@@ -375,18 +375,20 @@ function World({
           phase={f.phase}
           color={f.color}
           size={f.size}
-          onEnter={() =>
-            onHoverPlane({
-              amount: f.tx.amount,
-              direction: f.tx.direction,
-              payment_type: f.tx.payment_type,
-              value_date: f.tx.value_date,
-              clearing_delay_days: f.tx.clearing_delay_days,
-              src: f.src,
-              dst: f.dst,
-            })
+          onSelect={(remainingMs) =>
+            onSelectPlane(
+              {
+                amount: f.tx.amount,
+                direction: f.tx.direction,
+                payment_type: f.tx.payment_type,
+                value_date: f.tx.value_date,
+                clearing_delay_days: f.tx.clearing_delay_days,
+                src: f.src,
+                dst: f.dst,
+              },
+              remainingMs
+            )
           }
-          onLeave={() => onHoverPlane(null)}
         />
       ))}
     </group>
@@ -570,19 +572,18 @@ function Plane({
   phase,
   color,
   size,
-  onEnter,
-  onLeave,
+  onSelect,
 }: {
   samples: THREE.Vector3[];
   duration: number;
   phase: number;
   color: string;
   size: number;
-  onEnter: () => void;
-  onLeave: () => void;
+  onSelect: (remainingMs: number) => void;
 }) {
   const ref = useRef<THREE.Group>(null);
   const [hovered, setHovered] = useState(false);
+  const lastT = useRef(0);
 
   // reusable temp vectors so we don't allocate every frame
   const tmp = useMemo(
@@ -598,9 +599,10 @@ function Plane({
 
   useFrame((state) => {
     if (!ref.current) return;
-    if (hovered) return; // freeze while hovered so the tooltip is readable
+    if (hovered) return; // freeze while hovered so the plane is a stationary click target
     const elapsed = state.clock.elapsedTime + phase * duration;
     const t = (elapsed / duration) % 1;
+    lastT.current = t;
     const idx = t * (samples.length - 1);
     const i0 = Math.floor(idx);
     const i1 = Math.min(samples.length - 1, i0 + 1);
@@ -620,22 +622,26 @@ function Plane({
     ref.current.setRotationFromMatrix(tmp.m);
   });
 
-  const handlePointerOver = (e: ThreeEvent<PointerEvent>) => {
-    e.stopPropagation();
-    setHovered(true);
-    onEnter();
-    document.body.style.cursor = "pointer";
-  };
-  const handlePointerOut = () => {
-    setHovered(false);
-    onLeave();
-    document.body.style.cursor = "default";
-  };
-
   const worldScale = size * (hovered ? 1.4 : 1.0);
 
   return (
-    <group ref={ref} onPointerOver={handlePointerOver} onPointerOut={handlePointerOut}>
+    <group
+      ref={ref}
+      onPointerEnter={(e) => {
+        e.stopPropagation();
+        setHovered(true);
+        document.body.style.cursor = "pointer";
+      }}
+      onPointerLeave={() => {
+        setHovered(false);
+        document.body.style.cursor = "default";
+      }}
+      onClick={(e: ThreeEvent<MouseEvent>) => {
+        e.stopPropagation();
+        const remainingMs = duration * (1 - lastT.current) * 1000;
+        onSelect(remainingMs);
+      }}
+    >
       <PlaneModel color={color} size={worldScale} />
     </group>
   );
@@ -644,7 +650,7 @@ function Plane({
 // ---------------------------------------------------------------------------
 // Public component
 // ---------------------------------------------------------------------------
-export default function Globe3D({ transactions, onHoverPlane }: Globe3DProps) {
+export default function Globe3D({ transactions, onSelectPlane }: Globe3DProps) {
   const t = useT();
   return (
     <div className="relative w-full h-full">
@@ -666,7 +672,7 @@ export default function Globe3D({ transactions, onHoverPlane }: Globe3DProps) {
         <pointLight position={[-4, -2, -3]} intensity={0.25} color="#06b6d4" />
 
         <Suspense fallback={null}>
-          <World transactions={transactions} onHoverPlane={onHoverPlane} t={t} />
+          <World transactions={transactions} onSelectPlane={onSelectPlane} t={t} />
         </Suspense>
 
         <OrbitControls
