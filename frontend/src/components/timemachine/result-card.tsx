@@ -12,28 +12,51 @@ interface Props {
 export default function ResultCard({ result, intl }: Props) {
   const { t } = useLocale();
 
-  // Build a tight viewbox covering both baseline + stress + floor so the
-  // floor line is always visible relative to the trajectories.
-  const allValues = result.horizon.flatMap((p) => [p.baseline_p50, p.stress_p50]);
-  const minV = Math.min(...allValues, result.floor);
-  const maxV = Math.max(...allValues, result.floor);
-  const range = maxV - minV || 1;
-  const n = Math.max(1, result.horizon.length - 1);
+  // Y range built from baseline + stress only — including the floor here
+  // would compress typical (balance >> floor) traces into a flat line at
+  // the top of the chart. The floor is drawn inline when it lands inside
+  // the data range, or rendered as a tiny corner label otherwise.
+  const baselineVals = result.horizon.map((p) => p.baseline_p50);
+  const stressVals = result.horizon.map((p) => p.stress_p50);
+  const dataVals = [...baselineVals, ...stressVals];
+  const dataMin = Math.min(...dataVals);
+  const dataMax = Math.max(...dataVals);
+  // Edge case: baseline == stress (e.g. country mismatch in bank_holiday)
+  // gives zero range. Fall back to 1% of magnitude, then to 1 absolute.
+  const dataRange = dataMax - dataMin || Math.abs(dataMax) * 0.01 || 1;
+  const padding = dataRange * 0.15;
+  const yMin = dataMin - padding;
+  const yMax = dataMax + padding;
+  const yRange = yMax - yMin;
 
-  const toY = (v: number) => 60 - ((v - minV) / range) * 50;
+  const W = 260;
+  const H = 70;
+  const PAD_X = 4;
+  const PAD_TOP = 6;
+  const PAD_BOT = 14;
+  const innerW = W - PAD_X * 2;
+  const innerH = H - PAD_TOP - PAD_BOT;
+
+  const toX = (i: number) =>
+    PAD_X + (i / Math.max(1, result.horizon.length - 1)) * innerW;
+  const toY = (v: number) => PAD_TOP + ((yMax - v) / yRange) * innerH;
+
   const baselinePath = result.horizon
     .map(
       (p, i) =>
-        `${i === 0 ? "M" : "L"} ${(i * 260) / n} ${toY(p.baseline_p50).toFixed(1)}`
+        `${i === 0 ? "M" : "L"} ${toX(i).toFixed(1)} ${toY(p.baseline_p50).toFixed(1)}`
     )
     .join(" ");
   const stressPath = result.horizon
     .map(
       (p, i) =>
-        `${i === 0 ? "M" : "L"} ${(i * 260) / n} ${toY(p.stress_p50).toFixed(1)}`
+        `${i === 0 ? "M" : "L"} ${toX(i).toFixed(1)} ${toY(p.stress_p50).toFixed(1)}`
     )
     .join(" ");
+
+  const floorInRange = result.floor >= yMin && result.floor <= yMax;
   const floorY = toY(result.floor);
+  const floorAbove = result.floor > yMax;
 
   const breachWorsened = result.stress_breaches > result.baseline_breaches;
   const stressColor = breachWorsened ? "#dc2626" : "#16a34a";
@@ -49,17 +72,30 @@ export default function ResultCard({ result, intl }: Props) {
         )}
       </div>
 
-      <svg viewBox="0 0 260 70" className="w-full h-16 mb-3" preserveAspectRatio="none">
-        <line
-          x1="0"
-          x2="260"
-          y1={floorY}
-          y2={floorY}
-          stroke="#dc2626"
-          strokeWidth="0.5"
-          strokeDasharray="2 2"
-          opacity="0.6"
-        />
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-16 mb-3">
+        {floorInRange && (
+          <line
+            x1={PAD_X}
+            x2={W - PAD_X}
+            y1={floorY}
+            y2={floorY}
+            stroke="#dc2626"
+            strokeWidth="0.5"
+            strokeDasharray="2 2"
+            opacity="0.6"
+          />
+        )}
+        {!floorInRange && (
+          <text
+            x={PAD_X}
+            y={floorAbove ? PAD_TOP + 6 : H - 3}
+            fontSize="6"
+            fill="#dc2626"
+            opacity="0.7"
+          >
+            {floorAbove ? "\u2191" : "\u2193"} floor
+          </text>
+        )}
         <path d={baselinePath} fill="none" stroke="#94a3b8" strokeWidth="1.5" />
         <path d={stressPath} fill="none" stroke={stressColor} strokeWidth="1.5" />
       </svg>
