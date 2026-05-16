@@ -201,21 +201,41 @@ def _transform(
         return out
 
     if params.scenario == Scenario.BANK_HOLIDAY:
-        # Heuristic: for accounts in ``country``, the balance is frozen
-        # during ``holiday_days`` (no flows clear), then snaps to a value
-        # half-way between the baseline and the accumulated drift on the
-        # first business day after (pent-up clearing partially catching up).
+        # Heuristic: the bank holiday freezes flows during days 0..d-1.
+        # On day d, the backlog clears in one batch (catch-up DROP, not
+        # bump), amplified 1.2x to capture operational stress (banks
+        # process backlogs less efficiently than normal-day batches).
+        # Days d+1..n-1 linearly recover toward baseline as backlog drains.
         if account.country != (params.country or "").upper():
             return list(baseline)
         d = max(0, min(params.holiday_days, n - 1))
+        if d == 0:
+            return list(baseline)
+
         out = list(baseline)
-        if d > 0:
-            flat_value = baseline[0]
-            for i in range(min(d, n)):
-                out[i] = flat_value
-            if d < n:
-                delta = baseline[d] - flat_value
-                out[d] = baseline[d] + delta * 0.5
+        flat_value = baseline[0]
+
+        # During the holiday: no payments clear; balance stays at the
+        # pre-holiday value, freezing the baseline's natural drift.
+        for i in range(min(d, n)):
+            out[i] = flat_value
+
+        # Catch-up day d: pent-up backlog hits in a single business day.
+        # accumulated_drift is negative for outflow-heavy accounts, so the
+        # catch_up term subtracts MORE than the baseline already did.
+        if d < n:
+            accumulated_drift = baseline[d] - flat_value
+            catch_up = accumulated_drift * 1.2
+            out[d] = baseline[d] + catch_up
+
+            # Recovery: trajectory tapers back toward baseline over the
+            # remaining horizon as the backlog drains.
+            remaining = n - d - 1
+            if remaining > 0:
+                for i in range(d + 1, n):
+                    fade = (i - d) / (remaining + 1)  # 0..1 toward end
+                    out[i] = baseline[i] + catch_up * (1.0 - fade)
+
         return out
 
     return list(baseline)
