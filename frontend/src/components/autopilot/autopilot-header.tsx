@@ -40,12 +40,12 @@ export default function AutopilotHeader({
   const { t, locale } = useLocale();
   const intl = localeToIntl(locale);
   return (
-    <header className="h-14 shrink-0 border-b border-border bg-card/40 backdrop-blur-sm flex items-center px-6 gap-6">
+    <header className="h-16 shrink-0 glass border-x-0 border-t-0 flex items-center px-8 gap-8 relative z-20 shadow-sm">
       <div className="flex flex-col leading-tight">
-        <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-primary">
+        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/80 mb-0.5">
           {t("autopilot.eyebrow")}
         </span>
-        <span className="text-sm font-semibold">{t("autopilot.title")}</span>
+        <span className="text-lg font-display font-semibold text-slate-800 tracking-tight">{t("autopilot.title")}</span>
       </div>
 
       <div className="flex-1 flex items-center justify-center gap-4 text-[11px] font-mono">

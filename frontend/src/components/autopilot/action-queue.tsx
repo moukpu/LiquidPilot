@@ -89,12 +89,12 @@ export default function ActionQueue({
     });
 
   return (
-    <section className="flex flex-col min-h-0 rounded-lg border border-border bg-card/30 overflow-hidden">
-      <header className="h-10 shrink-0 px-4 flex items-center justify-between border-b border-border">
-        <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-primary">
+    <section className="flex flex-col h-full rounded-2xl glass-card overflow-hidden">
+      <header className="h-14 shrink-0 px-6 flex items-center justify-between border-b border-slate-200/80 bg-white/40">
+        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/80">
           {t("autopilot.queue.section")}
         </span>
-        <span className="text-[10px] font-mono text-muted-foreground tabular-nums">
+        <span className="text-xs font-medium text-slate-500 tabular-nums bg-white/60 px-3 py-1 rounded-full border border-slate-200/60 shadow-sm">
           {t("autopilot.queue.summary", {
             active: active.length,
             done: executed.length,

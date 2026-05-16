@@ -37,33 +37,45 @@ export default function AutopilotPage() {
   const showDemoHint = !demoMode && accounts.length > 0;
 
   return (
-    <div className="-mx-6 -mt-6 min-h-[calc(100vh-4rem)] flex flex-col bg-background">
-      <AutopilotHeader
-        demoMode={demoMode}
-        onToggleDemoMode={toggleDemoMode}
-        lastSync={lastSync}
-        error={error}
-        counts={counts}
-        demoHint={showDemoHint}
-      />
+    <div className="-mx-6 -mt-6 min-h-[calc(100vh-4rem)] flex flex-col relative overflow-hidden bg-slate-50/50">
+      {/* Background blobs */}
+      <div className="absolute top-0 left-1/4 w-[800px] h-[800px] bg-primary/10 rounded-full blur-[120px] -translate-y-1/2 pointer-events-none animate-blob" />
+      <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-emerald-500/10 rounded-full blur-[100px] translate-y-1/3 pointer-events-none animate-blob" style={{ animationDelay: '2s' }} />
 
-      <AccountSummaryStrip accounts={accounts} alerts={alerts} />
-
-      <main className="flex-1 min-h-0 p-6">
-        <ActionQueue
-          transfers={transfers}
-          alerts={alerts}
-          actionStates={actionStates}
-          onChange={setActionState}
-          showEmptyState={!demoMode}
+      <div className="relative z-10 flex flex-col min-h-0 flex-1">
+        <AutopilotHeader
+          demoMode={demoMode}
+          onToggleDemoMode={toggleDemoMode}
+          lastSync={lastSync}
+          error={error}
+          counts={counts}
+          demoHint={showDemoHint}
         />
-      </main>
 
-      <SessionSummary
-        transfers={transfers}
-        alerts={alerts}
-        actionStates={actionStates}
-      />
+        <AccountSummaryStrip accounts={accounts} alerts={alerts} />
+
+        <main className="flex-1 min-h-0 p-6 pb-24 flex justify-center">
+          <div className="w-full max-w-5xl h-full flex flex-col min-h-0">
+            <ActionQueue
+              transfers={transfers}
+              alerts={alerts}
+              actionStates={actionStates}
+              onChange={setActionState}
+              showEmptyState={!demoMode}
+            />
+          </div>
+        </main>
+      </div>
+
+      <div className="absolute bottom-0 left-0 right-0 z-20 flex justify-center pb-6 pointer-events-none">
+        <div className="pointer-events-auto">
+          <SessionSummary
+            transfers={transfers}
+            alerts={alerts}
+            actionStates={actionStates}
+          />
+        </div>
+      </div>
     </div>
   );
 }

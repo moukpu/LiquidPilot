@@ -38,15 +38,15 @@ export default function AccountSummaryStrip({
 }: AccountSummaryStripProps) {
   const t = useT();
   return (
-    <div className="px-6 py-2 shrink-0 border-b border-border flex items-center gap-3 flex-wrap">
-      <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+    <div className="px-8 py-3 shrink-0 glass border-x-0 border-t-0 flex items-center gap-4 flex-wrap z-10 shadow-sm/50">
+      <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
         {t("autopilot.summary.label")}
       </span>
       {accounts.length === 0
         ? [0, 1, 2].map((i) => (
             <div
               key={i}
-              className="h-6 w-32 rounded-full border border-border bg-card/30 animate-pulse"
+              className="h-7 w-32 rounded-full border border-slate-200/60 bg-white/40 animate-pulse"
             />
           ))
         : accounts.map((a) => {
@@ -54,12 +54,12 @@ export default function AccountSummaryStrip({
             return (
               <div
                 key={a.account_id}
-                className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-card border border-border shadow-sm"
+                className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-white/70 backdrop-blur-md border border-slate-200/80 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all cursor-default"
               >
                 <span
-                  className={`w-2.5 h-2.5 rounded-full ${DOT_CLASS[s]} ${DOT_SHADOW}`}
+                  className={`w-2.5 h-2.5 rounded-full ${DOT_CLASS[s]} ${DOT_SHADOW} ${s !== 'green' ? 'animate-pulse' : ''}`}
                 />
-                <span className="font-mono text-xs">
+                <span className="font-mono text-xs font-medium text-slate-700">
                   {displayAccountLabel(a.account_id)}
                 </span>
               </div>

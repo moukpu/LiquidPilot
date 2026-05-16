@@ -56,15 +56,15 @@ const SKIPPED_STRIPE_STYLE: React.CSSProperties = {
 function stateClasses(state: ActionState) {
   switch (state) {
     case "confirming":
-      return "border-amber-500/50 bg-amber-500/5";
+      return "border-amber-300 bg-gradient-to-r from-amber-50 to-white shadow-md shadow-amber-500/10 ring-1 ring-amber-500/20";
     case "executing":
-      return "border-primary/60 bg-primary/5";
+      return "border-primary/40 bg-gradient-to-r from-primary/5 to-white shadow-lg shadow-primary/10 ring-1 ring-primary/20 scale-[1.01] transition-all";
     case "executed":
-      return "border-emerald-500/40 bg-emerald-500/5 opacity-80";
+      return "border-emerald-200 bg-emerald-50/50 opacity-90 shadow-sm";
     case "skipped":
-      return "border-border bg-muted/30 opacity-70";
+      return "border-slate-200 bg-slate-50/80 opacity-60 grayscale-[0.3]";
     default:
-      return "border-border bg-card shadow-sm";
+      return "border-slate-200/80 bg-white/80 backdrop-blur-sm shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all";
   }
 }
 
@@ -129,7 +129,7 @@ export default function ActionCard({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: 24 }}
       transition={{ duration: 0.25 }}
-      className={`rounded-lg border px-5 py-4 space-y-3 ${stateClasses(state)}`}
+      className={`rounded-xl border px-6 py-5 space-y-4 relative overflow-hidden ${stateClasses(state)}`}
       style={state === "skipped" ? SKIPPED_STRIPE_STYLE : undefined}
     >
       {alert && (
@@ -159,23 +159,25 @@ export default function ActionCard({
         </div>
       )}
 
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2 min-w-0 flex-1">
-          <ArrowRightLeft className="w-4 h-4 text-primary shrink-0" />
-          <div className="font-mono text-sm font-semibold truncate min-w-0">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+            <ArrowRightLeft className="w-4 h-4 text-primary" />
+          </div>
+          <div className="font-display text-base font-semibold text-slate-800 truncate min-w-0">
             <span>{displayAccountLabel(transfer.from_account)}</span>
-            <span className="text-muted-foreground mx-1.5">→</span>
+            <span className="text-slate-400 mx-2 font-normal">→</span>
             <span>{displayAccountLabel(transfer.to_account)}</span>
           </div>
         </div>
         <div className="text-right shrink-0">
-          <div className="font-mono font-bold tabular-nums text-base leading-tight break-all">
+          <div className="font-display font-bold tabular-nums text-xl text-slate-900 leading-tight break-all">
             {amountStr}
           </div>
-          <div className="text-[10px] font-mono text-muted-foreground">
+          <div className="text-[11px] font-medium text-slate-500 mt-0.5">
             {transfer.currency_from}
             {transfer.requires_fx && (
-              <span className="text-amber-500">
+              <span className="text-amber-600">
                 {" "}
                 → {transfer.currency_to}
               </span>

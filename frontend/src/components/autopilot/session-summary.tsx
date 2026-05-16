@@ -56,30 +56,32 @@ export default function SessionSummary({
   }, [transfers, alerts, actionStates]);
 
   return (
-    <div className="px-6 py-2 border-t border-border bg-card/30 flex items-center gap-5 text-xs font-mono shrink-0">
-      <div className="flex items-center gap-2">
-        <span className="text-muted-foreground uppercase tracking-widest text-[10px]">
+    <div className="glass-card rounded-full px-8 py-3 flex items-center gap-8 shadow-2xl shadow-slate-200/50">
+      <div className="flex items-center gap-3">
+        <span className="text-slate-500 uppercase tracking-widest text-[10px] font-bold">
           {t("autopilot.session.accepted")}
         </span>
-        <span className="font-bold tabular-nums text-emerald-400">
+        <span className="font-display font-bold text-lg text-emerald-600">
           {stats.acceptedCount}
         </span>
       </div>
-      <div className="flex items-center gap-2">
-        <span className="text-muted-foreground uppercase tracking-widest text-[10px]">
+      <div className="w-px h-6 bg-slate-200" />
+      <div className="flex items-center gap-3">
+        <span className="text-slate-500 uppercase tracking-widest text-[10px] font-bold">
           {t("autopilot.session.moved")}
         </span>
-        <span className="font-bold tabular-nums text-foreground">
+        <span className="font-display font-bold text-xl text-slate-800 tabular-nums">
           {formatMoney(stats.movedUsd, "USD", { fractionDigits: 0 }, intl)}
         </span>
       </div>
-      <div className="flex items-center gap-2 ml-auto">
-        <span className="text-muted-foreground uppercase tracking-widest text-[10px]">
+      <div className="w-px h-6 bg-slate-200" />
+      <div className="flex items-center gap-3">
+        <span className="text-slate-500 uppercase tracking-widest text-[10px] font-bold">
           {t("autopilot.session.remaining")}
         </span>
         <span
-          className={`font-bold tabular-nums ${
-            stats.remaining > 0 ? "text-rose-400" : "text-emerald-400"
+          className={`font-display font-bold text-lg ${
+            stats.remaining > 0 ? "text-amber-500" : "text-emerald-500"
           }`}
         >
           {stats.remaining}
