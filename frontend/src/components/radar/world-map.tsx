@@ -20,6 +20,15 @@ const TOWERS: Tower[] = [
   { id: "EUR-Main", cityKey: "radar.city.frankfurt", coords: [8.68, 50.11], label: "EUR-Main" },
   { id: "USD-Correspondent", cityKey: "radar.city.newYork", coords: [-74.0, 40.71], label: "USD-Correspondent" },
   { id: "GBP-Local", cityKey: "radar.city.london", coords: [-0.13, 51.51], label: "GBP-Local" },
+  // d3 geoEquirectangular expects [lon, lat] — same coords as the 3D
+  // globe, just transposed. Markers may visually overlap in Central
+  // Europe (Frankfurt/Berlin/Zurich); that's intentional, see globe-3d.
+  { id: "EUR-Berlin", cityKey: "radar.city.berlin", coords: [13.41, 52.52], label: "EUR-Berlin" },
+  { id: "USD-LA", cityKey: "radar.city.losAngeles", coords: [-118.24, 34.05], label: "USD-LA" },
+  { id: "CHF-Zurich", cityKey: "radar.city.zurich", coords: [8.54, 47.37], label: "CHF-Zurich" },
+  { id: "JPY-Tokyo", cityKey: "radar.city.tokyo", coords: [139.69, 35.68], label: "JPY-Tokyo" },
+  { id: "SGD-Singapore", cityKey: "radar.city.singapore", coords: [103.82, 1.35], label: "SGD-Singapore" },
+  { id: "KZT-Almaty", cityKey: "radar.city.almaty", coords: [76.95, 43.25], label: "KZT-Almaty" },
 ];
 
 function fnv1a(str: string): number {

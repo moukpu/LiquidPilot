@@ -31,6 +31,15 @@ const TOWERS: Tower[] = [
   { id: "EUR-Main", cityKey: "radar.city.frankfurt", lat: 50.11, lon: 8.68, label: "EUR-Main" },
   { id: "USD-Correspondent", cityKey: "radar.city.newYork", lat: 40.71, lon: -74.0, label: "USD-Correspondent" },
   { id: "GBP-Local", cityKey: "radar.city.london", lat: 51.51, lon: -0.13, label: "GBP-Local" },
+  // Berlin / Frankfurt / Zurich are within ~5° of each other so the
+  // markers visually cluster on the rotating globe — that's a realistic
+  // illustration of intra-EU banking concentration, not a coordinate bug.
+  { id: "EUR-Berlin", cityKey: "radar.city.berlin", lat: 52.52, lon: 13.41, label: "EUR-Berlin" },
+  { id: "USD-LA", cityKey: "radar.city.losAngeles", lat: 34.05, lon: -118.24, label: "USD-LA" },
+  { id: "CHF-Zurich", cityKey: "radar.city.zurich", lat: 47.37, lon: 8.54, label: "CHF-Zurich" },
+  { id: "JPY-Tokyo", cityKey: "radar.city.tokyo", lat: 35.68, lon: 139.69, label: "JPY-Tokyo" },
+  { id: "SGD-Singapore", cityKey: "radar.city.singapore", lat: 1.35, lon: 103.82, label: "SGD-Singapore" },
+  { id: "KZT-Almaty", cityKey: "radar.city.almaty", lat: 43.25, lon: 76.95, label: "KZT-Almaty" },
 ];
 
 const GLOBE_RADIUS = 1;

@@ -49,6 +49,12 @@ const ru: Record<keyof typeof en, string> = {
   "radar.city.frankfurt": "Франкфурт",
   "radar.city.newYork": "Нью-Йорк",
   "radar.city.london": "Лондон",
+  "radar.city.berlin": "Берлин",
+  "radar.city.losAngeles": "Лос-Анджелес",
+  "radar.city.zurich": "Цюрих",
+  "radar.city.tokyo": "Токио",
+  "radar.city.singapore": "Сингапур",
+  "radar.city.almaty": "Алматы",
 
   "account.ledgerBalance": "Бухгалтерский баланс",
   "account.percentOfOpening": "{percent}% от начального",

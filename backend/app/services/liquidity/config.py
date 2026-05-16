@@ -46,6 +46,15 @@ FX_RATES_TO_USD: Dict[str, float] = {
     "EUR": 1.08,
     "USD": 1.00,
     "GBP": 1.27,
+    "CHF": 1.10,
+    # 1 JPY ≈ $0.0067 (≈ 150 JPY/USD). JPY balances run ~100× larger
+    # nominal values; the forecaster scales internally per-account so
+    # this doesn't poison feature engineering.
+    "JPY": 0.0067,
+    "SGD": 0.74,
+    # 1 KZT ≈ $0.0022 (≈ 450 KZT/USD). Like JPY, balances run with
+    # large nominal values — ~₸2.5B ≈ $5.5M.
+    "KZT": 0.0022,
 }
 
 
@@ -117,10 +126,13 @@ class SystemConfig:
 
 
 def default_system_config() -> SystemConfig:
-    """Return a realistic 3-account default for demos and tests.
+    """Return a realistic 9-account default for demos and tests.
 
     Numbers are illustrative but kept on the same order of magnitude as
-    a mid-sized fintech to keep alert/routing logic non-trivial.
+    a mid-sized fintech to keep alert/routing logic non-trivial. The
+    fleet spans EUR/USD/GBP/CHF/JPY/SGD/KZT across DE/US/GB/CH/JP/SG/KZ
+    so the radar globe and bank-holiday stress test have geographic +
+    currency diversity.
     """
 
     eur_main = AccountConfig(
@@ -182,4 +194,131 @@ def default_system_config() -> SystemConfig:
         },
     )
 
-    return SystemConfig(accounts=[eur_main, usd_corr, gbp_local])
+    eur_berlin = AccountConfig(
+        account_id="EUR-Berlin",
+        currency="EUR",
+        opening_balance=8_000_000,
+        min_balance=1_500_000,
+        alert_buffer=1_000_000,
+        country="DE",
+        inflow_mean=1_500_000,
+        inflow_std=400_000,
+        outflow_mean=1_500_000,
+        outflow_std=420_000,
+        # Heavy INTERNAL share — sister account to EUR-Main, frequent
+        # book transfers within the same banking group.
+        payment_mix={
+            PaymentType.INTERNAL: 0.40,
+            PaymentType.SEPA: 0.45,
+            PaymentType.SWIFT: 0.10,
+            PaymentType.CARD: 0.05,
+        },
+    )
+
+    usd_la = AccountConfig(
+        account_id="USD-LA",
+        currency="USD",
+        opening_balance=14_000_000,
+        min_balance=2_500_000,
+        alert_buffer=1_500_000,
+        country="US",
+        inflow_mean=2_500_000,
+        inflow_std=800_000,
+        outflow_mean=2_500_000,
+        outflow_std=830_000,
+        payment_mix={
+            PaymentType.SWIFT: 0.40,
+            PaymentType.CARD: 0.40,
+            PaymentType.INTERNAL: 0.20,
+        },
+    )
+
+    chf_zurich = AccountConfig(
+        account_id="CHF-Zurich",
+        currency="CHF",
+        opening_balance=7_000_000,
+        min_balance=1_500_000,
+        alert_buffer=1_000_000,
+        country="CH",
+        inflow_mean=1_200_000,
+        inflow_std=350_000,
+        outflow_mean=1_200_000,
+        outflow_std=360_000,
+        payment_mix={
+            PaymentType.SWIFT: 0.55,
+            PaymentType.SEPA: 0.30,
+            PaymentType.INTERNAL: 0.10,
+            PaymentType.CARD: 0.05,
+        },
+    )
+
+    jpy_tokyo = AccountConfig(
+        account_id="JPY-Tokyo",
+        currency="JPY",
+        # JPY balances are typically large nominal values; ¥1.5B ≈ $10M.
+        opening_balance=1_500_000_000,
+        min_balance=300_000_000,
+        alert_buffer=200_000_000,
+        country="JP",
+        inflow_mean=200_000_000,
+        inflow_std=60_000_000,
+        outflow_mean=200_000_000,
+        outflow_std=62_000_000,
+        payment_mix={
+            PaymentType.SWIFT: 0.60,
+            PaymentType.CARD: 0.30,
+            PaymentType.INTERNAL: 0.10,
+        },
+    )
+
+    sgd_singapore = AccountConfig(
+        account_id="SGD-Singapore",
+        currency="SGD",
+        opening_balance=9_000_000,
+        min_balance=1_500_000,
+        alert_buffer=1_000_000,
+        country="SG",
+        inflow_mean=1_300_000,
+        inflow_std=400_000,
+        outflow_mean=1_300_000,
+        outflow_std=420_000,
+        payment_mix={
+            PaymentType.SWIFT: 0.50,
+            PaymentType.CARD: 0.30,
+            PaymentType.INTERNAL: 0.20,
+        },
+    )
+
+    # KZT (Kazakhstan tenge): ≈ 450 KZT/USD, balances run nominally large
+    # (₸2.5B ≈ $5.5M). Active Central Asian fintech hub with strong
+    # card + SWIFT rails. Tenge is the only Central Asian currency in
+    # the demo so KZ stress branches are isolated.
+    kzt_almaty = AccountConfig(
+        account_id="KZT-Almaty",
+        currency="KZT",
+        opening_balance=2_500_000_000,
+        min_balance=500_000_000,
+        alert_buffer=300_000_000,
+        country="KZ",
+        inflow_mean=350_000_000,
+        inflow_std=100_000_000,
+        outflow_mean=350_000_000,
+        outflow_std=105_000_000,
+        payment_mix={
+            PaymentType.SWIFT: 0.45,
+            PaymentType.CARD: 0.35,
+            PaymentType.INTERNAL: 0.20,
+        },
+    )
+
+    return SystemConfig(accounts=[
+        eur_main,
+        usd_corr,
+        gbp_local,
+        eur_berlin,
+        usd_la,
+        chf_zurich,
+        jpy_tokyo,
+        sgd_singapore,
+        kzt_almaty,
+    ])

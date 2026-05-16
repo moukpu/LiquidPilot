@@ -130,58 +130,63 @@ export default function RadarPage() {
         </div>
       </div>
 
-      {/* Pinned Tooltip — left dead-space, click-to-open, X / Esc / auto-close */}
-      {tooltip && (
-        <div
-          className="absolute top-24 left-6 z-30 glass-card rounded-2xl p-5 shadow-xl w-[300px] pointer-events-auto"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <button
-            type="button"
-            onClick={closeTooltip}
-            aria-label={t("radar.tooltip.close")}
-            className="absolute top-3 right-3 w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 text-sm transition-colors"
-          >
-            ✕
-          </button>
-          <div className="flex items-center justify-between mb-4 border-b border-slate-200/50 pb-3 pr-9">
-            <span className="text-[10px] font-mono uppercase text-muted-foreground tracking-widest">
-              {t("radar.tooltip.direction")}
-            </span>
-            <span
-              className={`text-[10px] font-bold px-2 py-1 rounded uppercase tracking-widest ${
-                tooltip.direction === "IN"
-                  ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                  : "bg-rose-500/20 text-rose-400 border border-rose-500/30"
-              }`}
-            >
-              {tooltip.direction === "IN" ? t("radar.direction.IN") : t("radar.direction.OUT")}
-            </span>
-          </div>
-          <div className="space-y-3">
-            <Row
-              label={t("radar.tooltip.amount")}
-              value={formatNumber(tooltip.amount, 0, intl)}
-              valueClass="text-foreground font-bold text-sm"
-            />
-            <Row label={t("radar.tooltip.paymentType")} value={tooltip.payment_type} />
-            <Row label={t("radar.tooltip.valueDate")} value={tooltip.value_date} />
-            <Row
-              label={t("radar.tooltip.delay")}
-              value={`${tooltip.clearing_delay_days}d`}
-              valueClass="text-warning font-semibold"
-            />
-            <Row label={t("radar.tooltip.from")} value={tooltip.src} />
-            <Row label={t("radar.tooltip.to")} value={tooltip.dst} />
-          </div>
-        </div>
-      )}
-
-      {/* Right HUD Panel (Floating) */}
+      {/* Right HUD Panel (Floating).
+          The pinned tooltip lives as the first child here — previously it
+          was anchored to `top-24 left-6`, which blew up over the
+          bottom-left Rail Reliability + Flow Size cards on shorter
+          viewports. Putting it inside the right column reuses the
+          existing scrollable region; account cards just push down while
+          the tooltip is open and X / Esc dismisses it as before. */}
       <div 
         className="absolute right-6 top-6 bottom-6 w-[340px] z-20 flex flex-col gap-4 overflow-y-auto pr-2 pb-6 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-300/50 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-400/50"
         style={{ maskImage: "linear-gradient(to bottom, black 90%, transparent 100%)" }}
       >
+        {tooltip && (
+          <div
+            className="relative glass-card rounded-2xl p-5 shadow-xl pointer-events-auto shrink-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={closeTooltip}
+              aria-label={t("radar.tooltip.close")}
+              className="absolute top-3 right-3 w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 text-sm transition-colors"
+            >
+              ✕
+            </button>
+            <div className="flex items-center justify-between mb-4 border-b border-slate-200/50 pb-3 pr-9">
+              <span className="text-[10px] font-mono uppercase text-muted-foreground tracking-widest">
+                {t("radar.tooltip.direction")}
+              </span>
+              <span
+                className={`text-[10px] font-bold px-2 py-1 rounded uppercase tracking-widest ${
+                  tooltip.direction === "IN"
+                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                    : "bg-rose-500/20 text-rose-400 border border-rose-500/30"
+                }`}
+              >
+                {tooltip.direction === "IN" ? t("radar.direction.IN") : t("radar.direction.OUT")}
+              </span>
+            </div>
+            <div className="space-y-3">
+              <Row
+                label={t("radar.tooltip.amount")}
+                value={formatNumber(tooltip.amount, 0, intl)}
+                valueClass="text-foreground font-bold text-sm"
+              />
+              <Row label={t("radar.tooltip.paymentType")} value={tooltip.payment_type} />
+              <Row label={t("radar.tooltip.valueDate")} value={tooltip.value_date} />
+              <Row
+                label={t("radar.tooltip.delay")}
+                value={`${tooltip.clearing_delay_days}d`}
+                valueClass="text-warning font-semibold"
+              />
+              <Row label={t("radar.tooltip.from")} value={tooltip.src} />
+              <Row label={t("radar.tooltip.to")} value={tooltip.dst} />
+            </div>
+          </div>
+        )}
+
         {data.accounts.map((acc) => (
           <AccountCard
             key={acc.account_id}

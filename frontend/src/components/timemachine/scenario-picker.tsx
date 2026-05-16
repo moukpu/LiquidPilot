@@ -11,7 +11,7 @@ interface Props {
 }
 
 const RAILS = ["INTERNAL", "SEPA", "ACH", "CARD", "SWIFT"] as const;
-const COUNTRIES = ["DE", "US", "GB"] as const;
+const COUNTRIES = ["DE", "US", "GB", "CH", "JP", "SG", "KZ"] as const;
 
 export default function ScenarioPicker({
   value,

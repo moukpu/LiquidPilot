@@ -48,6 +48,12 @@ const en = {
   "radar.city.frankfurt": "Frankfurt",
   "radar.city.newYork": "New York",
   "radar.city.london": "London",
+  "radar.city.berlin": "Berlin",
+  "radar.city.losAngeles": "Los Angeles",
+  "radar.city.zurich": "Zurich",
+  "radar.city.tokyo": "Tokyo",
+  "radar.city.singapore": "Singapore",
+  "radar.city.almaty": "Almaty",
 
   "account.ledgerBalance": "Ledger balance",
   "account.percentOfOpening": "{percent}% of opening",
