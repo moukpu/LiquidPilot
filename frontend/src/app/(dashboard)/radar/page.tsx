@@ -23,7 +23,7 @@ export default function RadarPage() {
       </div>
 
       {/* Floating Status Bar (Top Left) */}
-      <div className="absolute top-6 left-6 z-10 glass rounded-full px-5 py-2.5 flex items-center gap-4 text-xs font-mono shadow-[0_0_30px_rgba(0,190,255,0.1)]">
+      <div className="absolute top-6 left-6 z-10 glass rounded-full px-5 py-2.5 flex items-center gap-4 text-xs font-mono shadow-lg">
         <span className="text-muted-foreground uppercase tracking-widest">
           {t("status.lastSync")} <span className="text-white font-semibold ml-1">{formatTime(lastSync, intl)}</span>
         </span>
@@ -32,26 +32,26 @@ export default function RadarPage() {
           <span className="text-rose-400 font-medium tracking-widest uppercase">⚠ {t("status.offline")}</span>
         ) : (
           <div className="flex items-center gap-2 border-l border-white/10 pl-4">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-sm" />
             <span className="text-emerald-400 font-medium tracking-widest uppercase">{t("status.online")}</span>
           </div>
         )}
       </div>
 
       {/* Floating Legend (Bottom Left) */}
-      <div className="absolute bottom-6 left-6 z-10 glass rounded-2xl px-6 py-5 flex flex-col gap-4 text-xs font-mono shadow-[0_0_30px_rgba(0,190,255,0.1)] pointer-events-none">
+      <div className="absolute bottom-6 left-6 z-10 glass rounded-2xl px-6 py-5 flex flex-col gap-4 text-xs font-mono shadow-lg pointer-events-none">
         <span className="text-muted-foreground uppercase tracking-widest text-[10px]">{t("radar.flowSize")}</span>
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-3">
-            <span className="inline-block w-2 h-2 rounded-full bg-[#22c55e] shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+            <span className="inline-block w-2 h-2 rounded-full bg-[#22c55e] shadow-sm" />
             <span className="text-white/90">{t("radar.legend.small")}</span>
           </div>
           <div className="flex items-center gap-3">
-            <span className="inline-block w-3 h-3 rounded-full bg-[#eab308] shadow-[0_0_8px_rgba(234,179,8,0.6)]" />
+            <span className="inline-block w-3 h-3 rounded-full bg-[#eab308] shadow-sm" />
             <span className="text-white/90">{t("radar.legend.medium")}</span>
           </div>
           <div className="flex items-center gap-3">
-            <span className="inline-block w-4 h-4 rounded-full bg-[#ef4444] shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
+            <span className="inline-block w-4 h-4 rounded-full bg-[#ef4444] shadow-sm" />
             <span className="text-white/90">{t("radar.legend.large")}</span>
           </div>
         </div>
@@ -60,7 +60,7 @@ export default function RadarPage() {
 
       {/* Floating Tooltip */}
       {tooltip && (
-        <div className="absolute top-6 left-1/2 -translate-x-1/2 glass-card rounded-2xl p-4 shadow-[0_0_50px_rgba(0,190,255,0.2)] z-30 min-w-[280px] pointer-events-none">
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 glass-card rounded-2xl p-4 shadow-xl z-30 min-w-[280px] pointer-events-none">
           <div className="flex items-center justify-between mb-3 border-b border-white/10 pb-3">
             <span className="text-[10px] font-mono uppercase text-muted-foreground tracking-widest">
               {t("radar.tooltip.direction")}
@@ -78,7 +78,7 @@ export default function RadarPage() {
           <div className="space-y-2.5 font-mono text-xs">
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground uppercase tracking-widest text-[10px]">{t("radar.tooltip.amount")}</span>
-              <span className="font-bold text-white text-sm text-glow">{formatNumber(tooltip.amount, 0, intl)}</span>
+              <span className="font-bold text-white text-sm">{formatNumber(tooltip.amount, 0, intl)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground uppercase tracking-widest text-[10px]">{t("radar.tooltip.paymentType")}</span>
@@ -117,7 +117,7 @@ export default function RadarPage() {
 
         <div className="glass-card rounded-2xl p-5 shrink-0 mt-2">
           <div className="text-[10px] font-mono uppercase tracking-widest text-primary mb-4 flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse shadow-[0_0_5px_rgba(0,190,255,0.8)]" />
+            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
             {t("alerts.title")}
           </div>
           <AlertsPanel

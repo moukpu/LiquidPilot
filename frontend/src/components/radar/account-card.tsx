@@ -38,7 +38,7 @@ export default function AccountCard({ account, transactions }: AccountCardProps)
       
       <div className="relative z-10 flex items-start justify-between">
         <div>
-          <div className="font-mono text-sm font-semibold uppercase tracking-widest text-primary text-glow">
+          <div className="font-mono text-sm font-semibold uppercase tracking-widest text-primary">
             {account.account_id}
           </div>
           <div className="text-xs text-muted-foreground mt-1">
@@ -46,7 +46,7 @@ export default function AccountCard({ account, transactions }: AccountCardProps)
           </div>
         </div>
         {bufferBreach && (
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase bg-amber-500/20 text-amber-400 border border-amber-500/30 animate-pulse shadow-[0_0_10px_rgba(245,158,11,0.3)]">
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase bg-amber-500/20 text-amber-400 border border-amber-500/30">
             {t("account.bufferBreach")}
           </span>
         )}
@@ -56,7 +56,7 @@ export default function AccountCard({ account, transactions }: AccountCardProps)
         <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground/70 mb-1">
           {t("account.ledgerBalance")}
         </div>
-        <div className="text-3xl font-mono font-bold tabular-nums text-white text-glow">
+        <div className="text-3xl font-mono font-bold tabular-nums text-white">
           {sym}
           {formatNumber(account.current_ledger_balance, 2, intl)}
         </div>
