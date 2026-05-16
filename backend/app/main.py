@@ -14,7 +14,7 @@ import asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import health, accounts, transactions, recommendations, contagion, timemachine
+from app.api.routes import health, accounts, transactions, recommendations, contagion, timemachine, radar
 from app.config import settings
 from app.services.engine_state import warm_up, state
 
@@ -48,6 +48,7 @@ app.include_router(transactions.router, prefix="/transactions", tags=["transacti
 app.include_router(recommendations.router, prefix="/recommendations", tags=["recommendations"])
 app.include_router(contagion.router, prefix="/contagion", tags=["contagion"])
 app.include_router(timemachine.router, prefix="/timemachine", tags=["timemachine"])
+app.include_router(radar.router, prefix="/radar", tags=["radar"])
 
 
 @app.get("/version")

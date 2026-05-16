@@ -1,13 +1,31 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getAccounts, getInFlightTransactions, getRecommendations } from "@/lib/api";
-import type { Account, Recommendations, Transaction } from "@/types/api";
+import {
+  getAccounts,
+  getInFlightTransactions,
+  getRadarInsights,
+  getRecommendations,
+} from "@/lib/api";
+import type {
+  Account,
+  RadarInsights,
+  Recommendations,
+  Transaction,
+} from "@/types/api";
+
+const EMPTY_INSIGHTS: RadarInsights = {
+  frozen_capital_per_account: {},
+  frozen_capital_total_usd: 0,
+  total_balance_usd: 0,
+  rail_reliability: {},
+};
 
 export interface RadarData {
   accounts: Account[];
   transactions: Transaction[];
   recommendations: Recommendations;
+  insights: RadarInsights;
 }
 
 export interface RadarState {
@@ -21,6 +39,7 @@ export function useRadarPolling(interval = 2000): RadarState {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [recommendations, setRecommendations] = useState<Recommendations>({ alerts: [], transfers: [] });
+  const [insights, setInsights] = useState<RadarInsights>(EMPTY_INSIGHTS);
   const [lastSync, setLastSync] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,6 +60,7 @@ export function useRadarPolling(interval = 2000): RadarState {
         getAccounts(controller.signal),
         getInFlightTransactions(controller.signal),
         getRecommendations(controller.signal),
+        getRadarInsights(controller.signal),
       ]);
 
       let anyOk = false;
@@ -65,6 +85,13 @@ export function useRadarPolling(interval = 2000): RadarState {
         anyOk = true;
       } else if (results[2].reason?.name !== "AbortError") {
         firstError ??= (results[2].reason as Error).message;
+      }
+
+      if (results[3].status === "fulfilled") {
+        setInsights(results[3].value);
+        anyOk = true;
+      } else if (results[3].reason?.name !== "AbortError") {
+        firstError ??= (results[3].reason as Error).message;
       }
 
       if (anyOk) {
@@ -93,7 +120,7 @@ export function useRadarPolling(interval = 2000): RadarState {
   }, [poll, interval]);
 
   return {
-    data: { accounts, transactions, recommendations },
+    data: { accounts, transactions, recommendations, insights },
     lastSync,
     error,
     loading,

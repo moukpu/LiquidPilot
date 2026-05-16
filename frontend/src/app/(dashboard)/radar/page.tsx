@@ -5,6 +5,8 @@ import dynamic from "next/dynamic";
 import { useRadarPolling } from "@/hooks/use-radar-polling";
 import type { TooltipData } from "@/components/radar/globe-3d";
 import AccountCard from "@/components/radar/account-card";
+import FrozenCapitalCard from "@/components/radar/frozen-capital-card";
+import RailReliabilityCard from "@/components/radar/rail-reliability-card";
 import { useLocale } from "@/i18n/locale-context";
 import { formatTime, formatNumber } from "@/lib/format";
 import { localeToIntl } from "@/i18n/locale-context";
@@ -45,6 +47,11 @@ export default function RadarPage() {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { t, locale } = useLocale();
   const intl = localeToIntl(locale);
+
+  // Account-id -> currency map, consumed by FrozenCapitalCard to label per-account rows.
+  const accountCurrencies = Object.fromEntries(
+    data.accounts.map((a) => [a.account_id, a.currency])
+  );
 
   const closeTooltip = useCallback(() => {
     if (timeoutRef.current) {
@@ -100,24 +107,27 @@ export default function RadarPage() {
         )}
       </div>
 
-      {/* Floating Legend (Bottom Left) */}
-      <div className="absolute bottom-6 left-6 z-10 glass rounded-2xl px-6 py-5 flex flex-col gap-4 text-xs font-mono shadow-lg pointer-events-none">
-        <span className="text-muted-foreground uppercase tracking-widest text-[10px]">{t("radar.flowSize")}</span>
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-3">
-            <span className="inline-block w-2 h-2 rounded-full bg-[#22c55e] shadow-sm" />
-            <span className="text-foreground/90">{t("radar.legend.small")}</span>
+      {/* Bottom-Left Column: Rail Reliability stacked above the legend */}
+      <div className="absolute bottom-6 left-6 z-10 flex flex-col gap-3 w-[280px]">
+        <RailReliabilityCard rails={data.insights.rail_reliability} />
+        <div className="glass rounded-2xl px-6 py-5 flex flex-col gap-4 text-xs font-mono shadow-lg pointer-events-none">
+          <span className="text-muted-foreground uppercase tracking-widest text-[10px]">{t("radar.flowSize")}</span>
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-3">
+              <span className="inline-block w-2 h-2 rounded-full bg-[#22c55e] shadow-sm" />
+              <span className="text-foreground/90">{t("radar.legend.small")}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="inline-block w-3 h-3 rounded-full bg-[#eab308] shadow-sm" />
+              <span className="text-foreground/90">{t("radar.legend.medium")}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="inline-block w-4 h-4 rounded-full bg-[#ef4444] shadow-sm" />
+              <span className="text-foreground/90">{t("radar.legend.large")}</span>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="inline-block w-3 h-3 rounded-full bg-[#eab308] shadow-sm" />
-            <span className="text-foreground/90">{t("radar.legend.medium")}</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="inline-block w-4 h-4 rounded-full bg-[#ef4444] shadow-sm" />
-            <span className="text-foreground/90">{t("radar.legend.large")}</span>
-          </div>
+          <span className="mt-1 text-[10px] text-muted-foreground/50 border-t border-slate-200/50 pt-2">{t("radar.legend.hoverHint")}</span>
         </div>
-        <span className="mt-1 text-[10px] text-muted-foreground/50 border-t border-slate-200/50 pt-2">{t("radar.legend.hoverHint")}</span>
       </div>
 
       {/* Pinned Tooltip — left dead-space, click-to-open, X / Esc / auto-close */}
@@ -179,6 +189,13 @@ export default function RadarPage() {
             transactions={data.transactions}
           />
         ))}
+
+        <FrozenCapitalCard
+          totalUsd={data.insights.frozen_capital_total_usd}
+          perAccount={data.insights.frozen_capital_per_account}
+          accountCurrencies={accountCurrencies}
+          totalBalanceUsd={data.insights.total_balance_usd}
+        />
       </div>
     </div>
   );

@@ -31,10 +31,12 @@ from app.services.liquidity.config import default_system_config
 logger = logging.getLogger(__name__)
 
 CACHE_DIR = Path("data/cache")
-TX_CACHE = CACHE_DIR / "transactions.parquet"
-BAL_CACHE = CACHE_DIR / "daily_balances.parquet"
-MODELS_CACHE = CACHE_DIR / "forecaster.pkl"
-FORECAST_CACHE = CACHE_DIR / "forecast.pkl"
+# Bumped to v2 when the `clearing_delayed` column was added to transactions
+# so a stale cache from before the schema change is bypassed and regenerated.
+TX_CACHE = CACHE_DIR / "transactions_v2.parquet"
+BAL_CACHE = CACHE_DIR / "daily_balances_v2.parquet"
+MODELS_CACHE = CACHE_DIR / "forecaster_v2.pkl"
+FORECAST_CACHE = CACHE_DIR / "forecast_v2.pkl"
 
 
 @dataclass

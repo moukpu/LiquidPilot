@@ -28,6 +28,21 @@ export interface Transaction {
   payment_type: string;
   clearing_delay_days: number;
   signed_amount: number;
+  clearing_delayed?: boolean;
+}
+
+export interface RailReliability {
+  reliability: number;
+  total: number;
+  delayed: number;
+  expected_delay_range: string;
+}
+
+export interface RadarInsights {
+  frozen_capital_per_account: Record<string, number>;
+  frozen_capital_total_usd: number;
+  total_balance_usd: number;
+  rail_reliability: Record<string, RailReliability>;
 }
 
 export interface Alert {

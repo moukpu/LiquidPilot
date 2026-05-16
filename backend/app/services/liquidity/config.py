@@ -38,6 +38,36 @@ CLEARING_DELAYS: Dict[PaymentType, tuple] = {
 }
 
 
+# Static FX snapshot used to express multi-currency totals in a single
+# numeraire (USD) for the radar insight widgets. This is intentionally a
+# constant rather than a live feed: the radar values are operational
+# guides, not P&L. Update by hand if rates drift materially.
+FX_RATES_TO_USD: Dict[str, float] = {
+    "EUR": 1.08,
+    "USD": 1.00,
+    "GBP": 1.27,
+}
+
+
+# Probability per booked transaction that its clearing slips past the
+# nominal rail SLA by an extra 1-2 days. Without this, reliability for
+# every rail is a flat 100% — which hides the whole point of comparing
+# rails on the radar.
+DELAY_OVERFLOW_PROB: float = 0.08
+
+
+# Human-readable SLA window per rail, surfaced in the Rail Reliability
+# widget. Keys are PaymentType values; ACH is listed for completeness
+# even though the current synthetic mix doesn't generate it.
+EXPECTED_DELAY_RANGES: Dict[str, str] = {
+    "INTERNAL": "T+0",
+    "SEPA": "T+0..1",
+    "ACH": "T+1..2",
+    "SWIFT": "T+2..3",
+    "CARD": "T+1..5",
+}
+
+
 @dataclass(frozen=True)
 class AccountConfig:
     """Static configuration for a single nostro/operational account."""

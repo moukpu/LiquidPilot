@@ -32,6 +32,7 @@ except ImportError:  # pragma: no cover - optional dependency at import time
 from .config import (
     AccountConfig,
     CLEARING_DELAYS,
+    DELAY_OVERFLOW_PROB,
     PaymentType,
     SystemConfig,
     default_system_config,
@@ -233,6 +234,13 @@ class MockDataGenerator:
             for amt in in_amounts:
                 rail = self._sample_rail(account)
                 delay = self._sample_clearing_delay(rail, date, account.country)
+                # Operational realism: ~8% of payments overshoot their rail's
+                # nominal SLA by 1-2 calendar days. Without this, reliability
+                # is a meaningless flat 100%.
+                clearing_delayed = False
+                if self._rng.random() < DELAY_OVERFLOW_PROB:
+                    delay += int(self._rng.choice([1, 2]))
+                    clearing_delayed = True
                 records.append(
                     {
                         "account_id": account.account_id,
@@ -243,6 +251,7 @@ class MockDataGenerator:
                         "direction": "IN",
                         "payment_type": rail.value,
                         "clearing_delay_days": delay,
+                        "clearing_delayed": clearing_delayed,
                     }
                 )
 
@@ -256,6 +265,10 @@ class MockDataGenerator:
             for amt in out_amounts:
                 rail = self._sample_rail(account)
                 delay = self._sample_clearing_delay(rail, date, account.country)
+                clearing_delayed = False
+                if self._rng.random() < DELAY_OVERFLOW_PROB:
+                    delay += int(self._rng.choice([1, 2]))
+                    clearing_delayed = True
                 records.append(
                     {
                         "account_id": account.account_id,
@@ -266,6 +279,7 @@ class MockDataGenerator:
                         "direction": "OUT",
                         "payment_type": rail.value,
                         "clearing_delay_days": delay,
+                        "clearing_delayed": clearing_delayed,
                     }
                 )
 

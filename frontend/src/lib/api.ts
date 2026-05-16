@@ -1,4 +1,4 @@
-import type { Account, Recommendations, Transaction } from "@/types/api";
+import type { Account, RadarInsights, Recommendations, Transaction } from "@/types/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -23,4 +23,8 @@ export function getInFlightTransactions(signal?: AbortSignal) {
 
 export function getRecommendations(signal?: AbortSignal) {
   return apiGet<Recommendations>("/recommendations/", signal);
+}
+
+export function getRadarInsights(signal?: AbortSignal) {
+  return apiGet<RadarInsights>("/radar/insights", signal);
 }

@@ -36,6 +36,13 @@ const en = {
   "radar.tooltip.from": "From",
   "radar.tooltip.to": "To",
   "radar.tooltip.close": "Close",
+  "radar.frozen.title": "Frozen liquidity",
+  "radar.frozen.ofTotal": "of total balance",
+  "radar.frozen.hint":
+    "Idle capital that can be deployed (overnight repo, MMF) without breaching the floor over the next 7 days.",
+  "radar.reliability.title": "Rail reliability",
+  "radar.reliability.hint":
+    "% of transactions settled on time over the last 90 days.",
   "radar.direction.IN": "IN",
   "radar.direction.OUT": "OUT",
   "radar.city.frankfurt": "Frankfurt",

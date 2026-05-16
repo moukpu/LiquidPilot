@@ -37,6 +37,13 @@ const ru: Record<keyof typeof en, string> = {
   "radar.tooltip.from": "Откуда",
   "radar.tooltip.to": "Куда",
   "radar.tooltip.close": "Закрыть",
+  "radar.frozen.title": "Замороженная ликвидность",
+  "radar.frozen.ofTotal": "от общего баланса",
+  "radar.frozen.hint":
+    "Простаивающий капитал — можно вложить (overnight repo, MMF) без риска breach в течение 7 дней.",
+  "radar.reliability.title": "Надёжность рельсов",
+  "radar.reliability.hint":
+    "% транзакций, прошедших вовремя за последние 90 дней.",
   "radar.direction.IN": "ПРИХОД",
   "radar.direction.OUT": "РАСХОД",
   "radar.city.frankfurt": "Франкфурт",
