@@ -74,6 +74,10 @@ export interface AccountStressResult {
   floor: number;
   baseline_breaches: number;
   stress_breaches: number;
+  /** Structured per-scenario inputs used to derive the stress numbers,
+   *  rendered as the per-card "Method" accordion. Shape varies by
+   *  scenario; `applied=false` branches carry a human-readable `reason`. */
+  methodology_inputs: Record<string, unknown>;
 }
 
 export interface StressResult {

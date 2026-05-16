@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 
@@ -61,6 +61,11 @@ class AccountStressResult:
     floor: float
     baseline_breaches: int  # days where baseline_p50 < floor
     stress_breaches: int    # days where stress_p50 < floor
+    # Structured per-account inputs that the front-end renders as a
+    # "Method" accordion under each card. Lets the treasurer (and the
+    # jury) audit how the stress numbers were derived without reverse-
+    # engineering the heuristics. Shape depends on the scenario.
+    methodology_inputs: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -95,7 +100,9 @@ def apply_scenario(
             continue
         baseline = [float(v) for v in fc.forecast["predicted_ledger_balance_p50"].tolist()]
         dates = fc.forecast["date"].dt.strftime("%Y-%m-%d").tolist()
-        stress = _transform(baseline, dates, acc, transactions, params)
+        stress, methodology_inputs = _transform(
+            baseline, dates, acc, transactions, params
+        )
 
         points = [
             ScenarioPoint(
@@ -126,6 +133,7 @@ def apply_scenario(
                 floor=float(acc.min_balance),
                 baseline_breaches=baseline_breaches,
                 stress_breaches=stress_breaches,
+                methodology_inputs=methodology_inputs,
             )
         )
 
@@ -144,19 +152,21 @@ def _transform(
     account: Any,
     transactions: pd.DataFrame,
     params: StressParams,
-) -> List[float]:
-    """Return the stressed P50 series. Each branch is an explicit heuristic."""
+) -> Tuple[List[float], Dict[str, Any]]:
+    """Return ``(stressed_series, methodology_inputs)``.
+
+    ``methodology_inputs`` is a JSON-serialisable dict shape-keyed by
+    scenario; the frontend renders it as the "Method" accordion under each
+    result card so the treasurer can audit how the stress numbers were
+    derived without reverse-engineering the heuristics. ``applied=False``
+    branches always carry a human-readable ``reason``.
+    """
 
     n = len(baseline)
     if n == 0:
-        return []
+        return [], {"scenario": params.scenario.value, "applied": False, "reason": "empty horizon"}
 
     if params.scenario == Scenario.RAIL_DELAY:
-        # Heuristic: inflows on the chosen rail get pushed past the horizon.
-        # We estimate the daily inflow magnitude from the last ~50 booked
-        # transactions on that rail and subtract it from the first
-        # ``extra_days`` of the forecast — modelling the "missing" cash
-        # while waiting on the delayed clearing.
         rail = params.rail or "SWIFT"
         in_transit = transactions[
             (transactions["account_id"] == account.account_id)
@@ -164,7 +174,15 @@ def _transform(
             & (transactions["direction"] == "IN")
         ]
         if in_transit.empty:
-            return list(baseline)
+            return list(baseline), {
+                "scenario": "rail_delay",
+                "rail": rail,
+                "extra_days": params.extra_days,
+                "avg_daily_inflow": 0.0,
+                "sample_size": 0,
+                "applied": False,
+                "reason": "no inbound transactions on this rail for this account",
+            }
         recent = in_transit.tail(50)
         unique_days = max(1, recent["booking_date"].nunique())
         shift = float(recent["amount"].sum()) / unique_days
@@ -173,22 +191,36 @@ def _transform(
         out = list(baseline)
         for i in range(d):
             out[i] -= shift
-        return out
+
+        return out, {
+            "scenario": "rail_delay",
+            "rail": rail,
+            "extra_days": params.extra_days,
+            "avg_daily_inflow": shift,
+            "sample_size": int(len(recent)),
+            "sample_days": int(unique_days),
+            "shift_per_day": shift,
+            "days_affected": int(d),
+            "applied": True,
+        }
 
     if params.scenario == Scenario.VOLUME_SPIKE:
-        # Heuristic: extra outflows accumulate over the horizon at a rate
-        # of ``(multiplier - 1) * avg_daily_outflow``. The dip therefore
-        # grows linearly across the 7 days.
         outs = transactions[
             (transactions["account_id"] == account.account_id)
             & (transactions["direction"] == "OUT")
         ]
-        if outs.empty:
-            return list(baseline)
         if params.affected_rail:
             outs = outs[outs["payment_type"] == params.affected_rail]
         if outs.empty:
-            return list(baseline)
+            return list(baseline), {
+                "scenario": "volume_spike",
+                "multiplier": params.multiplier,
+                "affected_rail": params.affected_rail or "ALL",
+                "avg_daily_outflow": 0.0,
+                "sample_size": 0,
+                "applied": False,
+                "reason": "no outbound transactions match this filter",
+            }
         recent = outs.tail(50)
         unique_days = max(1, recent["booking_date"].nunique())
         daily_avg_out = float(recent["amount"].sum()) / unique_days
@@ -198,52 +230,67 @@ def _transform(
         for v in baseline:
             cumulative += extra_per_day
             out.append(v - cumulative)
-        return out
+
+        return out, {
+            "scenario": "volume_spike",
+            "multiplier": params.multiplier,
+            "affected_rail": params.affected_rail or "ALL",
+            "avg_daily_outflow": daily_avg_out,
+            "sample_size": int(len(recent)),
+            "sample_days": int(unique_days),
+            "extra_per_day": extra_per_day,
+            "cumulative_by_horizon_end": extra_per_day * n,
+            "applied": True,
+        }
 
     if params.scenario == Scenario.BANK_HOLIDAY:
-        # Heuristic: the bank holiday freezes flows during days 0..d-1.
-        # On day d, the backlog clears in one batch (catch-up DROP, not
-        # bump), amplified 1.2x to capture operational stress (banks
-        # process backlogs less efficiently than normal-day batches).
-        # Days d+1..n-1 linearly recover toward baseline as backlog drains.
         if account.country != (params.country or "").upper():
-            return list(baseline)
+            return list(baseline), {
+                "scenario": "bank_holiday",
+                "country": params.country or "",
+                "holiday_days": params.holiday_days,
+                "account_country": account.country,
+                "applied": False,
+                "reason": "account country doesn't match holiday country",
+            }
         d = max(0, min(params.holiday_days, n - 1))
         if d == 0:
-            return list(baseline)
+            return list(baseline), {
+                "scenario": "bank_holiday",
+                "country": params.country,
+                "holiday_days": 0,
+                "applied": False,
+                "reason": "holiday_days=0",
+            }
 
         out = list(baseline)
         flat_value = baseline[0]
-
-        # During the holiday: no payments clear; balance stays at the
-        # pre-holiday value, freezing the baseline's natural drift.
         for i in range(min(d, n)):
             out[i] = flat_value
 
-        # Catch-up day d: pent-up backlog hits in a single business day.
-        # accumulated_drift is negative for outflow-heavy accounts, so the
-        # catch_up term subtracts MORE than the baseline already did.
+        accumulated_drift = baseline[d] - flat_value if d < n else 0.0
+        # Stress semantics: always a downside drop, sign-independent.
+        catch_up = -abs(accumulated_drift) * 1.2
         if d < n:
-            accumulated_drift = baseline[d] - flat_value
-            # Stress test semantics: always show downside risk. A holiday on
-            # an inflow-heavy day is, in reality, a temporary buffer — but
-            # the whole point of a stress page is "how bad can it get?", so
-            # we force the catch-up amplification to be a drop regardless
-            # of the natural drift's sign.
-            catch_up = -abs(accumulated_drift) * 1.2
             out[d] = baseline[d] + catch_up
-
-            # Recovery: trajectory tapers back toward baseline over the
-            # remaining horizon as the backlog drains.
             remaining = n - d - 1
             if remaining > 0:
                 for i in range(d + 1, n):
-                    fade = (i - d) / (remaining + 1)  # 0..1 toward end
+                    fade = (i - d) / (remaining + 1)
                     out[i] = baseline[i] + catch_up * (1.0 - fade)
 
-        return out
+        return out, {
+            "scenario": "bank_holiday",
+            "country": params.country,
+            "holiday_days": params.holiday_days,
+            "flat_value": float(flat_value),
+            "accumulated_drift": float(accumulated_drift),
+            "catch_up": float(catch_up),
+            "amplification": 1.2,
+            "applied": True,
+        }
 
-    return list(baseline)
+    return list(baseline), {"scenario": params.scenario.value, "applied": False, "reason": "unknown scenario"}
 
 
 __all__ = [

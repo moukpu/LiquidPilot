@@ -32,15 +32,15 @@ export default function ScenarioPicker({
   };
 
   return (
-    <div className="glass-card rounded-2xl p-5 space-y-4">
+    <div className="glass-card rounded-2xl p-4 space-y-3">
       <div>
-        <label className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground block mb-2">
+        <label className="text-[9px] font-mono uppercase tracking-widest text-muted-foreground block mb-1">
           {t("timemachine.scenario")}
         </label>
         <select
           value={value.scenario}
           onChange={(e) => setScenario(e.target.value as StressScenario)}
-          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 font-mono text-sm"
+          className="w-full bg-slate-50 border border-slate-200 rounded-md px-2 py-1.5 font-mono text-xs"
         >
           <option value="rail_delay">{t("timemachine.scenarios.railDelay")}</option>
           <option value="volume_spike">{t("timemachine.scenarios.volumeSpike")}</option>
@@ -49,15 +49,15 @@ export default function ScenarioPicker({
       </div>
 
       {value.scenario === "rail_delay" && (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground block mb-2">
+            <label className="text-[9px] font-mono uppercase tracking-widest text-muted-foreground block mb-1">
               {t("timemachine.rail")}
             </label>
             <select
               value={value.rail ?? "SWIFT"}
               onChange={(e) => onChange({ ...value, rail: e.target.value })}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 font-mono text-sm"
+              className="w-full bg-slate-50 border border-slate-200 rounded-md px-2 py-1.5 font-mono text-xs"
             >
               {RAILS.map((r) => (
                 <option key={r} value={r}>
@@ -67,7 +67,7 @@ export default function ScenarioPicker({
             </select>
           </div>
           <div>
-            <label className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground block mb-2">
+            <label className="text-[9px] font-mono uppercase tracking-widest text-muted-foreground block mb-1">
               {t("timemachine.extraDays")}:{" "}
               <span className="text-foreground font-bold">{value.extra_days}</span>
             </label>
@@ -87,7 +87,7 @@ export default function ScenarioPicker({
 
       {value.scenario === "volume_spike" && (
         <div>
-          <label className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground block mb-2">
+          <label className="text-[9px] font-mono uppercase tracking-widest text-muted-foreground block mb-1">
             {t("timemachine.multiplier")}:{" "}
             <span className="text-foreground font-bold">
               +{Math.round(((value.multiplier ?? 1.3) - 1) * 100)}%
@@ -108,15 +108,15 @@ export default function ScenarioPicker({
       )}
 
       {value.scenario === "bank_holiday" && (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground block mb-2">
+            <label className="text-[9px] font-mono uppercase tracking-widest text-muted-foreground block mb-1">
               {t("timemachine.country")}
             </label>
             <select
               value={value.country ?? "DE"}
               onChange={(e) => onChange({ ...value, country: e.target.value })}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 font-mono text-sm"
+              className="w-full bg-slate-50 border border-slate-200 rounded-md px-2 py-1.5 font-mono text-xs"
             >
               {COUNTRIES.map((c) => (
                 <option key={c} value={c}>
@@ -126,7 +126,7 @@ export default function ScenarioPicker({
             </select>
           </div>
           <div>
-            <label className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground block mb-2">
+            <label className="text-[9px] font-mono uppercase tracking-widest text-muted-foreground block mb-1">
               {t("timemachine.holidayDays")}:{" "}
               <span className="text-foreground font-bold">{value.holiday_days}</span>
             </label>
@@ -148,7 +148,7 @@ export default function ScenarioPicker({
         type="button"
         onClick={onRun}
         disabled={loading}
-        className="w-full bg-primary text-primary-foreground rounded-lg px-4 py-2.5 font-mono text-sm font-semibold uppercase tracking-widest hover:opacity-90 disabled:opacity-50 transition-opacity"
+        className="w-full bg-primary text-primary-foreground rounded-md px-3 py-2 font-mono text-xs font-semibold uppercase tracking-widest hover:opacity-90 disabled:opacity-50 transition-opacity"
       >
         {loading ? t("timemachine.running") : t("timemachine.runButton")}
       </button>

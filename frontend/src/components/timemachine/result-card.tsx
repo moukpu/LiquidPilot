@@ -2,11 +2,16 @@
 
 import { useLocale } from "@/i18n/locale-context";
 import { formatNumber, type IntlLocale } from "@/lib/format";
-import type { AccountStressResult } from "@/types/api";
+import type { AccountStressResult, StressRequest } from "@/types/api";
 
 interface Props {
   result: AccountStressResult;
   intl: IntlLocale;
+  /** Currently-selected scenario request. Kept for future contextual
+   *  copy in the methodology accordion; today only methodology_inputs
+   *  is consulted but the request is threaded through so we don't
+   *  re-plumb when richer per-rail / per-country messaging is added. */
+  scenarioParams: StressRequest;
 }
 
 // Cardinal-spline path builder (tension 0.2). Mirrors d3.curveCardinal so
@@ -88,17 +93,17 @@ export default function ResultCard({ result, intl }: Props) {
   const stressColor = breachWorsened ? "#dc2626" : "#16a34a";
 
   return (
-    <div className="glass-card rounded-2xl p-4">
-      <div className="flex items-center justify-between mb-3">
-        <span className="font-mono text-sm font-semibold">{result.account_id}</span>
+    <div className="glass-card rounded-xl p-3">
+      <div className="flex items-center justify-between mb-2">
+        <span className="font-mono text-xs font-semibold">{result.account_id}</span>
         {breachWorsened && (
-          <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-rose-500/20 text-rose-500 border border-rose-500/30">
+          <span className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-500 border border-rose-500/30">
             {t("timemachine.breach")}
           </span>
         )}
       </div>
 
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-16 mb-3">
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-12 mb-2">
         {floorInRange && (
           <line
             x1={PAD_X}
@@ -126,37 +131,174 @@ export default function ResultCard({ result, intl }: Props) {
         <path d={stressPath} fill="none" stroke={stressColor} strokeWidth="1.5" />
       </svg>
 
-      <div className="space-y-1.5 font-mono text-xs">
-        <div className="flex justify-between">
-          <span className="text-muted-foreground uppercase tracking-widest text-[10px]">
+      <div className="grid grid-cols-3 gap-2 text-[10px] font-mono pt-1 border-t border-border/50">
+        <div>
+          <div className="text-muted-foreground uppercase tracking-widest text-[9px]">
             {t("timemachine.baselineMin")}
-          </span>
-          <span className="tabular-nums">
-            {result.currency} {formatNumber(result.baseline_min_p50, 0, intl)}
-          </span>
+          </div>
+          <div className="tabular-nums">
+            {result.currency}{" "}
+            {formatNumber(result.baseline_min_p50, 0, intl)}
+          </div>
         </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground uppercase tracking-widest text-[10px]">
+        <div>
+          <div className="text-muted-foreground uppercase tracking-widest text-[9px]">
             {t("timemachine.stressMin")}
-          </span>
-          <span className="tabular-nums">
-            {result.currency} {formatNumber(result.stress_min_p50, 0, intl)}
-          </span>
+          </div>
+          <div className="tabular-nums">
+            {result.currency}{" "}
+            {formatNumber(result.stress_min_p50, 0, intl)}
+          </div>
         </div>
-        <div className="flex justify-between pt-2 border-t border-slate-200/50">
-          <span className="text-muted-foreground uppercase tracking-widest text-[10px]">
+        <div>
+          <div className="text-muted-foreground uppercase tracking-widest text-[9px]">
             {t("timemachine.delta")}
-          </span>
-          <span
+          </div>
+          <div
             className={`tabular-nums font-bold ${
               result.delta_min_p50 < 0 ? "text-rose-500" : "text-emerald-500"
             }`}
           >
             {result.delta_min_p50 >= 0 ? "+" : ""}
-            {result.currency} {formatNumber(result.delta_min_p50, 0, intl)}
-          </span>
+            {result.currency}{" "}
+            {formatNumber(result.delta_min_p50, 0, intl)}
+          </div>
         </div>
       </div>
+
+      <details className="mt-2 group">
+        <summary className="cursor-pointer text-[10px] font-mono uppercase tracking-widest text-muted-foreground hover:text-foreground py-1 list-none flex items-center gap-1">
+          <span className="group-open:rotate-90 transition-transform inline-block">
+            ▸
+          </span>
+          {t("timemachine.methodologyLabel")}
+        </summary>
+        <div className="mt-1 p-2 rounded bg-card/50 border border-border/50 space-y-1">
+          <MethodologyDetails
+            inputs={result.methodology_inputs}
+            currency={result.currency}
+            intl={intl}
+          />
+        </div>
+      </details>
+    </div>
+  );
+}
+
+function MethodologyDetails({
+  inputs,
+  currency,
+  intl,
+}: {
+  inputs: Record<string, unknown>;
+  currency: string;
+  intl: IntlLocale;
+}) {
+  const { t } = useLocale();
+  const scenario = inputs.scenario as string | undefined;
+
+  if (inputs.applied === false) {
+    return (
+      <p className="text-[10px] text-muted-foreground italic">
+        {t("timemachine.method.notApplied")}: {String(inputs.reason ?? "n/a")}
+      </p>
+    );
+  }
+
+  if (scenario === "rail_delay") {
+    return (
+      <>
+        <Row
+          label={t("timemachine.method.sample")}
+          value={`${inputs.sample_size} tx · ${inputs.sample_days} ${t("timemachine.method.days")}`}
+        />
+        <Row
+          label={t("timemachine.method.avgInflow", { rail: String(inputs.rail) })}
+          value={`${currency} ${formatNumber(Number(inputs.avg_daily_inflow), 0, intl)}/d`}
+        />
+        <Row
+          label={t("timemachine.method.daysAffected")}
+          value={String(inputs.days_affected)}
+        />
+        <Row
+          label={t("timemachine.method.shiftPerDay")}
+          value={`−${currency} ${formatNumber(Number(inputs.shift_per_day), 0, intl)}`}
+          highlight
+        />
+      </>
+    );
+  }
+
+  if (scenario === "volume_spike") {
+    return (
+      <>
+        <Row
+          label={t("timemachine.method.sample")}
+          value={`${inputs.sample_size} tx · ${inputs.sample_days} ${t("timemachine.method.days")}`}
+        />
+        <Row
+          label={t("timemachine.method.avgOutflow", { rail: String(inputs.affected_rail) })}
+          value={`${currency} ${formatNumber(Number(inputs.avg_daily_outflow), 0, intl)}/d`}
+        />
+        <Row
+          label={t("timemachine.method.multiplier")}
+          value={`×${Number(inputs.multiplier).toFixed(2)}`}
+        />
+        <Row
+          label={t("timemachine.method.extraPerDay")}
+          value={`−${currency} ${formatNumber(Number(inputs.extra_per_day), 0, intl)}`}
+          highlight
+        />
+      </>
+    );
+  }
+
+  if (scenario === "bank_holiday") {
+    return (
+      <>
+        <Row
+          label={t("timemachine.method.country")}
+          value={`${String(inputs.country)} · ${inputs.holiday_days} ${t("timemachine.method.days")}`}
+        />
+        <Row
+          label={t("timemachine.method.flatValue")}
+          value={`${currency} ${formatNumber(Number(inputs.flat_value), 0, intl)}`}
+        />
+        <Row
+          label={t("timemachine.method.accumulatedDrift")}
+          value={`${currency} ${formatNumber(Number(inputs.accumulated_drift), 0, intl)}`}
+        />
+        <Row
+          label={t("timemachine.method.catchUp")}
+          value={`${currency} ${formatNumber(Number(inputs.catch_up), 0, intl)}`}
+          highlight
+        />
+      </>
+    );
+  }
+
+  return null;
+}
+
+function Row({
+  label,
+  value,
+  highlight,
+}: {
+  label: string;
+  value: string;
+  highlight?: boolean;
+}) {
+  return (
+    <div className="flex justify-between gap-2 text-[10px] font-mono">
+      <span className="text-muted-foreground truncate">{label}</span>
+      <span
+        className={
+          highlight ? "tabular-nums font-bold" : "tabular-nums"
+        }
+      >
+        {value}
+      </span>
     </div>
   );
 }
