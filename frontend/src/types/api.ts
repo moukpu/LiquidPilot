@@ -32,8 +32,14 @@ export interface Transaction {
 
 export interface Alert {
   severity: "CRITICAL" | "WARNING" | "INFO";
+  account_id: string;
+  currency: string;
+  breach_date: string;
+  projected_balance: number;
+  min_balance: number;
+  shortfall: number;
+  days_until_breach: number;
   message: string;
-  account_id?: string;
 }
 
 export interface TransferSuggestion {

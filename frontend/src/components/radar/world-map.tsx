@@ -136,6 +136,18 @@ export default function WorldMap({ transactions, onHoverPlane }: WorldMapProps) 
     return result;
   }, [towerPoints]);
 
+  const txKey = useMemo(
+    () =>
+      transactions
+        .map(
+          (t) =>
+            `${t.account_id}|${t.booking_date}|${t.value_date}|${t.amount}|${t.direction}|${t.payment_type}|${t.clearing_delay_days}`
+        )
+        .sort()
+        .join(",,"),
+    [transactions]
+  );
+
   const flights = useMemo(() => {
     const sorted = [...transactions]
       .filter((tx) => TOWERS.some((t) => t.id === tx.account_id))
@@ -171,7 +183,8 @@ export default function WorldMap({ transactions, onHoverPlane }: WorldMapProps) 
         dst: dst.id,
       };
     });
-  }, [transactions, towerPoints]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [txKey, towerPoints]);
 
   const handleEnter = (flight: typeof flights[number]) => {
     onHoverPlane({

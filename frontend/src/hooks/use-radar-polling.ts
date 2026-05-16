@@ -37,16 +37,42 @@ export function useRadarPolling(interval = 2000): RadarState {
     controllerRef.current = controller;
 
     try {
-      const [acc, tx, rec] = await Promise.all([
+      const results = await Promise.allSettled([
         getAccounts(controller.signal),
         getInFlightTransactions(controller.signal),
         getRecommendations(controller.signal),
       ]);
-      setAccounts(acc);
-      setTransactions(tx);
-      setRecommendations(rec);
-      setLastSync(new Date());
-      setError(null);
+
+      let anyOk = false;
+      let firstError: string | null = null;
+
+      if (results[0].status === "fulfilled") {
+        setAccounts(results[0].value);
+        anyOk = true;
+      } else if (results[0].reason?.name !== "AbortError") {
+        firstError = (results[0].reason as Error).message;
+      }
+
+      if (results[1].status === "fulfilled") {
+        setTransactions(results[1].value);
+        anyOk = true;
+      } else if (results[1].reason?.name !== "AbortError") {
+        firstError ??= (results[1].reason as Error).message;
+      }
+
+      if (results[2].status === "fulfilled") {
+        setRecommendations(results[2].value);
+        anyOk = true;
+      } else if (results[2].reason?.name !== "AbortError") {
+        firstError ??= (results[2].reason as Error).message;
+      }
+
+      if (anyOk) {
+        setLastSync(new Date());
+        setError(null);
+      } else if (firstError) {
+        setError(firstError);
+      }
     } catch (err) {
       if ((err as Error).name !== "AbortError") {
         setError((err as Error).message);

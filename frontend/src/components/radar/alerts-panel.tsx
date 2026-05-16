@@ -54,13 +54,18 @@ export default function AlertsPanel({ alerts, transfers }: AlertsPanelProps) {
         >
           {severityIcon(alert.severity)}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="text-[10px] font-bold uppercase tracking-wider">{alert.severity}</span>
-              {alert.account_id && (
-                <span className="font-mono text-[10px] text-muted-foreground">{alert.account_id}</span>
-              )}
+              <span className="font-mono text-[10px] text-muted-foreground">{alert.account_id}</span>
+              <span className="font-mono text-[10px] text-muted-foreground">· {alert.breach_date}</span>
+              <span className="font-mono text-[10px] text-muted-foreground">· in {alert.days_until_breach}d</span>
             </div>
             <p className="text-xs mt-1 leading-relaxed">{alert.message}</p>
+            <div className="text-[10px] font-mono text-muted-foreground mt-1">
+              Shortfall {alert.shortfall.toLocaleString("en-US", { maximumFractionDigits: 0 })} {alert.currency}
+              {" · "}
+              Projected {alert.projected_balance.toLocaleString("en-US", { maximumFractionDigits: 0 })} vs floor {alert.min_balance.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+            </div>
           </div>
         </div>
       ))}
