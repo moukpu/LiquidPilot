@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from "react-simple-maps";
-import { geoEqualEarth, geoPath } from "d3-geo";
+import { geoEquirectangular, geoPath } from "d3-geo";
 import type { Transaction } from "@/types/api";
 import { useT } from "@/i18n/locale-context";
 import type { MessageKey } from "@/i18n/messages/en";
+import { Plane } from "lucide-react";
 
 interface Tower {
   id: string;
@@ -65,15 +66,15 @@ function sampleBezier(
 }
 
 function planeColor(amount: number): string {
-  if (amount < 50000) return "#22c55e";
-  if (amount < 500000) return "#eab308";
-  return "#ef4444";
+  if (amount < 50000) return "#22c55e"; // small: green
+  if (amount < 500000) return "#eab308"; // medium: yellow
+  return "#ef4444"; // large: red
 }
 
 function planeRadius(amount: number): number {
-  if (amount < 50000) return 2.5;
-  if (amount < 500000) return 4;
-  return 6;
+  if (amount < 50000) return 10;
+  if (amount < 500000) return 14;
+  return 18;
 }
 
 export interface TooltipData {
@@ -91,19 +92,20 @@ export interface WorldMapProps {
   onHoverPlane: (data: TooltipData | null) => void;
 }
 
+// Map scale and width calculation for infinite wrapping
+const MAP_SCALE = 130;
+const MAP_WIDTH = 2 * Math.PI * MAP_SCALE;
+
 export default function WorldMap({ transactions, onHoverPlane }: WorldMapProps) {
   const t = useT();
+  const [zoom, setZoom] = useState(1);
+
   const projection = useMemo(() => {
-    return geoEqualEarth()
-      .scale(190)
-      .center([-15, 30])
+    return geoEquirectangular()
+      .scale(MAP_SCALE)
+      .center([0, 0])
       .translate([400, 200]);
   }, []);
-
-  const spherePath = useMemo(() => {
-    const pathGen = geoPath().projection(projection);
-    return pathGen({ type: "Sphere" } as any) || "";
-  }, [projection]);
 
   const towerPoints = useMemo(() => {
     return TOWERS.map((t) => {
@@ -116,9 +118,6 @@ export default function WorldMap({ transactions, onHoverPlane }: WorldMapProps) 
     const result: {
       id: string;
       path: string;
-      p0: [number, number];
-      p1: [number, number];
-      p2: [number, number];
     }[] = [];
     for (let i = 0; i < towerPoints.length; i++) {
       for (let j = i + 1; j < towerPoints.length; j++) {
@@ -130,9 +129,6 @@ export default function WorldMap({ transactions, onHoverPlane }: WorldMapProps) 
         result.push({
           id: `${a.id}-${b.id}`,
           path: `M ${p0[0]} ${p0[1]} Q ${p1[0]} ${p1[1]} ${p2[0]} ${p2[1]}`,
-          p0,
-          p1,
-          p2,
         });
       }
     }
@@ -167,7 +163,16 @@ export default function WorldMap({ transactions, onHoverPlane }: WorldMapProps) 
       const p0: [number, number] = [srcPt.x, srcPt.y];
       const p2: [number, number] = [dstPt.x, dstPt.y];
       const p1 = arcControlPoint(p0, p2);
+      
       const samples = sampleBezier(p0, p1, p2, 40);
+      const angles = [];
+      for (let i = 0; i < samples.length - 1; i++) {
+        const ddx = samples[i+1][0] - samples[i][0];
+        const ddy = samples[i+1][1] - samples[i][1];
+        angles.push(Math.atan2(ddy, ddx) * (180 / Math.PI));
+      }
+      angles.push(angles[angles.length - 1]);
+
       const key = `${tx.account_id}-${tx.booking_date}-${tx.amount}-${tx.direction}-${tx.payment_type}`;
       const hash = fnv1a(key);
       const duration = 5 + (hash % 3);
@@ -178,6 +183,7 @@ export default function WorldMap({ transactions, onHoverPlane }: WorldMapProps) 
       return {
         tx,
         samples,
+        angles,
         duration,
         delay,
         color,
@@ -201,202 +207,151 @@ export default function WorldMap({ transactions, onHoverPlane }: WorldMapProps) 
     });
   };
 
+  // We render 3 copies of the map to simulate infinite horizontal panning
+  const offsets = [-MAP_WIDTH, 0, MAP_WIDTH];
+
   return (
     <div className="relative w-full h-full">
-      {/* Radial glow */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(circle at 50% 50%, rgba(6,182,212,0.08) 0%, transparent 70%)",
-        }}
-      />
-      {/* Grid overlay */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-10"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(6,182,212,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(6,182,212,0.3) 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
-        }}
-      />
-
       <ComposableMap
         projection={projection as unknown as any}
         viewBox="0 0 800 400"
         style={{ width: "100%", height: "100%", outline: "none" }}
       >
-        <ZoomableGroup zoom={1} center={[0, 0]} maxZoom={10}>
-          <defs>
-            <filter id="tower-glow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="2" result="coloredBlur" />
-              <feMerge>
-                <feMergeNode in="coloredBlur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-          </defs>
+        <ZoomableGroup 
+          zoom={zoom} 
+          center={[0, 0]} 
+          maxZoom={10} 
+          minZoom={1}
+          onMove={({ zoom }) => setZoom(zoom)}
+        >
+          {offsets.map((offsetX) => (
+            <g key={`world-copy-${offsetX}`} transform={`translate(${offsetX}, 0)`}>
+              {/* Geographies */}
+              <Geographies geography="/world/world-110m.json">
+                {({ geographies }) =>
+                  geographies.map((geo: any) => (
+                    <Geography
+                      key={geo.rsmKey}
+                      geography={geo}
+                      fill="#E2E8F0"
+                      stroke="#CBD5E1"
+                      strokeWidth={0.5 / zoom} // keep stroke thin
+                      style={{
+                        default: { outline: "none" },
+                        hover: { outline: "none" },
+                        pressed: { outline: "none" },
+                      }}
+                    />
+                  ))
+                }
+              </Geographies>
 
-        <Geographies geography="/world/world-110m.json">
-          {({ geographies }) =>
-            geographies.map((geo: any) => (
-              <Geography
-                key={geo.rsmKey}
-                geography={geo}
-                fill="#E2E8F0"
-                stroke="#CBD5E1"
-                strokeWidth={0.5}
-                style={{
-                  default: { outline: "none" },
-                  hover: { outline: "none" },
-                  pressed: { outline: "none" },
-                }}
-              />
-            ))
-          }
-        </Geographies>
+              {/* Arcs */}
+              {arcs.map((arc) => (
+                <path
+                  key={arc.id}
+                  d={arc.path}
+                  fill="none"
+                  stroke="#94A3B8"
+                  strokeWidth={1 / zoom} // keep stroke thin
+                  strokeDasharray={`${4 / zoom} ${4 / zoom}`} // keep dash constant
+                  opacity={0.6}
+                />
+              ))}
 
-        {spherePath && (
-          <path
-            d={spherePath}
-            fill="none"
-            stroke="#CBD5E1"
-            strokeWidth={1}
-          />
-        )}
+              {/* Towers */}
+              {towerPoints.map((tower) => (
+                <g key={tower.id} transform={`translate(${tower.x}, ${tower.y})`}>
+                  {/* Strict, non-pulsing dot. Scales down to stay small. */}
+                  <circle r={4 / zoom} fill="#0284c7" />
+                  
+                  {/* Text label that scales down visually to stay constant font size */}
+                  <g transform={`scale(${1 / zoom})`}>
+                    <g transform="translate(14, -10)">
+                      <rect
+                        x={-4}
+                        y={-14}
+                        width={tower.label.length * 7 + 8}
+                        height={28}
+                        rx={4}
+                        fill="#ffffff"
+                        stroke="#cbd5e1"
+                        strokeWidth={0.5}
+                      />
+                      <text
+                        x={(tower.label.length * 7 + 8) / 2}
+                        y={-2}
+                        textAnchor="middle"
+                        fill="#0284c7"
+                        fontSize={9}
+                        fontFamily="JetBrains Mono, monospace"
+                        fontWeight={600}
+                      >
+                        {tower.label}
+                      </text>
+                      <text
+                        x={(tower.label.length * 7 + 8) / 2}
+                        y={8}
+                        textAnchor="middle"
+                        fill="#64748b"
+                        fontSize={7}
+                        fontFamily="Inter, sans-serif"
+                      >
+                        {t(tower.cityKey)}
+                      </text>
+                    </g>
+                  </g>
+                </g>
+              ))}
 
-        {/* Arcs */}
-        {arcs.map((arc) => (
-          <path
-            key={arc.id}
-            d={arc.path}
-            fill="none"
-            stroke="#94A3B8"
-            strokeWidth={1}
-            strokeDasharray="4 4"
-            opacity={0.6}
-          />
-        ))}
-
-        {/* Towers */}
-        {towerPoints.map((tower) => (
-          <g key={tower.id} transform={`translate(${tower.x}, ${tower.y})`}>
-            <motion.circle
-              r={8}
-              fill="none"
-              stroke="#0284c7"
-              strokeWidth={1.5}
-              initial={{ opacity: 0.8, scale: 1 }}
-              animate={{ opacity: 0, scale: 3 }}
-              transition={{
-                duration: 1.6,
-                repeat: Infinity,
-                ease: "easeOut",
-              }}
-            />
-            <motion.circle
-              r={8}
-              fill="none"
-              stroke="#0284c7"
-              strokeWidth={1}
-              initial={{ opacity: 0.6, scale: 1 }}
-              animate={{ opacity: 0, scale: 2.5 }}
-              transition={{
-                duration: 2.4,
-                repeat: Infinity,
-                ease: "easeOut",
-                delay: 0.3,
-              }}
-            />
-            <circle r={5} fill="#0284c7" filter="url(#tower-glow)" />
-            <line x1={-12} y1={0} x2={-8} y2={0} stroke="#0284c7" strokeWidth={0.8} />
-            <line x1={8} y1={0} x2={12} y2={0} stroke="#0284c7" strokeWidth={0.8} />
-            <line x1={0} y1={-12} x2={0} y2={-8} stroke="#0284c7" strokeWidth={0.8} />
-            <line x1={0} y1={8} x2={0} y2={12} stroke="#0284c7" strokeWidth={0.8} />
-            <g transform="translate(14, -10)">
-              <rect
-                x={-4}
-                y={-14}
-                width={tower.label.length * 7 + 8}
-                height={28}
-                rx={4}
-                fill="#ffffff"
-                stroke="#cbd5e1"
-                strokeWidth={0.5}
-              />
-              <text
-                x={(tower.label.length * 7 + 8) / 2}
-                y={-2}
-                textAnchor="middle"
-                fill="#0284c7"
-                fontSize={9}
-                fontFamily="JetBrains Mono, monospace"
-                fontWeight={600}
-              >
-                {tower.label}
-              </text>
-              <text
-                x={(tower.label.length * 7 + 8) / 2}
-                y={8}
-                textAnchor="middle"
-                fill="#64748b"
-                fontSize={7}
-                fontFamily="Inter, sans-serif"
-              >
-                {t(tower.cityKey)}
-              </text>
+              {/* Flights (Planes) */}
+              {flights.map((flight, idx) => {
+                const times = flight.samples.map((_, i) => i / (flight.samples.length - 1));
+                return (
+                  <motion.g
+                    key={`flight-${idx}`}
+                    animate={{
+                      x: flight.samples.map((p) => p[0]),
+                      y: flight.samples.map((p) => p[1]),
+                      rotate: flight.angles,
+                    }}
+                    transition={{
+                      duration: flight.duration,
+                      repeat: Infinity,
+                      ease: "linear",
+                      delay: flight.delay,
+                      times,
+                    }}
+                  >
+                    {/* Reverse scale so planes don't become huge when zoomed */}
+                    <g transform={`scale(${1 / zoom})`}>
+                      {/* Interactive hit area */}
+                      <circle 
+                        r={flight.radius * 1.5} 
+                        fill="transparent" 
+                        style={{ cursor: "pointer" }}
+                        onMouseEnter={() => handleEnter(flight)}
+                        onMouseLeave={() => onHoverPlane(null)}
+                      />
+                      {/* Lucide plane points top-right (45deg), so we rotate 45deg to point right (0deg) */}
+                      <g transform="translate(-12, -12) rotate(45, 12, 12)">
+                        <Plane 
+                          size={flight.radius} 
+                          color={flight.color} 
+                          fill={flight.color}
+                          strokeWidth={1.5}
+                          className="opacity-90"
+                        />
+                      </g>
+                    </g>
+                  </motion.g>
+                );
+              })}
             </g>
-          </g>
-        ))}
-
-        {/* Flights */}
-        {flights.map((flight, idx) => {
-          const times = flight.samples.map((_, i) => i / (flight.samples.length - 1));
-          return (
-            <g key={idx}>
-              <motion.circle
-                cx={flight.samples[0][0]}
-                cy={flight.samples[0][1]}
-                r={flight.radius * 2}
-                fill={flight.color}
-                opacity={0.12}
-                animate={{
-                  cx: flight.samples.map((p) => p[0]),
-                  cy: flight.samples.map((p) => p[1]),
-                }}
-                transition={{
-                  duration: flight.duration,
-                  repeat: Infinity,
-                  ease: "linear",
-                  delay: flight.delay,
-                  times,
-                }}
-              />
-              <motion.circle
-                cx={flight.samples[0][0]}
-                cy={flight.samples[0][1]}
-                r={flight.radius}
-                fill={flight.color}
-                style={{ cursor: "pointer" }}
-                animate={{
-                  cx: flight.samples.map((p) => p[0]),
-                  cy: flight.samples.map((p) => p[1]),
-                }}
-                transition={{
-                  duration: flight.duration,
-                  repeat: Infinity,
-                  ease: "linear",
-                  delay: flight.delay,
-                  times,
-                }}
-                onMouseEnter={() => handleEnter(flight)}
-                onMouseLeave={() => onHoverPlane(null)}
-              />
-            </g>
-          );
-        })}
+          ))}
         </ZoomableGroup>
       </ComposableMap>
     </div>
   );
 }
+
