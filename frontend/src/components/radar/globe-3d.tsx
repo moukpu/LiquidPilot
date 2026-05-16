@@ -34,10 +34,10 @@ const TOWERS: Tower[] = [
 ];
 
 const GLOBE_RADIUS = 1;
-const ARC_LIFT = 0.32; // peak altitude above surface
+const ARC_LIFT = 0.06; // peak altitude above surface (~6% of radius — visible but not absurd)
 const PLANE_COUNT = 28;
-const BORDER_LIFT = 1.003; // sit borders just above surface to avoid z-fight
-const GRID_LIFT = 1.001;
+const BORDER_LIFT = 1.001; // sit borders just above surface to avoid z-fight
+const GRID_LIFT = 1.0005;
 
 // --- Deterministic hash for stable plane assignment ------------------------
 function fnv1a(str: string): number {
@@ -89,9 +89,9 @@ function planeColorHex(amount: number): string {
 }
 
 function planeSize(amount: number): number {
-  if (amount < 50000) return 0.024;
-  if (amount < 500000) return 0.034;
-  return 0.046;
+  if (amount < 50000) return 0.008;
+  if (amount < 500000) return 0.012;
+  return 0.018;
 }
 
 // --- Choose deterministic counterparty tower for OUT/IN tx -----------------
@@ -218,26 +218,26 @@ function Earth() {
 
   return (
     <group>
-      {/* ocean sphere — lighter blue */}
+      {/* ocean sphere — medium-tone blue to fit light UI */}
       <mesh>
         <sphereGeometry args={[GLOBE_RADIUS * 0.995, 96, 96]} />
         <meshStandardMaterial
-          color="#1f3a64"
+          color="#1e3a5f"
           roughness={0.85}
           metalness={0}
-          emissive="#142a4a"
-          emissiveIntensity={0.5}
+          emissive="#0f2440"
+          emissiveIntensity={0.35}
         />
       </mesh>
 
-      {/* lat/lon wireframe grid (subtle) */}
+      {/* lat/lon wireframe grid */}
       <lineSegments geometry={gridGeometry}>
-        <lineBasicMaterial color="#3b5e8f" transparent opacity={0.35} />
+        <lineBasicMaterial color="#3b6896" transparent opacity={0.5} />
       </lineSegments>
 
-      {/* country borders (real natural-earth 110m via world-atlas) */}
+      {/* country borders (real natural-earth 110m) */}
       <lineSegments geometry={borderGeometry}>
-        <lineBasicMaterial color="#8ab4e8" transparent opacity={0.9} />
+        <lineBasicMaterial color="#3b6896" transparent opacity={0.85} />
       </lineSegments>
 
       {/* outer atmosphere glow */}
@@ -398,15 +398,25 @@ function TowerMarker({
   label: string;
   city: string;
 }) {
-  // ring pulses by scale
+  const groupRef = useRef<THREE.Group>(null);
   const ringRef = useRef<THREE.Mesh>(null);
-  useFrame((state) => {
-    if (!ringRef.current) return;
-    const k = (Math.sin(state.clock.elapsedTime * 1.8) + 1) / 2; // 0..1
-    const scale = 1 + k * 1.6;
-    ringRef.current.scale.set(scale, scale, scale);
-    const mat = ringRef.current.material as THREE.MeshBasicMaterial;
-    mat.opacity = 0.6 * (1 - k);
+
+  // Per-frame: scale whole marker by camera distance so it stays constant in
+  // pixel size on screen regardless of zoom. Same paradigm as Globe.gl / Cesium.
+  useFrame(({ camera }) => {
+    if (!groupRef.current) return;
+    const dist = camera.position.distanceTo(position);
+    const scale = dist / 3.2; // 3.2 = initial camera distance from origin
+    groupRef.current.scale.setScalar(scale);
+
+    // Ring pulse in local frame
+    if (ringRef.current) {
+      const k = (Math.sin((performance.now() / 1000) * 1.8) + 1) / 2;
+      const ringScale = 1 + k * 1.6;
+      ringRef.current.scale.set(ringScale, ringScale, ringScale);
+      const mat = ringRef.current.material as THREE.MeshBasicMaterial;
+      mat.opacity = 0.6 * (1 - k);
+    }
   });
 
   // orient the marker so its local +Y points outward (along surface normal)
@@ -417,7 +427,7 @@ function TowerMarker({
   }, [position]);
 
   return (
-    <group position={position} quaternion={quaternion}>
+    <group ref={groupRef} position={position} quaternion={quaternion}>
       {/* glowing core */}
       <mesh>
         <sphereGeometry args={[0.018, 16, 16]} />
@@ -441,6 +451,9 @@ function TowerMarker({
 }
 
 function SpriteLabel({ label, city }: { label: string; city: string }) {
+  const matRef = useRef<THREE.SpriteMaterial>(null);
+  const spriteRef = useRef<THREE.Sprite>(null);
+
   const texture = useMemo(() => {
     const canvas = document.createElement("canvas");
     canvas.width = 512;
@@ -481,16 +494,28 @@ function SpriteLabel({ label, city }: { label: string; city: string }) {
     return tex;
   }, [label, city]);
 
+  // Fade out when the tower is on the far side of the globe
+  const spriteWorld = useMemo(() => new THREE.Vector3(), []);
+  useFrame(({ camera }) => {
+    if (!matRef.current || !spriteRef.current) return;
+    spriteRef.current.getWorldPosition(spriteWorld);
+    const camDir = camera.position.clone().normalize();
+    const dot = spriteWorld.clone().normalize().dot(camDir);
+    // dot ≈ 1 facing camera, ≈ -1 on far side
+    const opacity = THREE.MathUtils.clamp((dot + 0.1) * 2.5, 0, 1);
+    matRef.current.opacity = opacity;
+  });
+
   return (
-    <sprite position={[0, 0.08, 0]} scale={[0.24, 0.075, 1]}>
-      <spriteMaterial map={texture} transparent depthTest={false} />
+    <sprite ref={spriteRef} position={[0, 0.08, 0]} scale={[0.24, 0.075, 1]}>
+      <spriteMaterial ref={matRef} map={texture} transparent depthTest={false} />
     </sprite>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Plane — actual dart-shape mesh (cone body + wings + tail), oriented along
-// the velocity vector with +Y aligned to the surface normal.
+// Plane — canvas-texture sprite of the Lucide Plane icon, scaled by amount,
+// rotated in screen-space to match the flight direction along the arc.
 // ---------------------------------------------------------------------------
 function Plane({
   samples,
@@ -509,39 +534,51 @@ function Plane({
   onEnter: () => void;
   onLeave: () => void;
 }) {
-  const planeRef = useRef<THREE.Group>(null);
-  const haloRef = useRef<THREE.Mesh>(null);
+  const ref = useRef<THREE.Sprite>(null);
 
-  // scratch vectors / matrix
-  const tmpForward = useMemo(() => new THREE.Vector3(), []);
-  const tmpRight = useMemo(() => new THREE.Vector3(), []);
-  const tmpUp = useMemo(() => new THREE.Vector3(), []);
-  const tmpMat = useMemo(() => new THREE.Matrix4(), []);
+  // canvas-rendered Lucide Plane icon, tinted to `color`
+  const planeTexture = useMemo(() => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext("2d")!;
+    ctx.translate(64, 64);
+    ctx.fillStyle = color;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 6;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    // Stylised Lucide Plane silhouette, centred on origin (~96×96 box)
+    const path = new Path2D(
+      "M-22 -8 L22 6 L22 -2 L34 4 L34 -6 L22 -14 L22 -22 L14 -22 L8 -10 L-12 -22 L-22 -22 L-12 -8 Z"
+    );
+    ctx.fill(path);
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.needsUpdate = true;
+    return tex;
+  }, [color]);
 
   useFrame((state) => {
-    if (!planeRef.current) return;
+    if (!ref.current) return;
     const elapsed = state.clock.elapsedTime + phase * duration;
     const t = (elapsed / duration) % 1;
     const idx = t * (samples.length - 1);
     const i0 = Math.floor(idx);
     const i1 = Math.min(samples.length - 1, i0 + 1);
-    const i2 = Math.min(samples.length - 1, i0 + 2);
     const frac = idx - i0;
     const p = samples[i0].clone().lerp(samples[i1], frac);
+    ref.current.position.copy(p);
 
-    // basis: forward = velocity, up = outward radial, right = up × forward
-    tmpForward.copy(samples[i2]).sub(samples[i1]);
-    if (tmpForward.lengthSq() < 1e-8) tmpForward.set(0, 0, 1);
-    tmpForward.normalize();
-    tmpUp.copy(p).normalize();
-    tmpRight.crossVectors(tmpUp, tmpForward).normalize();
-    tmpForward.crossVectors(tmpRight, tmpUp).normalize();
-
-    tmpMat.makeBasis(tmpRight, tmpUp, tmpForward);
-    planeRef.current.position.copy(p);
-    planeRef.current.quaternion.setFromRotationMatrix(tmpMat);
-
-    if (haloRef.current) haloRef.current.position.copy(p);
+    // screen-space rotation: project current + next sample to NDC, take atan2
+    const next = samples[i1].clone();
+    const cam = state.camera;
+    const pNDC = p.clone().project(cam);
+    const nNDC = next.project(cam);
+    const dx = nNDC.x - pNDC.x;
+    const dy = nNDC.y - pNDC.y;
+    const angle = Math.atan2(dy, dx);
+    // Plane icon's "forward" is up-and-right; -PI/4 corrects to horizontal-right
+    (ref.current.material as THREE.SpriteMaterial).rotation = angle - Math.PI / 4;
   });
 
   const [hovered, setHovered] = useState(false);
@@ -558,58 +595,17 @@ function Plane({
     document.body.style.cursor = "default";
   };
 
-  const scale = hovered ? 1.5 : 1;
+  const s = size * 4 * (hovered ? 1.4 : 1);
 
   return (
-    <group>
-      {/* soft halo */}
-      <mesh ref={haloRef}>
-        <sphereGeometry args={[size * 1.8, 12, 12]} />
-        <meshBasicMaterial color={color} transparent opacity={0.18} />
-      </mesh>
-
-      {/* plane: body + wings + tail */}
-      <group
-        ref={planeRef}
-        scale={scale}
-        onPointerOver={handlePointerOver}
-        onPointerOut={handlePointerOut}
-      >
-        {/* body: cone with apex pointing forward (+Z) */}
-        <mesh rotation={[Math.PI / 2, 0, 0]}>
-          <coneGeometry args={[size * 0.85, size * 3, 12]} />
-          <meshStandardMaterial
-            color={color}
-            emissive={color}
-            emissiveIntensity={0.9}
-            roughness={0.4}
-            metalness={0.1}
-          />
-        </mesh>
-        {/* wings: thin flat box along X */}
-        <mesh position={[0, 0, -size * 0.3]}>
-          <boxGeometry args={[size * 3.4, size * 0.12, size * 0.7]} />
-          <meshStandardMaterial
-            color={color}
-            emissive={color}
-            emissiveIntensity={0.9}
-            roughness={0.4}
-            metalness={0.1}
-          />
-        </mesh>
-        {/* tail fin: vertical at the back */}
-        <mesh position={[0, size * 0.35, -size * 1.1]}>
-          <boxGeometry args={[size * 0.12, size * 0.7, size * 0.5]} />
-          <meshStandardMaterial
-            color={color}
-            emissive={color}
-            emissiveIntensity={0.9}
-            roughness={0.4}
-            metalness={0.1}
-          />
-        </mesh>
-      </group>
-    </group>
+    <sprite
+      ref={ref}
+      scale={[s, s, 1]}
+      onPointerOver={handlePointerOver}
+      onPointerOut={handlePointerOut}
+    >
+      <spriteMaterial map={planeTexture} transparent depthWrite={false} />
+    </sprite>
   );
 }
 
@@ -633,10 +629,9 @@ export default function Globe3D({ transactions, onHoverPlane }: Globe3DProps) {
         dpr={[1, 2]}
         gl={{ antialias: true, alpha: true }}
       >
-        <ambientLight intensity={0.95} />
-        <directionalLight position={[3, 2, 5]} intensity={1.1} color="#e6f1ff" />
-        <directionalLight position={[-3, -1, -4]} intensity={0.5} color="#bfe7ff" />
-        <pointLight position={[-4, -2, -3]} intensity={0.4} color="#06b6d4" />
+        <ambientLight intensity={0.7} />
+        <directionalLight position={[3, 2, 5]} intensity={0.6} color="#dbeafe" />
+        <pointLight position={[-4, -2, -3]} intensity={0.25} color="#06b6d4" />
 
         <Suspense fallback={null}>
           <World transactions={transactions} onHoverPlane={onHoverPlane} t={t} />
