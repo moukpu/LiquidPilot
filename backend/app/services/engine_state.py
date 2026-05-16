@@ -31,12 +31,14 @@ from app.services.liquidity.config import default_system_config
 logger = logging.getLogger(__name__)
 
 CACHE_DIR = Path("data/cache")
-# Bumped to v2 when the `clearing_delayed` column was added to transactions
-# so a stale cache from before the schema change is bypassed and regenerated.
-TX_CACHE = CACHE_DIR / "transactions_v2.parquet"
-BAL_CACHE = CACHE_DIR / "daily_balances_v2.parquet"
-MODELS_CACHE = CACHE_DIR / "forecaster_v2.pkl"
-FORECAST_CACHE = CACHE_DIR / "forecast_v2.pkl"
+# v2 added the `clearing_delayed` column; v3 bumps when the per-rail
+# overflow distribution replaced the scalar one. Reliability stats drift
+# materially so we want a clean regen, not a cached parquet with the old
+# uniform-8% delay pattern.
+TX_CACHE = CACHE_DIR / "transactions_v3.parquet"
+BAL_CACHE = CACHE_DIR / "daily_balances_v3.parquet"
+MODELS_CACHE = CACHE_DIR / "forecaster_v3.pkl"
+FORECAST_CACHE = CACHE_DIR / "forecast_v3.pkl"
 
 
 @dataclass

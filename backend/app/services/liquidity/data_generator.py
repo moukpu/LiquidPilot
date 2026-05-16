@@ -234,11 +234,13 @@ class MockDataGenerator:
             for amt in in_amounts:
                 rail = self._sample_rail(account)
                 delay = self._sample_clearing_delay(rail, date, account.country)
-                # Operational realism: ~8% of payments overshoot their rail's
-                # nominal SLA by 1-2 calendar days. Without this, reliability
-                # is a meaningless flat 100%.
+                # Operational realism: a fraction of payments overshoot their
+                # rail's nominal SLA by 1-2 calendar days. Overflow rate is
+                # rail-specific so the reliability widget tells a real story
+                # (SWIFT slow, INTERNAL near-perfect).
                 clearing_delayed = False
-                if self._rng.random() < DELAY_OVERFLOW_PROB:
+                prob = DELAY_OVERFLOW_PROB.get(rail.value, 0.08)
+                if self._rng.random() < prob:
                     delay += int(self._rng.choice([1, 2]))
                     clearing_delayed = True
                 records.append(
@@ -266,7 +268,8 @@ class MockDataGenerator:
                 rail = self._sample_rail(account)
                 delay = self._sample_clearing_delay(rail, date, account.country)
                 clearing_delayed = False
-                if self._rng.random() < DELAY_OVERFLOW_PROB:
+                prob = DELAY_OVERFLOW_PROB.get(rail.value, 0.08)
+                if self._rng.random() < prob:
                     delay += int(self._rng.choice([1, 2]))
                     clearing_delayed = True
                 records.append(
