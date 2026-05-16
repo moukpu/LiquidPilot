@@ -75,18 +75,3 @@ export function translateBackendTransfer(
   });
 }
 
-export function translateBackendNote(
-  t: TransferSuggestion,
-  locale: Locale
-): string | null {
-  if (t.from_account === "(none)") {
-    return pick(locale, "backend.transfer.note.escalate");
-  }
-  if (t.requires_fx) {
-    return interp(pick(locale, "backend.transfer.note.fx"), {
-      fromCcy: t.currency_from,
-      toCcy: t.currency_to,
-    });
-  }
-  return null;
-}

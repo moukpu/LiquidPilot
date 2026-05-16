@@ -4,7 +4,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="w-full h-full relative">
+    <div className="w-full relative">
       {children}
     </div>
   );

@@ -18,9 +18,10 @@ import { useLocale, localeToIntl } from "@/i18n/locale-context";
 import type { MessageKey } from "@/i18n/messages/en";
 import {
   translateBackendAlert,
-  translateBackendNote,
   translateBackendTransfer,
 } from "@/i18n/translate-backend";
+import { convertFx, fxRate } from "@/lib/fx";
+import { pushExecuteEvent } from "@/lib/execute-events";
 
 const EXECUTING_DURATION_MS = 1600;
 const CONFIRM_TIMEOUT_MS = 5000;
@@ -80,7 +81,6 @@ export default function ActionCard({
   const initiateByStr = transfer.initiate_by
     ? t("action.initiateBy", { date: transfer.initiate_by })
     : "";
-  const note = translateBackendNote(transfer, locale);
 
   // Auto-revert from confirming → queued after timeout
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -108,6 +108,20 @@ export default function ActionCard({
     }
   }, [state, onChange]);
 
+  // Push execute event to session store so Radar can animate violet planes
+  const pushedRef = useRef(false);
+  useEffect(() => {
+    if (state === "executed" && !pushedRef.current) {
+      pushedRef.current = true;
+      pushExecuteEvent({
+        from_account: transfer.from_account,
+        to_account: transfer.to_account,
+        amount: transfer.amount,
+        currency: transfer.currency_from,
+      });
+    }
+  }, [state, transfer]);
+
   return (
     <motion.article
       layout
@@ -115,7 +129,7 @@ export default function ActionCard({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: 24 }}
       transition={{ duration: 0.25 }}
-      className={`rounded-lg border p-4 space-y-3 ${stateClasses(state)}`}
+      className={`rounded-lg border px-5 py-4 space-y-3 ${stateClasses(state)}`}
       style={state === "skipped" ? SKIPPED_STRIPE_STYLE : undefined}
     >
       {alert && (
@@ -154,7 +168,7 @@ export default function ActionCard({
             <span>{displayAccountLabel(transfer.to_account)}</span>
           </div>
         </div>
-        <div className="text-right shrink-0 max-w-[40%]">
+        <div className="text-right shrink-0">
           <div className="font-mono font-bold tabular-nums text-base leading-tight break-all">
             {amountStr}
           </div>
@@ -180,20 +194,23 @@ export default function ActionCard({
             ? t("action.initiatePrefix", { date: transfer.initiate_by })
             : t("action.initiateAsap")}
         </span>
-        {transfer.requires_fx && (
-          <span className="px-1.5 py-0.5 rounded bg-amber-50 border border-amber-500/40 text-amber-700">
-            {t("action.fxBadge")}
-          </span>
-        )}
       </div>
 
       <p className="text-xs text-muted-foreground leading-relaxed">
         {translateBackendTransfer(transfer, locale)}
       </p>
 
-      {note && (
+      {transfer.requires_fx && (
         <div className="text-[10px] font-mono text-amber-700 leading-snug border-l-2 border-amber-500/50 pl-2">
-          {note}
+          ≈{" "}
+          {formatMoney(
+            convertFx(transfer.amount, transfer.currency_from, transfer.currency_to),
+            transfer.currency_to,
+            { fractionDigits: 0 },
+            intl
+          )}{" "}
+          (1 {transfer.currency_from} = {fxRate(transfer.currency_from, transfer.currency_to).toFixed(2)}{" "}
+          {transfer.currency_to})
         </div>
       )}
 

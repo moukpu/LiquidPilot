@@ -10,6 +10,7 @@ import RailReliabilityCard from "@/components/radar/rail-reliability-card";
 import { useLocale } from "@/i18n/locale-context";
 import { formatTime, formatNumber } from "@/lib/format";
 import { localeToIntl } from "@/i18n/locale-context";
+import { useExecuteEvents } from "@/lib/execute-events";
 
 // Two-column row for tooltip values — keeps every line in lockstep.
 function Row({
@@ -47,6 +48,7 @@ export default function RadarPage() {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { t, locale } = useLocale();
   const intl = localeToIntl(locale);
+  const executeEvents = useExecuteEvents();
 
   // Account-id -> currency map, consumed by FrozenCapitalCard to label per-account rows.
   const accountCurrencies = Object.fromEntries(
@@ -85,7 +87,7 @@ export default function RadarPage() {
   }, []);
 
   return (
-    <div className="w-full h-full relative overflow-hidden bg-background">
+    <div className="w-full h-[calc(100vh-4rem)] relative overflow-hidden bg-background">
       {/* Background 3D Globe — full screen, interactive (drag to rotate, scroll to zoom) */}
       <div className="absolute inset-0 z-0 pointer-events-auto">
         <Globe3D transactions={data.transactions} onSelectPlane={openTooltip} />
@@ -103,6 +105,14 @@ export default function RadarPage() {
           <div className="flex items-center gap-2 border-l border-slate-200/50 pl-4">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-sm" />
             <span className="text-emerald-400 font-medium tracking-widest uppercase">{t("status.online")}</span>
+          </div>
+        )}
+        {executeEvents.length > 0 && (
+          <div className="flex items-center gap-2 border-l border-slate-200/50 pl-4">
+            <span className="w-2 h-2 rounded-full bg-violet-500 animate-pulse shadow-sm" />
+            <span className="text-violet-400 font-medium tracking-widest uppercase">
+              {t("radar.executeInFlight", { n: executeEvents.length })}
+            </span>
           </div>
         )}
       </div>

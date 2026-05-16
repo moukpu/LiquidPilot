@@ -1,8 +1,31 @@
 "use client";
 
 import { useLocale } from "@/i18n/locale-context";
+import type { MessageKey } from "@/i18n/messages/en";
 import { formatNumber, formatMoneyCompact, type IntlLocale } from "@/lib/format";
 import type { AccountStressResult, StressRequest } from "@/types/api";
+
+function formatStatAmount(amount: number, intl: IntlLocale): string {
+  // Compact only for absolute values ≥ 1,000,000.
+  // Smaller values show full number with separators so thousands read.
+  if (Math.abs(amount) >= 1_000_000) {
+    return formatMoneyCompact(amount, intl);
+  }
+  return formatNumber(amount, 0, intl);
+}
+
+function translateReason(
+  raw: unknown,
+  t: (k: MessageKey) => string
+): string {
+  const s = String(raw ?? "");
+  if (s.includes("no inbound")) return t("timemachine.reason.noInboundOnRail");
+  if (s.includes("no outbound")) return t("timemachine.reason.noOutboundOnRail");
+  if (s.includes("country") && s.includes("not"))
+    return t("timemachine.reason.countryMismatch");
+  if (s.includes("multiplier")) return t("timemachine.reason.zeroMultiplier");
+  return t("timemachine.reason.unknown");
+}
 
 interface Props {
   result: AccountStressResult;
@@ -163,9 +186,6 @@ function FooterStat({
   showSign?: boolean;
 }) {
   const sign = showSign && amount >= 0 ? "+" : "";
-  // Compact notation keeps even KZT/JPY billions inside a 90-px column.
-  // Number sits on its own row so we never see `KZT 5 061 111 026` wrap
-  // mid-thousands-separator on narrow viewports.
   const tone =
     highlight === "negative"
       ? "text-rose-500 font-bold"
@@ -174,13 +194,15 @@ function FooterStat({
       : "";
   return (
     <div className="min-w-0">
-      <div className="text-muted-foreground uppercase tracking-widest text-[9px] truncate">
+      <div className="text-muted-foreground uppercase tracking-widest text-[9px]">
         {label}
       </div>
-      <div className="text-[9px] text-muted-foreground/70 mt-0.5">{currency}</div>
-      <div className={`tabular-nums truncate text-right ${tone}`} title={`${sign}${currency} ${formatNumber(amount, 0, intl)}`}>
+      <div
+        className={`tabular-nums text-right whitespace-nowrap text-[10px] ${tone}`}
+        title={`${sign}${currency} ${formatNumber(amount, 0, intl)}`}
+      >
         {sign}
-        {formatMoneyCompact(amount, intl)}
+        {currency} {formatStatAmount(amount, intl)}
       </div>
     </div>
   );
@@ -201,7 +223,7 @@ function MethodologyDetails({
   if (inputs.applied === false) {
     return (
       <p className="text-[10px] text-muted-foreground italic">
-        {t("timemachine.method.notApplied")}: {String(inputs.reason ?? "n/a")}
+        {t("timemachine.method.notApplied")}: {translateReason(inputs.reason, t)}
       </p>
     );
   }
@@ -292,7 +314,7 @@ function Row({
 }) {
   return (
     <div className="flex justify-between gap-2 text-[10px] font-mono">
-      <span className="text-muted-foreground truncate">{label}</span>
+      <span className="text-muted-foreground">{label}</span>
       <span
         className={
           highlight ? "tabular-nums font-bold" : "tabular-nums"

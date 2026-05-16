@@ -40,7 +40,7 @@ export default function TimeMachinePage() {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col min-h-[calc(100vh-4rem)]">
       <div className="glass-card rounded-2xl px-5 py-3 mx-6 mt-4 shrink-0">
         <h1 className="text-xl font-bold leading-tight">
           {t("timemachine.title")}
@@ -102,21 +102,28 @@ export default function TimeMachinePage() {
         )}
 
         {result && (
-          <div
-            className="grid gap-3"
-            style={{
-              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-            }}
-          >
-            {result.accounts.map((acc) => (
-              <ResultCard
-                key={acc.account_id}
-                result={acc}
-                intl={intl}
-                scenarioParams={req}
-              />
-            ))}
-          </div>
+          <>
+            {result.new_breach_count === 0 && (
+              <div className="mb-4 p-3 rounded-xl bg-emerald-50/60 border border-emerald-200/60 text-emerald-700 text-xs leading-snug">
+                {t("timemachine.summary.noBreaches")}
+              </div>
+            )}
+            <div
+              className="grid gap-3"
+              style={{
+                gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+              }}
+            >
+              {result.accounts.map((acc) => (
+                <ResultCard
+                  key={acc.account_id}
+                  result={acc}
+                  intl={intl}
+                  scenarioParams={req}
+                />
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>

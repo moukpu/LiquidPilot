@@ -9,6 +9,7 @@ import { useT } from "@/i18n/locale-context";
 import type { MessageKey } from "@/i18n/messages/en";
 import { Plane } from "lucide-react";
 import { displayAccountLabel } from "@/lib/format";
+import { useExecuteEvents } from "@/lib/execute-events";
 
 // Label is derived at render time via displayAccountLabel(id) — keeps
 // the user-visible string in lockstep with the formatter helper used by
@@ -179,6 +180,8 @@ export default function WorldMap({ transactions, onHoverPlane }: WorldMapProps) 
     [transactions]
   );
 
+  const executeEvents = useExecuteEvents();
+
   const flights = useMemo(() => {
     const sorted = [...transactions]
       .filter((tx) => TOWERS.some((t) => t.id === tx.account_id))
@@ -195,7 +198,7 @@ export default function WorldMap({ transactions, onHoverPlane }: WorldMapProps) 
       const p0: [number, number] = [srcPt.x, srcPt.y];
       const p2: [number, number] = [dstPt.x, dstPt.y];
       const p1 = arcControlPoint(p0, p2);
-      
+
       const samples = sampleBezier(p0, p1, p2, 40);
       const angles = [];
       for (let i = 0; i < samples.length - 1; i++) {
@@ -226,6 +229,42 @@ export default function WorldMap({ transactions, onHoverPlane }: WorldMapProps) 
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [txKey, towerPoints]);
+
+  const executeFlights = useMemo(() => {
+    return executeEvents
+      .filter(
+        (ev) =>
+          TOWERS.some((t) => t.id === ev.from_account) &&
+          TOWERS.some((t) => t.id === ev.to_account)
+      )
+      .map((ev) => {
+        const src = TOWERS.find((t) => t.id === ev.from_account)!;
+        const dst = TOWERS.find((t) => t.id === ev.to_account)!;
+        const srcPt = towerPoints.find((t) => t.id === src.id)!;
+        const dstPt = towerPoints.find((t) => t.id === dst.id)!;
+        const p0: [number, number] = [srcPt.x, srcPt.y];
+        const p2: [number, number] = [dstPt.x, dstPt.y];
+        const p1 = arcControlPoint(p0, p2);
+        const samples = sampleBezier(p0, p1, p2, 32);
+        const angles = [];
+        for (let i = 0; i < samples.length - 1; i++) {
+          const ddx = samples[i+1][0] - samples[i][0];
+          const ddy = samples[i+1][1] - samples[i][1];
+          angles.push(Math.atan2(ddy, ddx) * (180 / Math.PI));
+        }
+        angles.push(angles[angles.length - 1]);
+        return {
+          samples,
+          angles,
+          duration: 3,
+          delay: 0,
+          color: "#8b5cf6",
+          radius: 6,
+          src: src.id,
+          dst: dst.id,
+        };
+      });
+  }, [executeEvents, towerPoints]);
 
   const handleEnter = (flight: typeof flights[number]) => {
     onHoverPlane({
@@ -365,18 +404,52 @@ export default function WorldMap({ transactions, onHoverPlane }: WorldMapProps) 
                     {/* Reverse scale so planes don't become huge when zoomed */}
                     <g transform={`scale(${1 / zoom})`}>
                       {/* Interactive hit area */}
-                      <circle 
-                        r={flight.radius * 1.5} 
-                        fill="transparent" 
+                      <circle
+                        r={flight.radius * 1.5}
+                        fill="transparent"
                         style={{ cursor: "pointer" }}
                         onMouseEnter={() => handleEnter(flight)}
                         onMouseLeave={() => onHoverPlane(null)}
                       />
                       {/* Lucide plane points top-right (45deg), so we rotate 45deg to point right (0deg) */}
                       <g transform="translate(-12, -12) rotate(45, 12, 12)">
-                        <Plane 
-                          size={flight.radius} 
-                          color={flight.color} 
+                        <Plane
+                          size={flight.radius}
+                          color={flight.color}
+                          fill={flight.color}
+                          strokeWidth={1.5}
+                          className="opacity-90"
+                        />
+                      </g>
+                    </g>
+                  </motion.g>
+                );
+              })}
+
+              {/* Execute-event violet planes */}
+              {executeFlights.map((flight, idx) => {
+                const times = flight.samples.map((_, i) => i / (flight.samples.length - 1));
+                return (
+                  <motion.g
+                    key={`exec-flight-${idx}`}
+                    animate={{
+                      x: flight.samples.map((p) => p[0]),
+                      y: flight.samples.map((p) => p[1]),
+                      rotate: flight.angles,
+                    }}
+                    transition={{
+                      duration: flight.duration,
+                      repeat: Infinity,
+                      ease: "linear",
+                      delay: flight.delay,
+                      times,
+                    }}
+                  >
+                    <g transform={`scale(${1 / zoom})`}>
+                      <g transform="translate(-12, -12) rotate(45, 12, 12)">
+                        <Plane
+                          size={flight.radius}
+                          color={flight.color}
                           fill={flight.color}
                           strokeWidth={1.5}
                           className="opacity-90"

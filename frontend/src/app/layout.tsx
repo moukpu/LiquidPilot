@@ -30,7 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable} font-sans antialiased bg-background text-foreground overflow-hidden h-screen w-screen`}
+        className={`${inter.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable} font-sans antialiased bg-background text-foreground min-h-screen overflow-x-hidden`}
       >
         <LocaleProvider>
           <header className="fixed top-0 left-0 right-0 z-50 glass border-b border-white/5 h-16 flex items-center px-6 justify-between">
@@ -47,13 +47,11 @@ export default function RootLayout({
             <div className="flex items-center gap-6">
                <LocaleSwitcher />
                <div className="flex items-center gap-4 border-l border-white/10 pl-6">
-                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.8)]" />
-                 <span className="text-xs font-mono text-muted-foreground hidden sm:inline-block tracking-widest">SYSTEM ONLINE</span>
-                 <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary border border-primary/30 ml-2">LP</div>
+                 <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary border border-primary/30">LP</div>
                </div>
             </div>
           </header>
-          <div className="pt-16 h-full relative">
+          <div className="pt-16 relative">
             {children}
           </div>
         </LocaleProvider>

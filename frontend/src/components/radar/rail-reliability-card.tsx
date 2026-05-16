@@ -50,9 +50,6 @@ export default function RailReliabilityCard({ rails }: Props) {
                 {r.reliability.toFixed(1)}%
               </span>
               <Dots score={r.reliability} />
-              <span className="text-muted-foreground/60 text-[10px] w-14 text-right">
-                {r.expected_delay_range}
-              </span>
             </div>
           );
         })}

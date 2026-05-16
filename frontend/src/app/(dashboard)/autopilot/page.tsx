@@ -37,7 +37,7 @@ export default function AutopilotPage() {
   const showDemoHint = !demoMode && accounts.length > 0;
 
   return (
-    <div className="-mx-6 -mt-6 h-[calc(100vh-4rem)] flex flex-col bg-background">
+    <div className="-mx-6 -mt-6 min-h-[calc(100vh-4rem)] flex flex-col bg-background">
       <AutopilotHeader
         demoMode={demoMode}
         onToggleDemoMode={toggleDemoMode}
@@ -49,7 +49,7 @@ export default function AutopilotPage() {
 
       <AccountSummaryStrip accounts={accounts} alerts={alerts} />
 
-      <main className="flex-1 min-h-0 overflow-hidden p-6">
+      <main className="flex-1 min-h-0 p-6">
         <ActionQueue
           transfers={transfers}
           alerts={alerts}

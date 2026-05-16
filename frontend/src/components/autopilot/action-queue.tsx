@@ -198,11 +198,14 @@ export default function ActionQueue({
 
             {infoOnlyAlerts.length > 0 && (
               <div className="pt-2 space-y-2">
-                <div className="text-[10px] font-mono uppercase tracking-wider text-amber-700">
+                <div className="text-[10px] font-mono uppercase tracking-wider text-amber-800">
                   {t("autopilot.queue.infoSection", {
                     n: infoOnlyAlerts.length,
                   })}
                 </div>
+                <p className="text-[10px] text-muted-foreground leading-snug">
+                  {t("autopilot.queue.infoSectionHint")}
+                </p>
                 <AnimatePresence mode="popLayout">
                   {infoOnlyAlerts.map((a) => (
                     <motion.div

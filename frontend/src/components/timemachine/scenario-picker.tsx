@@ -90,7 +90,7 @@ export default function ScenarioPicker({
           <label className="text-[9px] font-mono uppercase tracking-widest text-muted-foreground block mb-1">
             {t("timemachine.multiplier")}:{" "}
             <span className="text-foreground font-bold">
-              +{Math.round(((value.multiplier ?? 1.3) - 1) * 100)}%
+              ×{(value.multiplier ?? 1.3).toFixed(2)}
             </span>
           </label>
           <input

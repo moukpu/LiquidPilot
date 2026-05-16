@@ -5,7 +5,7 @@ import type { Alert, TransferSuggestion } from "@/types/api";
 import { useLocale, localeToIntl } from "@/i18n/locale-context";
 import { formatNumber } from "@/lib/format";
 import type { MessageKey } from "@/i18n/messages/en";
-import { translateBackendAlert, translateBackendNote } from "@/i18n/translate-backend";
+import { translateBackendAlert } from "@/i18n/translate-backend";
 
 interface AlertsPanelProps {
   alerts: Alert[];
@@ -103,11 +103,6 @@ export default function AlertsPanel({ alerts, transfers }: AlertsPanelProps) {
               ? t("action.initiatePrefix", { date: tx.initiate_by })
               : t("action.initiateAsap")}
           </div>
-          {translateBackendNote(tx, locale) && (
-            <div className="text-[10px] text-amber-400/80 leading-snug">
-              {translateBackendNote(tx, locale)}
-            </div>
-          )}
         </div>
       ))}
     </div>

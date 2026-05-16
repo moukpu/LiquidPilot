@@ -18,6 +18,7 @@ import type { Transaction } from "@/types/api";
 import { useT } from "@/i18n/locale-context";
 import type { MessageKey } from "@/i18n/messages/en";
 import { displayAccountLabel } from "@/lib/format";
+import { useExecuteEvents } from "@/lib/execute-events";
 
 // --- Tower definitions: same 3 cities as the flat map ----------------------
 // Label is derived at render time via displayAccountLabel(id) so the user-
@@ -346,6 +347,8 @@ function World({
     [transactions]
   );
 
+  const executeEvents = useExecuteEvents();
+
   const flights = useMemo(() => {
     const sorted = [...transactions]
       .filter((tx) => TOWERS.some((tt) => tt.id === tx.account_id))
@@ -383,6 +386,32 @@ function World({
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [txKey, towerPoints]);
+
+  // Violet execute-event planes — animate between donor and recipient towers
+  const executeFlights = useMemo(() => {
+    return executeEvents
+      .filter(
+        (ev) =>
+          TOWERS.some((t) => t.id === ev.from_account) &&
+          TOWERS.some((t) => t.id === ev.to_account)
+      )
+      .map((ev, i) => {
+        const src = towerPoints.find((p) => p.id === ev.from_account)!;
+        const dst = towerPoints.find((p) => p.id === ev.to_account)!;
+        const samples = sampleArc(src.pos, dst.pos, 64);
+        const duration = 3 + (i % 3) * 0.5; // 3..4s variation
+        const phase = ((Date.now() - ev.timestamp) / 1000) % duration / duration;
+        return {
+          src: src.id,
+          dst: dst.id,
+          samples,
+          duration,
+          phase,
+          color: "#8b5cf6",
+          size: 0.04,
+        };
+      });
+  }, [executeEvents, towerPoints]);
 
   return (
     <group ref={groupRef}>
@@ -429,6 +458,19 @@ function World({
               remainingMs
             )
           }
+        />
+      ))}
+
+      {/* execute-event violet planes */}
+      {executeFlights.map((f, idx) => (
+        <Plane
+          key={`exec-${f.src}-${f.dst}-${idx}`}
+          samples={f.samples}
+          duration={f.duration}
+          phase={f.phase}
+          color={f.color}
+          size={f.size}
+          onSelect={() => {}}
         />
       ))}
     </group>

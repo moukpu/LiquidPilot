@@ -49,7 +49,7 @@ const itemVariants = {
 
 export default function Home() {
   return (
-    <main className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center px-6 py-20 relative overflow-hidden">
+    <main className="flex flex-col items-center px-6 py-12 relative overflow-hidden">
       <AnimatedBackground />
       
       <motion.div 

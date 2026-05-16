@@ -53,7 +53,6 @@ const ru: Record<keyof typeof en, string> = {
   "radar.city.singapore": "Сингапур",
   "radar.city.almaty": "Алматы",
 
-  "account.ledgerBalance": "Бухгалтерский баланс",
   "account.bufferBreach": "Буфер пробит",
   "account.vsFloor": "к минимуму",
   "account.in": "Приход за сегодня",
@@ -117,7 +116,6 @@ const ru: Record<keyof typeof en, string> = {
   "action.settledOn": "Исполнено через {rail}",
   "action.skipped": "Пропущено",
   "action.restore": "Восстановить",
-  "action.fxBadge": "FX",
   "action.initiateAsap": "Срочно",
   "action.initiatePrefix": "до {date}",
 
@@ -136,7 +134,7 @@ const ru: Record<keyof typeof en, string> = {
     "Выберите сценарий, настройте параметры, запустите симуляцию. Показываем базовый и стрессовый прогноз P50 по каждому счёту.",
   "timemachine.scenario": "Сценарий",
   "timemachine.scenarios.railDelay": "Задержка клиринга рельса",
-  "timemachine.scenarios.volumeSpike": "Всплеск исходящих платежей",
+  "timemachine.scenarios.volumeSpike": "Всплеск расхода (чарджбеки / выплаты)",
   "timemachine.scenarios.bankHoliday": "Банковский выходной",
   "timemachine.rail": "Рельс",
   "timemachine.extraDays": "Доп. дней клиринга",
@@ -172,16 +170,20 @@ const ru: Record<keyof typeof en, string> = {
   "timemachine.hint.volumeSpike":
     "Volume Spike — умножить расход по рельсу. Пример: чарджбеки по картам в 2× в ближайшие 7 дней.",
   "timemachine.hint.bankHoliday":
-    "Bank Holiday — заморозка отходящего clearing’а на N дней в выбранной стране с последующим catch-up дропом.",
+    "Bank Holiday — заморозка отходящего clearing'а на N дней в выбранной стране с последующим catch-up дропом.",
+  "timemachine.reason.noInboundOnRail": "по этому рельсу для счёта нет входящих транзакций",
+  "timemachine.reason.noOutboundOnRail": "по этому рельсу для счёта нет исходящих транзакций",
+  "timemachine.reason.countryMismatch": "страна счёта не совпадает со страной выходного",
+  "timemachine.reason.zeroMultiplier": "множитель ≤ 1 — всплеска нет",
+  "timemachine.reason.unknown": "сценарий неприменим",
+  "timemachine.summary.noBreaches": "Стресс прошёл — ни один счёт не свалился под минимум. Попробуй жёстче (rail_delay +5d / multiplier ≥1.6 / bank_holiday 4d).",
+  "autopilot.queue.infoSectionHint": "Прогнозируемые пробои, которые движок не может закрыть автоматически — нет счёта-донора с излишком. Решает казначей вручную: кредитная линия / FX-своп / репо.",
+  "radar.executeInFlight": "Автопилот · {n} в полёте",
 
   "backend.alert.template":
     "{accountId}: прогноз {projected} {currency} к {breachDate}, ниже минимума {floor} (нехватка {shortfall}).",
   "backend.transfer.fund":
     "Пополнить {to} ({severity} к {breachDate}) со счёта {from} через {rail}.",
-  "backend.transfer.note.fx":
-    "Требуется конвертация валют {fromCcy} → {toCcy}; считайте в валюте источника перед запросом котировки спот.",
-  "backend.transfer.note.escalate":
-    "Ни один счёт не может закрыть разрыв без пробития собственного буфера — нужна внешняя ликвидность (кредитная линия / репо / FX-своп).",
 };
 
 export default ru;

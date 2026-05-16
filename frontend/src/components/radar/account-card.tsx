@@ -18,7 +18,12 @@ export default function AccountCard({ account, transactions }: AccountCardProps)
   const intl = localeToIntl(locale);
   const sym = currencySymbol(account.currency);
 
-  const related = transactions.filter((tx) => tx.account_id === account.account_id);
+  const startOfToday = new Date().toISOString().slice(0, 10);
+  const related = transactions.filter(
+    (tx) =>
+      tx.account_id === account.account_id &&
+      tx.value_date >= startOfToday
+  );
   const inTx = related.filter((tx) => tx.direction === "IN");
   const outTx = related.filter((tx) => tx.direction === "OUT");
   const inSum = inTx.reduce((s, tx) => s + tx.amount, 0);
@@ -49,10 +54,7 @@ export default function AccountCard({ account, transactions }: AccountCardProps)
         )}
       </div>
 
-      <div className="relative z-10">
-        <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground/70 mb-1">
-          {t("account.ledgerBalance")}
-        </div>
+      <div className="relative z-10 flex items-end gap-3">
         {/* Compact-format the balance so even KZT/JPY billions fit a 220-px
             column. Down from text-3xl → text-2xl: the previous size used
             to overflow on Almaty's ₸2.5B ledger and snip the trailing
@@ -61,19 +63,17 @@ export default function AccountCard({ account, transactions }: AccountCardProps)
           {sym}
           {formatMoneyCompact(account.current_ledger_balance, intl)}
         </div>
-        <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] font-mono">
-          <span
-            className={`px-2 py-0.5 rounded-full ${
-              aboveFloor >= 0
-                ? "bg-emerald-100 text-emerald-700"
-                : "bg-rose-100 text-rose-700"
-            }`}
-          >
-            {aboveFloor >= 0 ? "+" : "−"}
-            {sym}
-            {formatMoneyCompact(Math.abs(aboveFloor), intl)} {t("account.vsFloor")}
-          </span>
-        </div>
+        <span
+          className={`mb-1 px-2 py-0.5 rounded-full text-[10px] font-mono ${
+            aboveFloor >= 0
+              ? "bg-emerald-100 text-emerald-700"
+              : "bg-rose-100 text-rose-700"
+          }`}
+        >
+          {aboveFloor >= 0 ? "+" : "−"}
+          {sym}
+          {formatMoneyCompact(Math.abs(aboveFloor), intl)} {t("account.vsFloor")}
+        </span>
       </div>
 
       <div className="relative z-10 grid grid-cols-2 gap-4 pt-4 border-t border-slate-200/50">

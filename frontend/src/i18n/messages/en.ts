@@ -52,7 +52,6 @@ const en = {
   "radar.city.singapore": "Singapore",
   "radar.city.almaty": "Almaty",
 
-  "account.ledgerBalance": "Ledger balance",
   "account.bufferBreach": "Buffer breach",
   "account.vsFloor": "vs floor",
   "account.in": "Inflow today",
@@ -117,7 +116,6 @@ const en = {
   "action.settledOn": "Settled on {rail}",
   "action.skipped": "Skipped",
   "action.restore": "Restore",
-  "action.fxBadge": "FX",
   "action.initiateAsap": "ASAP",
   "action.initiatePrefix": "by {date}",
 
@@ -135,7 +133,7 @@ const en = {
     "Pick a scenario, tune the parameters, run the simulation. We show baseline vs stressed P50 forecast per account.",
   "timemachine.scenario": "Scenario",
   "timemachine.scenarios.railDelay": "Rail clearing delay shock",
-  "timemachine.scenarios.volumeSpike": "Outflow volume spike",
+  "timemachine.scenarios.volumeSpike": "Outflow spike (chargebacks / payouts)",
   "timemachine.scenarios.bankHoliday": "Bank holiday",
   "timemachine.rail": "Rail",
   "timemachine.extraDays": "Extra clearing days",
@@ -172,15 +170,19 @@ const en = {
     "Volume Spike — multiply outflow on a specific rail. Example: card chargebacks 2× normal volume for the next 7 days.",
   "timemachine.hint.bankHoliday":
     "Bank Holiday — freeze all outbound clearing for accounts in a country for N days, then catch-up drop on day N+1.",
+  "timemachine.reason.noInboundOnRail": "no inbound transactions on this rail for this account",
+  "timemachine.reason.noOutboundOnRail": "no outbound transactions on this rail for this account",
+  "timemachine.reason.countryMismatch": "account country does not match holiday country",
+  "timemachine.reason.zeroMultiplier": "multiplier ≤ 1 — no spike",
+  "timemachine.reason.unknown": "scenario not applicable",
+  "timemachine.summary.noBreaches": "Stress passed — no account drops below floor under this scenario. Try harder (rail_delay +5d / multiplier ≥1.6 / bank_holiday 4d).",
+  "autopilot.queue.infoSectionHint": "Forecasted breaches the engine cannot auto-resolve — no donor account has surplus. Manual treasurer action: arrange credit line / FX swap / repo.",
+  "radar.executeInFlight": "Autopilot · {n} in flight",
 
   "backend.alert.template":
     "{accountId}: forecast {projected} {currency} by {breachDate}, below floor of {floor} (shortfall {shortfall}).",
   "backend.transfer.fund":
     "Fund {to} ({severity} on {breachDate}) from {from} via {rail}.",
-  "backend.transfer.note.fx":
-    "Requires FX conversion {fromCcy} → {toCcy}; size in donor currency before quoting the spot deal.",
-  "backend.transfer.note.escalate":
-    "No surplus account can fund this gap without breaching its own buffer — escalate to external funding (credit line / repo / FX swap).",
 } as const;
 
 export type MessageKey = keyof typeof en;
