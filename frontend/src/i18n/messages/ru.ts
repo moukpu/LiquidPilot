@@ -92,6 +92,18 @@ const ru: Record<keyof typeof en, string> = {
   "autopilot.queue.allResolved": "Все действия обработаны.",
   "autopilot.queue.recentlyExecuted": "Недавно исполнено · {n}",
   "autopilot.queue.skippedSection": "Пропущено · {n}",
+  "autopilot.queue.infoSection": "Открытые алерты · {n}",
+  "autopilot.summary.label": "Счета",
+  "autopilot.summary.linkRadar": "Подробные метрики на Radar",
+  "autopilot.header.statusLine": "{pending} ожидает · {resolved} решено",
+  "autopilot.session.accepted": "Принято",
+  "autopilot.session.moved": "Перемещено",
+  "autopilot.session.remaining": "Открытые алерты",
+  "autopilot.alerts.dismiss": "Скрыть",
+  "alert.message.critical":
+    "В худшем случае {account} опустится до {projected} {date} — ниже требуемого минимума {min}. Дефицит: {shortfall}.",
+  "alert.message.warning":
+    "В ближайшие {days} дней типичный прогноз для {account} входит в зону буфера.",
 
   "action.execute": "Исполнить",
   "action.skip": "Пропустить",

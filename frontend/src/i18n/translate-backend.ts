@@ -22,18 +22,24 @@ function interp(
 }
 
 export function translateBackendAlert(alert: Alert, locale: Locale): string {
+  // Read structured fields directly from the Alert object — we never parse
+  // the backend's `.message` string here because it's full of ML jargon
+  // (P05, P50, "ledger balance") that no treasurer thinks in. The
+  // user-facing templates are stored in the i18n catalogs.
   const intl = localeToIntl(locale);
-  return interp(pick(locale, "backend.alert.template"), {
-    accountId: alert.account_id,
+  const templateKey: MessageKey =
+    alert.severity === "CRITICAL"
+      ? "alert.message.critical"
+      : "alert.message.warning";
+  return interp(pick(locale, templateKey), {
+    account: alert.account_id,
     projected: formatMoney(
       alert.projected_balance,
       alert.currency,
       { fractionDigits: 0 },
       intl
     ),
-    currency: alert.currency,
-    breachDate: alert.breach_date,
-    floor: formatMoney(
+    min: formatMoney(
       alert.min_balance,
       alert.currency,
       { fractionDigits: 0 },
@@ -45,6 +51,8 @@ export function translateBackendAlert(alert: Alert, locale: Locale): string {
       { fractionDigits: 0 },
       intl
     ),
+    date: alert.breach_date,
+    days: alert.days_until_breach,
   });
 }
 

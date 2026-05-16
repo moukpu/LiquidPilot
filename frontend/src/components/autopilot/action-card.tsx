@@ -12,12 +12,14 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatMoney } from "@/lib/format";
-import type { TransferSuggestion } from "@/types/api";
+import type { Alert, TransferSuggestion } from "@/types/api";
 import type { ActionState, ExecutedMeta } from "@/hooks/use-autopilot-state";
 import { useLocale, localeToIntl } from "@/i18n/locale-context";
+import type { MessageKey } from "@/i18n/messages/en";
 import {
-  translateBackendTransfer,
+  translateBackendAlert,
   translateBackendNote,
+  translateBackendTransfer,
 } from "@/i18n/translate-backend";
 
 const EXECUTING_DURATION_MS = 1600;
@@ -27,7 +29,16 @@ export interface ActionCardProps {
   transfer: TransferSuggestion;
   meta: ExecutedMeta;
   onChange: (state: ActionState) => void;
+  /** Optional alert paired to this transfer (rendered as a banner above the
+   *  transfer rows). When null the card shows just the proposed action. */
+  alert?: Alert | null;
 }
+
+const ALERT_BANNER_CLASS: Record<Alert["severity"], string> = {
+  CRITICAL: "border-rose-500/40 bg-rose-500/10 text-rose-300",
+  WARNING: "border-amber-500/40 bg-amber-500/10 text-amber-300",
+  INFO: "border-primary/30 bg-primary/5 text-primary",
+};
 
 function stateClasses(state: ActionState) {
   switch (state) {
@@ -44,7 +55,12 @@ function stateClasses(state: ActionState) {
   }
 }
 
-export default function ActionCard({ transfer, meta, onChange }: ActionCardProps) {
+export default function ActionCard({
+  transfer,
+  meta,
+  onChange,
+  alert = null,
+}: ActionCardProps) {
   const { t, locale } = useLocale();
   const intl = localeToIntl(locale);
   const state = meta.state;
@@ -89,6 +105,33 @@ export default function ActionCard({ transfer, meta, onChange }: ActionCardProps
       transition={{ duration: 0.25 }}
       className={`rounded-lg border p-4 space-y-3 ${stateClasses(state)}`}
     >
+      {alert && (
+        <div
+          className={`rounded-md px-3 py-2 border ${ALERT_BANNER_CLASS[alert.severity]}`}
+        >
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[10px] font-bold uppercase tracking-widest">
+              {t(`severity.${alert.severity}` as MessageKey)}
+            </span>
+            <span className="text-[10px] font-mono opacity-70">
+              {t("autopilot.alerts.inDays", { n: alert.days_until_breach })}
+            </span>
+          </div>
+          <p className="text-xs leading-relaxed">
+            {translateBackendAlert(alert, locale)}
+          </p>
+          <div className="text-[10px] font-mono mt-1.5 opacity-80">
+            {t("autopilot.alerts.shortfall")}:{" "}
+            {formatMoney(
+              alert.shortfall,
+              alert.currency,
+              { fractionDigits: 0 },
+              intl
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
           <ArrowRightLeft className="w-4 h-4 text-primary shrink-0" />

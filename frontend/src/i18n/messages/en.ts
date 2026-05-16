@@ -92,6 +92,18 @@ const en = {
   "autopilot.queue.allResolved": "All actions resolved.",
   "autopilot.queue.recentlyExecuted": "Recently executed · {n}",
   "autopilot.queue.skippedSection": "Skipped · {n}",
+  "autopilot.queue.infoSection": "Open alerts · {n}",
+  "autopilot.summary.label": "Accounts",
+  "autopilot.summary.linkRadar": "Detailed metrics on Radar",
+  "autopilot.header.statusLine": "{pending} pending · {resolved} resolved",
+  "autopilot.session.accepted": "Accepted",
+  "autopilot.session.moved": "Moved",
+  "autopilot.session.remaining": "Open alerts",
+  "autopilot.alerts.dismiss": "Dismiss",
+  "alert.message.critical":
+    "In the worst case, {account} will fall to {projected} on {date} — below the required minimum {min}. Estimated shortfall: {shortfall}.",
+  "alert.message.warning":
+    "In the next {days} days, the typical projection for {account} enters the safety buffer.",
 
   "action.execute": "Execute",
   "action.skip": "Skip",

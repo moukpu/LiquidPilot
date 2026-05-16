@@ -55,17 +55,12 @@ export default function AutopilotHeader({
       </div>
 
       <div className="flex items-center gap-5">
-        <div className="flex items-center gap-3 text-[10px] font-mono uppercase tracking-wider tabular-nums">
-          <span className="text-muted-foreground">{t("autopilot.counter.queued", { n: counts.queued })}</span>
-          {counts.confirming > 0 && (
-            <span className="text-amber-400">{t("autopilot.counter.confirm", { n: counts.confirming })}</span>
-          )}
-          {counts.executing > 0 && (
-            <span className="text-primary">{t("autopilot.counter.exec", { n: counts.executing })}</span>
-          )}
-          <span className="text-emerald-400">{t("autopilot.counter.done", { n: counts.executed })}</span>
-          <span className="text-muted-foreground">{t("autopilot.counter.skip", { n: counts.skipped })}</span>
-        </div>
+        <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground tabular-nums">
+          {t("autopilot.header.statusLine", {
+            pending: counts.queued + counts.confirming + counts.executing,
+            resolved: counts.executed + counts.skipped,
+          })}
+        </span>
 
         <TooltipProvider delayDuration={200}>
           <Tooltip>

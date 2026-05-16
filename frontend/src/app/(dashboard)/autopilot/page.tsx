@@ -5,8 +5,8 @@ import { useAutopilotState } from "@/hooks/use-autopilot-state";
 import { transferKey } from "@/lib/autopilot-synth";
 import AutopilotHeader from "@/components/autopilot/autopilot-header";
 import AccountSummaryStrip from "@/components/autopilot/account-summary-strip";
-import AlertsDetailPanel from "@/components/autopilot/alerts-detail-panel";
 import ActionQueue from "@/components/autopilot/action-queue";
+import SessionSummary from "@/components/autopilot/session-summary";
 
 export default function AutopilotPage() {
   const {
@@ -41,17 +41,23 @@ export default function AutopilotPage() {
         counts={counts}
       />
 
-      <AccountSummaryStrip accounts={accounts} />
+      <AccountSummaryStrip accounts={accounts} alerts={alerts} />
 
-      <main className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-4 p-6 overflow-hidden">
-        <AlertsDetailPanel alerts={alerts} />
+      <main className="flex-1 min-h-0 grid grid-cols-1 gap-4 p-6 overflow-hidden">
         <ActionQueue
           transfers={transfers}
+          alerts={alerts}
           actionStates={actionStates}
           onChange={setActionState}
           showEmptyState={!demoMode}
         />
       </main>
+
+      <SessionSummary
+        transfers={transfers}
+        alerts={alerts}
+        actionStates={actionStates}
+      />
     </div>
   );
 }
