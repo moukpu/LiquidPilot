@@ -22,3 +22,11 @@ export function convertFx(
 ): number {
   return amount * fxRate(from, to);
 }
+
+export function amountInUsd(
+  amount: number,
+  currency: string
+): number {
+  const fx = FX_TO_USD[currency] ?? 1.0;
+  return Math.abs(amount) * fx;
+}

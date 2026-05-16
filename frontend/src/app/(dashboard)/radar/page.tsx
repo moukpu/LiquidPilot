@@ -11,6 +11,7 @@ import { useLocale } from "@/i18n/locale-context";
 import { formatTime, formatNumber } from "@/lib/format";
 import { localeToIntl } from "@/i18n/locale-context";
 import { useExecuteEvents } from "@/lib/execute-events";
+import { TOWER_IDS } from "@/lib/radar-towers";
 
 // Two-column row for tooltip values — keeps every line in lockstep.
 function Row({
@@ -49,6 +50,14 @@ export default function RadarPage() {
   const { t, locale } = useLocale();
   const intl = localeToIntl(locale);
   const executeEvents = useExecuteEvents();
+
+  // Real per-tower in-flight count (matches the badge rendered on each
+  // 3D tower marker). Filter against the shared TOWER_IDS list so the
+  // total never includes transactions for accounts the globe ignores.
+  const towerIdSet = new Set<string>(TOWER_IDS);
+  const totalInFlight = data.transactions.filter((tx) =>
+    towerIdSet.has(tx.account_id)
+  ).length;
 
   // Account-id -> currency map, consumed by FrozenCapitalCard to label per-account rows.
   const accountCurrencies = Object.fromEntries(
@@ -120,83 +129,87 @@ export default function RadarPage() {
       {/* Bottom-Left Column: Rail Reliability stacked above the legend */}
       <div className="absolute bottom-6 left-6 z-10 flex flex-col gap-3 w-[280px]">
         <RailReliabilityCard rails={data.insights.rail_reliability} />
-        <div className="glass rounded-2xl px-6 py-5 flex flex-col gap-4 text-xs font-mono shadow-lg pointer-events-none">
-          <span className="text-muted-foreground uppercase tracking-widest text-[10px]">{t("radar.flowSize")}</span>
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-3">
-              <span className="inline-block w-2 h-2 rounded-full bg-[#22c55e] shadow-sm" />
-              <span className="text-foreground/90">{t("radar.legend.small")}</span>
+        <div className="glass rounded-2xl px-5 py-4 flex flex-col gap-3 text-xs font-mono shadow-lg pointer-events-none">
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground uppercase tracking-widest text-[10px]">{t("radar.flowSize")}</span>
+            <span className="text-[10px] text-foreground font-semibold tabular-nums">
+              {t("radar.legend.totalInFlight", { n: totalInFlight })}
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 whitespace-nowrap">
+              <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#22c55e] shadow-sm shrink-0" />
+              <span className="text-foreground/90 text-[11px]">{t("radar.legend.small")}</span>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="inline-block w-3 h-3 rounded-full bg-[#eab308] shadow-sm" />
-              <span className="text-foreground/90">{t("radar.legend.medium")}</span>
+            <div className="flex items-center gap-2 whitespace-nowrap">
+              <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#eab308] shadow-sm shrink-0" />
+              <span className="text-foreground/90 text-[11px]">{t("radar.legend.medium")}</span>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="inline-block w-4 h-4 rounded-full bg-[#ef4444] shadow-sm" />
-              <span className="text-foreground/90">{t("radar.legend.large")}</span>
+            <div className="flex items-center gap-2 whitespace-nowrap">
+              <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#ef4444] shadow-sm shrink-0" />
+              <span className="text-foreground/90 text-[11px]">{t("radar.legend.large")}</span>
             </div>
           </div>
-          <span className="mt-1 text-[10px] text-muted-foreground/50 border-t border-slate-200/50 pt-2">{t("radar.legend.hoverHint")}</span>
+          <span className="text-[10px] text-muted-foreground/60 border-t border-slate-200/50 pt-2">{t("radar.legend.hoverHint")}</span>
         </div>
       </div>
 
-      {/* Right HUD Panel (Floating).
-          The pinned tooltip lives as the first child here — previously it
-          was anchored to `top-24 left-6`, which blew up over the
-          bottom-left Rail Reliability + Flow Size cards on shorter
-          viewports. Putting it inside the right column reuses the
-          existing scrollable region; account cards just push down while
-          the tooltip is open and X / Esc dismisses it as before. */}
-      <div 
+      {/* Plane-click tooltip — anchored on the LEFT column, between the
+          floating status bar (top-6) and the bottom-left card stack
+          (Rail Reliability + Flow Size). Sits at top-20 with the same
+          280px width as the bottom-left column so the three cards form
+          a tidy vertical strip on the left edge. */}
+      {tooltip && (
+        <div
+          className="absolute top-20 left-6 z-20 w-[280px] glass-card rounded-2xl p-5 shadow-xl pointer-events-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            type="button"
+            onClick={closeTooltip}
+            aria-label={t("radar.tooltip.close")}
+            className="absolute top-3 right-3 w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 text-sm transition-colors"
+          >
+            ✕
+          </button>
+          <div className="flex items-center justify-between mb-4 border-b border-slate-200/50 pb-3 pr-9">
+            <span className="text-[10px] font-mono uppercase text-muted-foreground tracking-widest">
+              {t("radar.tooltip.direction")}
+            </span>
+            <span
+              className={`text-[10px] font-bold px-2 py-1 rounded uppercase tracking-widest ${
+                tooltip.direction === "IN"
+                  ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                  : "bg-rose-500/20 text-rose-400 border border-rose-500/30"
+              }`}
+            >
+              {tooltip.direction === "IN" ? t("radar.direction.IN") : t("radar.direction.OUT")}
+            </span>
+          </div>
+          <div className="space-y-3">
+            <Row
+              label={t("radar.tooltip.amount")}
+              value={formatNumber(tooltip.amount, 0, intl)}
+              valueClass="text-foreground font-bold text-sm"
+            />
+            <Row label={t("radar.tooltip.paymentType")} value={tooltip.payment_type} />
+            <Row label={t("radar.tooltip.valueDate")} value={tooltip.value_date} />
+            <Row
+              label={t("radar.tooltip.delay")}
+              value={`${tooltip.clearing_delay_days}d`}
+              valueClass="text-warning font-semibold"
+            />
+            <Row label={t("radar.tooltip.from")} value={tooltip.src} />
+            <Row label={t("radar.tooltip.to")} value={tooltip.dst} />
+          </div>
+        </div>
+      )}
+
+      {/* Right HUD panel — account cards + frozen capital. */}
+      <div
         className="absolute right-6 top-6 bottom-6 w-[340px] z-20 flex flex-col gap-4 overflow-y-auto pr-2 pb-6 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-300/50 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-400/50"
         style={{ maskImage: "linear-gradient(to bottom, black 90%, transparent 100%)" }}
       >
-        {tooltip && (
-          <div
-            className="relative glass-card rounded-2xl p-5 shadow-xl pointer-events-auto shrink-0"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              type="button"
-              onClick={closeTooltip}
-              aria-label={t("radar.tooltip.close")}
-              className="absolute top-3 right-3 w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 text-sm transition-colors"
-            >
-              ✕
-            </button>
-            <div className="flex items-center justify-between mb-4 border-b border-slate-200/50 pb-3 pr-9">
-              <span className="text-[10px] font-mono uppercase text-muted-foreground tracking-widest">
-                {t("radar.tooltip.direction")}
-              </span>
-              <span
-                className={`text-[10px] font-bold px-2 py-1 rounded uppercase tracking-widest ${
-                  tooltip.direction === "IN"
-                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                    : "bg-rose-500/20 text-rose-400 border border-rose-500/30"
-                }`}
-              >
-                {tooltip.direction === "IN" ? t("radar.direction.IN") : t("radar.direction.OUT")}
-              </span>
-            </div>
-            <div className="space-y-3">
-              <Row
-                label={t("radar.tooltip.amount")}
-                value={formatNumber(tooltip.amount, 0, intl)}
-                valueClass="text-foreground font-bold text-sm"
-              />
-              <Row label={t("radar.tooltip.paymentType")} value={tooltip.payment_type} />
-              <Row label={t("radar.tooltip.valueDate")} value={tooltip.value_date} />
-              <Row
-                label={t("radar.tooltip.delay")}
-                value={`${tooltip.clearing_delay_days}d`}
-                valueClass="text-warning font-semibold"
-              />
-              <Row label={t("radar.tooltip.from")} value={tooltip.src} />
-              <Row label={t("radar.tooltip.to")} value={tooltip.dst} />
-            </div>
-          </div>
-        )}
-
         {data.accounts.map((acc) => (
           <AccountCard
             key={acc.account_id}

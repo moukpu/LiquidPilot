@@ -10,6 +10,7 @@ import type { MessageKey } from "@/i18n/messages/en";
 import { Plane } from "lucide-react";
 import { displayAccountLabel } from "@/lib/format";
 import { useExecuteEvents } from "@/lib/execute-events";
+import { amountInUsd } from "@/lib/fx";
 
 // Label is derived at render time via displayAccountLabel(id) — keeps
 // the user-visible string in lockstep with the formatter helper used by
@@ -79,32 +80,16 @@ function sampleBezier(
 }
 
 // USD-normalised thresholds matching globe-3d so both surfaces show
-// the same colour for the same transaction. See globe-3d planeColorHex
-// for the full rationale.
-const FX_TO_USD: Record<string, number> = {
-  EUR: 1.08,
-  USD: 1.0,
-  GBP: 1.27,
-  CHF: 1.1,
-  JPY: 0.0067,
-  SGD: 0.74,
-  KZT: 0.0022,
-};
-
-function amountInUsd(tx: Transaction): number {
-  const fx = FX_TO_USD[tx.currency] ?? 1.0;
-  return Math.abs(tx.amount) * fx;
-}
-
+// the same colour for the same transaction.
 function planeColor(tx: Transaction): string {
-  const usd = amountInUsd(tx);
+  const usd = amountInUsd(tx.amount, tx.currency);
   if (usd < 100_000) return "#22c55e";
   if (usd < 1_000_000) return "#eab308";
   return "#ef4444";
 }
 
 function planeRadius(tx: Transaction): number {
-  const usd = amountInUsd(tx);
+  const usd = amountInUsd(tx.amount, tx.currency);
   if (usd < 100_000) return 10;
   if (usd < 1_000_000) return 14;
   return 18;

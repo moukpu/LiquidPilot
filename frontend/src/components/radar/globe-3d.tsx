@@ -19,6 +19,7 @@ import { useT } from "@/i18n/locale-context";
 import type { MessageKey } from "@/i18n/messages/en";
 import { displayAccountLabel } from "@/lib/format";
 import { useExecuteEvents } from "@/lib/execute-events";
+import { FX_TO_USD, amountInUsd } from "@/lib/fx";
 
 // --- Tower definitions: same 3 cities as the flat map ----------------------
 // Label is derived at render time via displayAccountLabel(id) so the user-
@@ -48,7 +49,9 @@ const TOWERS: Tower[] = [
 
 const GLOBE_RADIUS = 1;
 const ARC_LIFT = 0.06; // peak altitude above surface (~6% of radius — visible but not absurd)
-const PLANE_COUNT = 28;
+// Hard cap so a 500-row backend dump doesn't murder GPU. Real per-tower
+// counts (rendered on the marker labels) are NOT capped.
+const PLANE_COUNT = 60;
 const BORDER_LIFT = 1.001; // sit borders just above surface to avoid z-fight
 const GRID_LIFT = 1.0005;
 
@@ -95,29 +98,8 @@ function sampleArc(a: THREE.Vector3, b: THREE.Vector3, n: number): THREE.Vector3
 }
 
 // --- Plane color/size by amount --------------------------------------------
-// USD-normalised thresholds. With 7 currencies in play (CHF/JPY/SGD/KZT
-// added on top of EUR/USD/GBP) the old per-currency cutoffs lit up every
-// KZT plane red because 10M KZT ≈ 22k USD. Convert via the same FX
-// table the backend uses, then bucket: <$100k green, <$1M yellow,
-// ≥$1M red. Eyeballs in line with what a treasurer would call
-// micro-payment / daily clearing / large.
-const FX_TO_USD: Record<string, number> = {
-  EUR: 1.08,
-  USD: 1.0,
-  GBP: 1.27,
-  CHF: 1.1,
-  JPY: 0.0067,
-  SGD: 0.74,
-  KZT: 0.0022,
-};
-
-function amountInUsd(tx: Transaction): number {
-  const fx = FX_TO_USD[tx.currency] ?? 1.0;
-  return Math.abs(tx.amount) * fx;
-}
-
 function planeColorHex(tx: Transaction): string {
-  const usd = amountInUsd(tx);
+  const usd = amountInUsd(tx.amount, tx.currency);
   if (usd < 100_000) return "#22c55e";
   if (usd < 1_000_000) return "#eab308";
   return "#ef4444";
@@ -126,7 +108,7 @@ function planeColorHex(tx: Transaction): string {
 function planeSize(tx: Transaction): number {
   // PlaneModel itself is ~4 model units long; final world size =
   // planeSize * 4 ≈ 0.016 / 0.024 / 0.036. Keeps colour/size in lockstep.
-  const usd = amountInUsd(tx);
+  const usd = amountInUsd(tx.amount, tx.currency);
   if (usd < 100_000) return 0.004;
   if (usd < 1_000_000) return 0.006;
   return 0.009;
@@ -349,6 +331,19 @@ function World({
 
   const executeEvents = useExecuteEvents();
 
+  // Per-tower in-flight count derived directly from transactions —
+  // user-visible labels then never lie about how busy a city is.
+  const towerCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const tx of transactions) {
+      if (TOWERS.some((t) => t.id === tx.account_id)) {
+        counts[tx.account_id] = (counts[tx.account_id] ?? 0) + 1;
+      }
+    }
+    return counts;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [txKey]);
+
   const flights = useMemo(() => {
     const sorted = [...transactions]
       .filter((tx) => TOWERS.some((tt) => tt.id === tx.account_id))
@@ -432,6 +427,7 @@ function World({
           position={tw.pos}
           label={displayAccountLabel(tw.id)}
           city={t(tw.cityKey)}
+          count={towerCounts[tw.id] ?? 0}
         />
       ))}
 
@@ -484,10 +480,12 @@ function TowerMarker({
   position,
   label,
   city,
+  count,
 }: {
   position: THREE.Vector3;
   label: string;
   city: string;
+  count: number;
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const ringRef = useRef<THREE.Mesh>(null);
@@ -536,12 +534,20 @@ function TowerMarker({
       </mesh>
 
       {/* label sprite via canvas texture */}
-      <SpriteLabel label={label} city={city} />
+      <SpriteLabel label={label} city={city} count={count} />
     </group>
   );
 }
 
-function SpriteLabel({ label, city }: { label: string; city: string }) {
+function SpriteLabel({
+  label,
+  city,
+  count,
+}: {
+  label: string;
+  city: string;
+  count: number;
+}) {
   const matRef = useRef<THREE.SpriteMaterial>(null);
   const spriteRef = useRef<THREE.Sprite>(null);
 
@@ -574,16 +580,21 @@ function SpriteLabel({ label, city }: { label: string; city: string }) {
     ctx.font = "700 56px 'JetBrains Mono', monospace";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(label, w / 2, h / 2 - 18);
+    ctx.fillText(label, w / 2, h / 2 - 28);
 
     ctx.fillStyle = "#94a3b8";
-    ctx.font = "400 32px Inter, sans-serif";
-    ctx.fillText(city, w / 2, h / 2 + 36);
+    ctx.font = "400 30px Inter, sans-serif";
+    ctx.fillText(city, w / 2, h / 2 + 22);
+
+    // count badge — real per-tower in-flight transactions
+    ctx.fillStyle = "#fbbf24";
+    ctx.font = "700 28px 'JetBrains Mono', monospace";
+    ctx.fillText(`${count} \u2708`, w / 2, h / 2 + 58);
 
     const tex = new THREE.CanvasTexture(canvas);
     tex.needsUpdate = true;
     return tex;
-  }, [label, city]);
+  }, [label, city, count]);
 
   // Fade out when the tower is on the far side of the globe
   const spriteWorld = useMemo(() => new THREE.Vector3(), []);
