@@ -119,6 +119,27 @@ const ru: Record<keyof typeof en, string> = {
   "stub.timemachine.body":
     "Воспроизведение исторических сценариев — будет в Phase 6.",
 
+  "timemachine.title": "Машина времени — стресс-тест",
+  "timemachine.subtitle":
+    "Выберите сценарий, настройте параметры, запустите симуляцию. Показываем базовый и стрессовый прогноз P50 по каждому счёту.",
+  "timemachine.scenario": "Сценарий",
+  "timemachine.scenarios.railDelay": "Задержка клиринга рельса",
+  "timemachine.scenarios.volumeSpike": "Всплеск исходящих платежей",
+  "timemachine.scenarios.bankHoliday": "Банковский выходной",
+  "timemachine.rail": "Рельс",
+  "timemachine.extraDays": "Доп. дней клиринга",
+  "timemachine.multiplier": "Множитель оттока",
+  "timemachine.country": "Страна",
+  "timemachine.holidayDays": "Дней выходных",
+  "timemachine.runButton": "Запустить симуляцию",
+  "timemachine.running": "Запуск...",
+  "timemachine.totalImpact": "Совокупный эффект (USD)",
+  "timemachine.newBreaches": "Новые пробои",
+  "timemachine.breach": "Пробой",
+  "timemachine.baselineMin": "Базовый минимум",
+  "timemachine.stressMin": "Стрессовый минимум",
+  "timemachine.delta": "Дельта",
+
   "backend.alert.template":
     "{accountId}: прогноз {projected} {currency} к {breachDate}, ниже минимума {floor} (нехватка {shortfall}).",
   "backend.transfer.fund":

@@ -118,6 +118,27 @@ const en = {
   "stub.timemachine.title": "Time Machine",
   "stub.timemachine.body": "Historical scenario replay — coming in Phase 6.",
 
+  "timemachine.title": "Time Machine — stress test",
+  "timemachine.subtitle":
+    "Pick a scenario, tune the parameters, run the simulation. We show baseline vs stressed P50 forecast per account.",
+  "timemachine.scenario": "Scenario",
+  "timemachine.scenarios.railDelay": "Rail clearing delay shock",
+  "timemachine.scenarios.volumeSpike": "Outflow volume spike",
+  "timemachine.scenarios.bankHoliday": "Bank holiday",
+  "timemachine.rail": "Rail",
+  "timemachine.extraDays": "Extra clearing days",
+  "timemachine.multiplier": "Outflow multiplier",
+  "timemachine.country": "Country",
+  "timemachine.holidayDays": "Holiday days",
+  "timemachine.runButton": "Run simulation",
+  "timemachine.running": "Running...",
+  "timemachine.totalImpact": "Total impact (USD)",
+  "timemachine.newBreaches": "New breaches",
+  "timemachine.breach": "Breach",
+  "timemachine.baselineMin": "Baseline min",
+  "timemachine.stressMin": "Stress min",
+  "timemachine.delta": "Delta",
+
   "backend.alert.template":
     "{accountId}: forecast {projected} {currency} by {breachDate}, below floor of {floor} (shortfall {shortfall}).",
   "backend.transfer.fund":

@@ -1,4 +1,11 @@
-import type { Account, RadarInsights, Recommendations, Transaction } from "@/types/api";
+import type {
+  Account,
+  RadarInsights,
+  Recommendations,
+  StressRequest,
+  StressResult,
+  Transaction,
+} from "@/types/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -27,4 +34,17 @@ export function getRecommendations(signal?: AbortSignal) {
 
 export function getRadarInsights(signal?: AbortSignal) {
   return apiGet<RadarInsights>("/radar/insights", signal);
+}
+
+export async function runStressTest(req: StressRequest): Promise<StressResult> {
+  const res = await fetch(`${API_BASE}/timemachine/simulate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify(req),
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(`stress test failed: ${res.status} ${res.statusText}${detail ? ` — ${detail}` : ""}`);
+  }
+  return (await res.json()) as StressResult;
 }

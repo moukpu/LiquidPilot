@@ -45,6 +45,45 @@ export interface RadarInsights {
   rail_reliability: Record<string, RailReliability>;
 }
 
+export type StressScenario = "rail_delay" | "volume_spike" | "bank_holiday";
+
+export interface StressRequest {
+  scenario: StressScenario;
+  rail?: string;
+  extra_days?: number;
+  multiplier?: number;
+  affected_rail?: string;
+  country?: string;
+  holiday_days?: number;
+}
+
+export interface ScenarioPoint {
+  date: string;
+  baseline_p50: number;
+  stress_p50: number;
+  delta: number;
+}
+
+export interface AccountStressResult {
+  account_id: string;
+  currency: string;
+  horizon: ScenarioPoint[];
+  baseline_min_p50: number;
+  stress_min_p50: number;
+  delta_min_p50: number;
+  floor: number;
+  baseline_breaches: number;
+  stress_breaches: number;
+}
+
+export interface StressResult {
+  scenario: StressScenario;
+  params: StressRequest;
+  accounts: AccountStressResult[];
+  total_delta_usd: number;
+  new_breach_count: number;
+}
+
 export interface Alert {
   severity: "CRITICAL" | "WARNING" | "INFO";
   account_id: string;
