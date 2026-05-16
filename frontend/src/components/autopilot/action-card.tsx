@@ -20,7 +20,7 @@ import {
   translateBackendAlert,
   translateBackendTransfer,
 } from "@/i18n/translate-backend";
-import { convertFx, fxRate } from "@/lib/fx";
+import { convertFx, formatFxQuote } from "@/lib/fx";
 import { pushExecuteEvent } from "@/lib/execute-events";
 
 const EXECUTING_DURATION_MS = 1600;
@@ -211,8 +211,7 @@ export default function ActionCard({
             { fractionDigits: 0 },
             intl
           )}{" "}
-          (1 {transfer.currency_from} = {fxRate(transfer.currency_from, transfer.currency_to).toFixed(2)}{" "}
-          {transfer.currency_to})
+          ({formatFxQuote(transfer.currency_from, transfer.currency_to)})
         </div>
       )}
 

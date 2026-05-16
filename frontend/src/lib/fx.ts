@@ -23,6 +23,14 @@ export function convertFx(
   return amount * fxRate(from, to);
 }
 
+export function formatFxQuote(from: string, to: string): string {
+  const r = fxRate(from, to);
+  if (r >= 1) return `1 ${from} = ${r.toFixed(2)} ${to}`;
+  if (r >= 0.01) return `1 ${from} = ${r.toFixed(4)} ${to}`;
+  const inv = 1 / r;
+  return `1 ${to} = ${inv.toFixed(2)} ${from}`;
+}
+
 export function amountInUsd(
   amount: number,
   currency: string

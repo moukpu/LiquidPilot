@@ -1,4 +1,5 @@
 import type { Account, Alert, TransferSuggestion } from "@/types/api";
+import { FX_TO_USD, convertFx } from "@/lib/fx";
 
 const inDays = (n: number) => {
   const d = new Date();
@@ -6,10 +7,14 @@ const inDays = (n: number) => {
   return d.toISOString().slice(0, 10);
 };
 
+function balanceUsd(acc: Account): number {
+  return acc.current_ledger_balance * (FX_TO_USD[acc.currency] ?? 1);
+}
+
 export function synthAlerts(accounts: Account[]): Alert[] {
   if (accounts.length < 2) return [];
   const sorted = [...accounts].sort(
-    (a, b) => a.current_ledger_balance - b.current_ledger_balance
+    (a, b) => balanceUsd(a) - balanceUsd(b)
   );
   const a1 = sorted[0];
   const a2 = sorted[1];
@@ -41,42 +46,50 @@ export function synthAlerts(accounts: Account[]): Alert[] {
 
 export function synthTransfers(accounts: Account[]): TransferSuggestion[] {
   if (accounts.length < 3) return [];
-  const sorted = [...accounts].sort(
-    (a, b) => b.current_ledger_balance - a.current_ledger_balance
+  const alerts = synthAlerts(accounts);
+  if (alerts.length === 0) return [];
+
+  const recipientIds = new Set(alerts.map((a) => a.account_id));
+  const recipients = alerts.map(
+    (a) => accounts.find((acc) => acc.account_id === a.account_id)!
   );
-  const donor = sorted[0];
-  const r1 = sorted[1];
-  const r2 = sorted[2];
-  const requiresFx1 = donor.currency !== r1.currency;
-  const requiresFx2 = donor.currency !== r2.currency;
-  return [
-    {
+
+  const eligibleDonors = accounts.filter(
+    (acc) => !recipientIds.has(acc.account_id)
+  );
+  if (eligibleDonors.length === 0) return [];
+
+  const donor = eligibleDonors.reduce((best, acc) => {
+    const bestExcess =
+      balanceUsd(best) - best.min_balance * (FX_TO_USD[best.currency] ?? 1);
+    const accExcess =
+      balanceUsd(acc) - acc.min_balance * (FX_TO_USD[acc.currency] ?? 1);
+    return accExcess > bestExcess ? acc : best;
+  });
+
+  return recipients.map((recipient, i) => {
+    const alert = alerts[i];
+    const amount = convertFx(
+      alert.shortfall * 1.2,
+      recipient.currency,
+      donor.currency
+    );
+    const requiresFx = donor.currency !== recipient.currency;
+    return {
       from_account: donor.account_id,
-      to_account: r1.account_id,
-      amount: 750000,
+      to_account: recipient.account_id,
+      amount: Math.round(amount),
       currency_from: donor.currency,
-      currency_to: r1.currency,
-      rail: requiresFx1 ? "SWIFT" : "SEPA",
-      initiate_by: inDays(2),
-      rationale: `Pre-fund ${r1.account_id} ahead of forecasted breach on ${inDays(3)}.`,
-      requires_fx: requiresFx1,
-      notes: requiresFx1
-        ? [`FX leg ${donor.currency}→${r1.currency} adds T+1 settlement risk.`]
+      currency_to: recipient.currency,
+      rail: requiresFx ? "SWIFT" : "SEPA",
+      initiate_by: inDays(Math.max(1, alert.days_until_breach - 1)),
+      rationale: `Pre-fund ${recipient.account_id} ahead of ${alert.breach_date} breach — covers shortfall ${alert.shortfall} ${recipient.currency}.`,
+      requires_fx: requiresFx,
+      notes: requiresFx
+        ? [`FX leg ${donor.currency}→${recipient.currency} adds T+1 settlement risk.`]
         : [],
-    },
-    {
-      from_account: donor.account_id,
-      to_account: r2.account_id,
-      amount: 350000,
-      currency_from: donor.currency,
-      currency_to: r2.currency,
-      rail: requiresFx2 ? "SWIFT" : "INTERNAL",
-      initiate_by: inDays(5),
-      rationale: `Top up ${r2.account_id} buffer before alert window closes on ${inDays(6)}.`,
-      requires_fx: requiresFx2,
-      notes: [],
-    },
-  ];
+    };
+  });
 }
 
 export function transferKey(t: TransferSuggestion): string {
