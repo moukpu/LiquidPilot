@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { ComposableMap, Geographies, Geography } from "react-simple-maps";
+import { ComposableMap, Geographies, Geography, ZoomableGroup } from "react-simple-maps";
 import { geoEqualEarth, geoPath } from "d3-geo";
 import type { Transaction } from "@/types/api";
 import { useT } from "@/i18n/locale-context";
@@ -224,17 +224,18 @@ export default function WorldMap({ transactions, onHoverPlane }: WorldMapProps) 
       <ComposableMap
         projection={projection as unknown as any}
         viewBox="0 0 800 400"
-        style={{ width: "100%", height: "100%" }}
+        style={{ width: "100%", height: "100%", outline: "none" }}
       >
-        <defs>
-          <filter id="tower-glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="2" result="coloredBlur" />
-            <feMerge>
-              <feMergeNode in="coloredBlur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
+        <ZoomableGroup zoom={1} center={[0, 0]} maxZoom={10}>
+          <defs>
+            <filter id="tower-glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="2" result="coloredBlur" />
+              <feMerge>
+                <feMergeNode in="coloredBlur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
 
         <Geographies geography="/world/world-110m.json">
           {({ geographies }) =>
@@ -394,6 +395,7 @@ export default function WorldMap({ transactions, onHoverPlane }: WorldMapProps) 
             </g>
           );
         })}
+        </ZoomableGroup>
       </ComposableMap>
     </div>
   );
