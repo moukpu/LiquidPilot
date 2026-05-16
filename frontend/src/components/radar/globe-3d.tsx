@@ -89,9 +89,11 @@ function planeColorHex(amount: number): string {
 }
 
 function planeSize(amount: number): number {
-  if (amount < 50000) return 0.008;
-  if (amount < 500000) return 0.012;
-  return 0.018;
+  // Halved vs the old sprite tier because PlaneModel itself is ~4 model units
+  // long; final world size = planeSize * 4 ~= 0.016 / 0.024 / 0.036.
+  if (amount < 50000) return 0.004;
+  if (amount < 500000) return 0.006;
+  return 0.009;
 }
 
 // --- Choose deterministic counterparty tower for OUT/IN tx -----------------
@@ -326,7 +328,12 @@ function World({
       const samples = sampleArc(src.pos, dst.pos, 80);
       const key = `${tx.account_id}-${tx.booking_date}-${tx.amount}-${tx.direction}-${tx.payment_type}`;
       const hash = fnv1a(key);
-      const duration = 5 + (hash % 3); // seconds for a full traversal
+      // Map clearing rail to visual duration. INTERNAL T+0 zips across in ~3s,
+      // SWIFT T+3 takes ~10.5s, CARD T+5 takes ~15.5s. Treasurers visually
+      // feel "this SWIFT is slow" without reading the tooltip. Tiny jitter
+      // (0..0.5s) so identical-rail flights don't march in lockstep.
+      const delay = tx.clearing_delay_days ?? 0;
+      const duration = 3 + delay * 2.5 + (hash % 100) / 200;
       const phase = (hash % 1000) / 1000; // 0..1
       return {
         tx,
@@ -514,8 +521,48 @@ function SpriteLabel({ label, city }: { label: string; city: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// Plane — canvas-texture sprite of the Lucide Plane icon, scaled by amount,
-// rotated in screen-space to match the flight direction along the arc.
+// PlaneModel — low-poly plane built from primitives. Local frame:
+//   nose at +X, wings span Z, up = +Y. Externally scaled by `size`.
+// ---------------------------------------------------------------------------
+function PlaneModel({ color, size }: { color: string; size: number }) {
+  const mat = useMemo(
+    () => new THREE.MeshStandardMaterial({ color, roughness: 0.4, metalness: 0.1 }),
+    [color]
+  );
+  return (
+    <group scale={[size, size, size]}>
+      {/* fuselage — cylinder lying along X */}
+      <mesh material={mat} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.5, 0.5, 4, 12]} />
+      </mesh>
+      {/* nose cone */}
+      <mesh material={mat} position={[2.4, 0, 0]} rotation={[0, 0, -Math.PI / 2]}>
+        <coneGeometry args={[0.5, 0.8, 12]} />
+      </mesh>
+      {/* main wings — thin box along Z */}
+      <mesh material={mat} position={[0.2, 0, 0]}>
+        <boxGeometry args={[1.4, 0.15, 5.5]} />
+      </mesh>
+      {/* horizontal stabilizer (rear small wings) */}
+      <mesh material={mat} position={[-1.6, 0, 0]}>
+        <boxGeometry args={[0.6, 0.1, 2.0]} />
+      </mesh>
+      {/* vertical stabilizer (tail fin) */}
+      <mesh material={mat} position={[-1.6, 0.7, 0]}>
+        <boxGeometry args={[0.6, 1.0, 0.1]} />
+      </mesh>
+      {/* cockpit hint — squashed sphere */}
+      <mesh material={mat} position={[1.2, 0.35, 0]} scale={[0.8, 0.4, 0.4]}>
+        <sphereGeometry args={[0.5, 12, 12]} />
+      </mesh>
+    </group>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Plane — animated wrapper that walks the arc and orients PlaneModel so its
+// nose points along the direction of motion with wings parallel to the
+// surface beneath it.
 // ---------------------------------------------------------------------------
 function Plane({
   samples,
@@ -534,29 +581,20 @@ function Plane({
   onEnter: () => void;
   onLeave: () => void;
 }) {
-  const ref = useRef<THREE.Sprite>(null);
+  const ref = useRef<THREE.Group>(null);
+  const [hovered, setHovered] = useState(false);
 
-  // canvas-rendered Lucide Plane icon, tinted to `color`
-  const planeTexture = useMemo(() => {
-    const canvas = document.createElement("canvas");
-    canvas.width = 128;
-    canvas.height = 128;
-    const ctx = canvas.getContext("2d")!;
-    ctx.translate(64, 64);
-    ctx.fillStyle = color;
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 6;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    // Stylised Lucide Plane silhouette, centred on origin (~96×96 box)
-    const path = new Path2D(
-      "M-22 -8 L22 6 L22 -2 L34 4 L34 -6 L22 -14 L22 -22 L14 -22 L8 -10 L-12 -22 L-22 -22 L-12 -8 Z"
-    );
-    ctx.fill(path);
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.needsUpdate = true;
-    return tex;
-  }, [color]);
+  // reusable temp vectors so we don't allocate every frame
+  const tmp = useMemo(
+    () => ({
+      forward: new THREE.Vector3(),
+      up: new THREE.Vector3(),
+      right: new THREE.Vector3(),
+      orthoForward: new THREE.Vector3(),
+      m: new THREE.Matrix4(),
+    }),
+    []
+  );
 
   useFrame((state) => {
     if (!ref.current) return;
@@ -566,22 +604,20 @@ function Plane({
     const i0 = Math.floor(idx);
     const i1 = Math.min(samples.length - 1, i0 + 1);
     const frac = idx - i0;
-    const p = samples[i0].clone().lerp(samples[i1], frac);
-    ref.current.position.copy(p);
 
-    // screen-space rotation: project current + next sample to NDC, take atan2
-    const next = samples[i1].clone();
-    const cam = state.camera;
-    const pNDC = p.clone().project(cam);
-    const nNDC = next.project(cam);
-    const dx = nNDC.x - pNDC.x;
-    const dy = nNDC.y - pNDC.y;
-    const angle = Math.atan2(dy, dx);
-    // Plane icon's "forward" is up-and-right; -PI/4 corrects to horizontal-right
-    (ref.current.material as THREE.SpriteMaterial).rotation = angle - Math.PI / 4;
+    // current position by lerping consecutive samples
+    ref.current.position.copy(samples[i0]).lerp(samples[i1], frac);
+
+    // orientation: forward = direction of motion, up = outward radial
+    tmp.forward.copy(samples[i1]).sub(samples[i0]).normalize();
+    tmp.up.copy(ref.current.position).normalize();
+    tmp.right.crossVectors(tmp.forward, tmp.up).normalize();
+    tmp.orthoForward.crossVectors(tmp.up, tmp.right).normalize();
+    // Build a rotation that maps model-space (+X forward, +Y up, +Z right)
+    // to (orthoForward, up, right) in world.
+    tmp.m.makeBasis(tmp.orthoForward, tmp.up, tmp.right);
+    ref.current.setRotationFromMatrix(tmp.m);
   });
-
-  const [hovered, setHovered] = useState(false);
 
   const handlePointerOver = (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation();
@@ -595,17 +631,12 @@ function Plane({
     document.body.style.cursor = "default";
   };
 
-  const s = size * 4 * (hovered ? 1.4 : 1);
+  const worldScale = size * (hovered ? 1.4 : 1.0);
 
   return (
-    <sprite
-      ref={ref}
-      scale={[s, s, 1]}
-      onPointerOver={handlePointerOver}
-      onPointerOut={handlePointerOut}
-    >
-      <spriteMaterial map={planeTexture} transparent depthWrite={false} />
-    </sprite>
+    <group ref={ref} onPointerOver={handlePointerOver} onPointerOut={handlePointerOut}>
+      <PlaneModel color={color} size={worldScale} />
+    </group>
   );
 }
 
