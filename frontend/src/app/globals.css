@@ -4,15 +4,15 @@
 
 @layer base {
   :root {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
-    --card: 215 28% 17%;
-    --primary: 175 70% 41%;
-    --accent: 215 25% 27%;
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --primary: 199 89% 48%;
+    --accent: 210 40% 96%;
     --warning: 38 92% 50%;
     --destructive: 0 84% 60%;
-    --muted: 215 25% 27%;
-    --border: 215 25% 27%;
+    --muted: 215 16% 47%;
+    --border: 214 32% 91%;
   }
 
   body {
@@ -22,9 +22,10 @@
 
 @layer utilities {
   .glass {
-    @apply bg-[#0F172A]/80 backdrop-blur-md border border-white/5;
+    @apply bg-white/70 backdrop-blur-md border border-slate-200/60;
   }
   .glass-card {
-    @apply bg-[#1E293B]/80 backdrop-blur-lg border border-white/5 shadow-xl shadow-black/40;
+    @apply bg-white/80 backdrop-blur-lg border border-slate-200/80 shadow-xl shadow-slate-200/50;
   }
 }
+

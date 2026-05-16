@@ -63,7 +63,7 @@ export default function Home() {
             <span className="flex h-2 w-2 rounded-full bg-primary animate-pulse mr-2"></span>
             SynergyX Hackathon 2026
           </div>
-          <h1 className="text-5xl sm:text-7xl font-display font-bold tracking-tight text-white">
+          <h1 className="text-5xl sm:text-7xl font-display font-bold tracking-tight text-foreground">
             Predictive Liquidity <br className="hidden sm:block" />
             <span className="text-primary">Cockpit</span>
           </h1>
@@ -95,8 +95,8 @@ export default function Home() {
                   <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
                     <feature.icon className="h-6 w-6" />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2 font-display text-white transition-all">{feature.title}</h3>
-                  <p className="text-sm text-muted-foreground group-hover:text-slate-300 transition-colors">
+                  <h3 className="text-lg font-semibold mb-2 font-display text-foreground transition-all">{feature.title}</h3>
+                  <p className="text-sm text-muted-foreground group-hover:text-slate-700 transition-colors">
                     {feature.description}
                   </p>
                 </div>

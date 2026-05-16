@@ -242,8 +242,8 @@ export default function WorldMap({ transactions, onHoverPlane }: WorldMapProps) 
               <Geography
                 key={geo.rsmKey}
                 geography={geo}
-                fill="#0b1426"
-                stroke="#1e3a5f"
+                fill="#E2E8F0"
+                stroke="#CBD5E1"
                 strokeWidth={0.5}
                 style={{
                   default: { outline: "none" },
@@ -259,7 +259,7 @@ export default function WorldMap({ transactions, onHoverPlane }: WorldMapProps) 
           <path
             d={spherePath}
             fill="none"
-            stroke="#1e3a5f"
+            stroke="#CBD5E1"
             strokeWidth={1}
           />
         )}
@@ -270,7 +270,7 @@ export default function WorldMap({ transactions, onHoverPlane }: WorldMapProps) 
             key={arc.id}
             d={arc.path}
             fill="none"
-            stroke="#1e3a5f"
+            stroke="#94A3B8"
             strokeWidth={1}
             strokeDasharray="4 4"
             opacity={0.6}
@@ -283,7 +283,7 @@ export default function WorldMap({ transactions, onHoverPlane }: WorldMapProps) 
             <motion.circle
               r={8}
               fill="none"
-              stroke="#06b6d4"
+              stroke="#0284c7"
               strokeWidth={1.5}
               initial={{ opacity: 0.8, scale: 1 }}
               animate={{ opacity: 0, scale: 3 }}
@@ -296,7 +296,7 @@ export default function WorldMap({ transactions, onHoverPlane }: WorldMapProps) 
             <motion.circle
               r={8}
               fill="none"
-              stroke="#06b6d4"
+              stroke="#0284c7"
               strokeWidth={1}
               initial={{ opacity: 0.6, scale: 1 }}
               animate={{ opacity: 0, scale: 2.5 }}
@@ -307,11 +307,11 @@ export default function WorldMap({ transactions, onHoverPlane }: WorldMapProps) 
                 delay: 0.3,
               }}
             />
-            <circle r={5} fill="#06b6d4" filter="url(#tower-glow)" />
-            <line x1={-12} y1={0} x2={-8} y2={0} stroke="#06b6d4" strokeWidth={0.8} />
-            <line x1={8} y1={0} x2={12} y2={0} stroke="#06b6d4" strokeWidth={0.8} />
-            <line x1={0} y1={-12} x2={0} y2={-8} stroke="#06b6d4" strokeWidth={0.8} />
-            <line x1={0} y1={8} x2={0} y2={12} stroke="#06b6d4" strokeWidth={0.8} />
+            <circle r={5} fill="#0284c7" filter="url(#tower-glow)" />
+            <line x1={-12} y1={0} x2={-8} y2={0} stroke="#0284c7" strokeWidth={0.8} />
+            <line x1={8} y1={0} x2={12} y2={0} stroke="#0284c7" strokeWidth={0.8} />
+            <line x1={0} y1={-12} x2={0} y2={-8} stroke="#0284c7" strokeWidth={0.8} />
+            <line x1={0} y1={8} x2={0} y2={12} stroke="#0284c7" strokeWidth={0.8} />
             <g transform="translate(14, -10)">
               <rect
                 x={-4}
@@ -319,15 +319,15 @@ export default function WorldMap({ transactions, onHoverPlane }: WorldMapProps) 
                 width={tower.label.length * 7 + 8}
                 height={28}
                 rx={4}
-                fill="#0b1426"
-                stroke="#1e3a5f"
+                fill="#ffffff"
+                stroke="#cbd5e1"
                 strokeWidth={0.5}
               />
               <text
                 x={(tower.label.length * 7 + 8) / 2}
                 y={-2}
                 textAnchor="middle"
-                fill="#06b6d4"
+                fill="#0284c7"
                 fontSize={9}
                 fontFamily="JetBrains Mono, monospace"
                 fontWeight={600}
@@ -338,7 +338,7 @@ export default function WorldMap({ transactions, onHoverPlane }: WorldMapProps) 
                 x={(tower.label.length * 7 + 8) / 2}
                 y={8}
                 textAnchor="middle"
-                fill="#94a3b8"
+                fill="#64748b"
                 fontSize={7}
                 fontFamily="Inter, sans-serif"
               >

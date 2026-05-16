@@ -56,7 +56,7 @@ export default function AccountCard({ account, transactions }: AccountCardProps)
         <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground/70 mb-1">
           {t("account.ledgerBalance")}
         </div>
-        <div className="text-3xl font-mono font-bold tabular-nums text-white">
+        <div className="text-3xl font-mono font-bold tabular-nums text-foreground">
           {sym}
           {formatNumber(account.current_ledger_balance, 2, intl)}
         </div>
@@ -68,7 +68,7 @@ export default function AccountCard({ account, transactions }: AccountCardProps)
         </div>
       </div>
 
-      <div className="relative z-10 grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
+      <div className="relative z-10 grid grid-cols-2 gap-4 pt-4 border-t border-slate-200/50">
         <div>
           <div className="text-[10px] font-mono tracking-widest uppercase text-emerald-400/80 mb-1">{t("account.in")}</div>
           <div className="font-mono text-sm font-bold tabular-nums text-emerald-400">
@@ -92,7 +92,7 @@ export default function AccountCard({ account, transactions }: AccountCardProps)
       </div>
 
       {related.length > 0 && (
-        <div className="relative z-10 text-[10px] font-mono tracking-widest uppercase text-muted-foreground/70 pt-2 border-t border-white/5 flex items-center gap-2">
+        <div className="relative z-10 text-[10px] font-mono tracking-widest uppercase text-muted-foreground/70 pt-2 border-t border-slate-200/50 flex items-center gap-2">
           <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
           {t("account.inTransit", { amount: related.length })}
         </div>
