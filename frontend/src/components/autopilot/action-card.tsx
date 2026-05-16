@@ -11,7 +11,7 @@ import {
   Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { formatMoney } from "@/lib/format";
+import { displayAccountLabel, formatMoney } from "@/lib/format";
 import type { Alert, TransferSuggestion } from "@/types/api";
 import type { ActionState, ExecutedMeta } from "@/hooks/use-autopilot-state";
 import { useLocale, localeToIntl } from "@/i18n/locale-context";
@@ -149,9 +149,9 @@ export default function ActionCard({
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <ArrowRightLeft className="w-4 h-4 text-primary shrink-0" />
           <div className="font-mono text-sm font-semibold truncate min-w-0">
-            <span>{transfer.from_account}</span>
+            <span>{displayAccountLabel(transfer.from_account)}</span>
             <span className="text-muted-foreground mx-1.5">→</span>
-            <span>{transfer.to_account}</span>
+            <span>{displayAccountLabel(transfer.to_account)}</span>
           </div>
         </div>
         <div className="text-right shrink-0 max-w-[40%]">
@@ -192,7 +192,7 @@ export default function ActionCard({
       </p>
 
       {note && (
-        <div className="text-[10px] font-mono text-amber-400/80 leading-snug border-l-2 border-amber-500/40 pl-2">
+        <div className="text-[10px] font-mono text-amber-700 leading-snug border-l-2 border-amber-500/50 pl-2">
           {note}
         </div>
       )}
@@ -223,16 +223,16 @@ export default function ActionCard({
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 space-y-2"
+          className="rounded-md border border-amber-500/50 bg-amber-50 p-3 space-y-2"
         >
-          <div className="text-xs font-medium text-amber-300">
+          <div className="text-xs font-semibold text-amber-800">
             {t("action.confirmPrompt")}
           </div>
           <div className="text-[11px] font-mono text-foreground/80 leading-relaxed">
             {t("action.move", {
               amount: amountStr,
-              from: transfer.from_account,
-              to: transfer.to_account,
+              from: displayAccountLabel(transfer.from_account),
+              to: displayAccountLabel(transfer.to_account),
               rail: transfer.rail,
               initiateBy: initiateByStr,
             })}
@@ -285,7 +285,7 @@ export default function ActionCard({
 
       {state === "executed" && (
         <div className="flex items-center justify-between gap-2 pt-1 text-xs">
-          <div className="flex items-center gap-2 text-emerald-400">
+          <div className="flex items-center gap-2 text-emerald-700">
             <Check className="w-4 h-4" />
             <span className="font-mono uppercase tracking-wider">
               {t("action.settledOn", { rail: transfer.rail })}

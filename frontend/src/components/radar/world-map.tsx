@@ -8,27 +8,30 @@ import type { Transaction } from "@/types/api";
 import { useT } from "@/i18n/locale-context";
 import type { MessageKey } from "@/i18n/messages/en";
 import { Plane } from "lucide-react";
+import { displayAccountLabel } from "@/lib/format";
 
+// Label is derived at render time via displayAccountLabel(id) — keeps
+// the user-visible string in lockstep with the formatter helper used by
+// every other surface (account-card, frozen-capital, action-card).
 interface Tower {
   id: string;
   cityKey: MessageKey;
   coords: [number, number];
-  label: string;
 }
 
 const TOWERS: Tower[] = [
-  { id: "EUR-Main", cityKey: "radar.city.frankfurt", coords: [8.68, 50.11], label: "EUR-Main" },
-  { id: "USD-Correspondent", cityKey: "radar.city.newYork", coords: [-74.0, 40.71], label: "USD-Correspondent" },
-  { id: "GBP-Local", cityKey: "radar.city.london", coords: [-0.13, 51.51], label: "GBP-Local" },
+  { id: "EUR-Main", cityKey: "radar.city.frankfurt", coords: [8.68, 50.11] },
+  { id: "USD-Correspondent", cityKey: "radar.city.newYork", coords: [-74.0, 40.71] },
+  { id: "GBP-Local", cityKey: "radar.city.london", coords: [-0.13, 51.51] },
   // d3 geoEquirectangular expects [lon, lat] — same coords as the 3D
   // globe, just transposed. Markers may visually overlap in Central
   // Europe (Frankfurt/Berlin/Zurich); that's intentional, see globe-3d.
-  { id: "EUR-Berlin", cityKey: "radar.city.berlin", coords: [13.41, 52.52], label: "EUR-Berlin" },
-  { id: "USD-LA", cityKey: "radar.city.losAngeles", coords: [-118.24, 34.05], label: "USD-LA" },
-  { id: "CHF-Zurich", cityKey: "radar.city.zurich", coords: [8.54, 47.37], label: "CHF-Zurich" },
-  { id: "JPY-Tokyo", cityKey: "radar.city.tokyo", coords: [139.69, 35.68], label: "JPY-Tokyo" },
-  { id: "SGD-Singapore", cityKey: "radar.city.singapore", coords: [103.82, 1.35], label: "SGD-Singapore" },
-  { id: "KZT-Almaty", cityKey: "radar.city.almaty", coords: [76.95, 43.25], label: "KZT-Almaty" },
+  { id: "EUR-Berlin", cityKey: "radar.city.berlin", coords: [13.41, 52.52] },
+  { id: "USD-LA", cityKey: "radar.city.losAngeles", coords: [-118.24, 34.05] },
+  { id: "CHF-Zurich", cityKey: "radar.city.zurich", coords: [8.54, 47.37] },
+  { id: "JPY-Tokyo", cityKey: "radar.city.tokyo", coords: [139.69, 35.68] },
+  { id: "SGD-Singapore", cityKey: "radar.city.singapore", coords: [103.82, 1.35] },
+  { id: "KZT-Almaty", cityKey: "radar.city.almaty", coords: [76.95, 43.25] },
 ];
 
 function fnv1a(str: string): number {
@@ -231,8 +234,8 @@ export default function WorldMap({ transactions, onHoverPlane }: WorldMapProps) 
       payment_type: flight.tx.payment_type,
       value_date: flight.tx.value_date,
       clearing_delay_days: flight.tx.clearing_delay_days,
-      src: flight.src,
-      dst: flight.dst,
+      src: displayAccountLabel(flight.src),
+      dst: displayAccountLabel(flight.dst),
     });
   };
 
@@ -289,49 +292,56 @@ export default function WorldMap({ transactions, onHoverPlane }: WorldMapProps) 
               ))}
 
               {/* Towers */}
-              {towerPoints.map((tower) => (
-                <g key={tower.id} transform={`translate(${tower.x}, ${tower.y})`}>
-                  {/* Strict, non-pulsing dot. Scales down to stay small. */}
-                  <circle r={4 / zoom} fill="#0284c7" />
-                  
-                  {/* Text label that scales down visually to stay constant font size */}
-                  <g transform={`scale(${1 / zoom})`}>
-                    <g transform="translate(14, -10)">
-                      <rect
-                        x={-4}
-                        y={-14}
-                        width={tower.label.length * 7 + 8}
-                        height={28}
-                        rx={4}
-                        fill="#ffffff"
-                        stroke="#cbd5e1"
-                        strokeWidth={0.5}
-                      />
-                      <text
-                        x={(tower.label.length * 7 + 8) / 2}
-                        y={-2}
-                        textAnchor="middle"
-                        fill="#0284c7"
-                        fontSize={9}
-                        fontFamily="JetBrains Mono, monospace"
-                        fontWeight={600}
-                      >
-                        {tower.label}
-                      </text>
-                      <text
-                        x={(tower.label.length * 7 + 8) / 2}
-                        y={8}
-                        textAnchor="middle"
-                        fill="#64748b"
-                        fontSize={7}
-                        fontFamily="Inter, sans-serif"
-                      >
-                        {t(tower.cityKey)}
-                      </text>
+              {towerPoints.map((tower) => {
+                // Compute the user-visible label once per render so we can
+                // size the rounded-rect background to fit it (svg <rect>
+                // can't auto-size to its <text> child).
+                const label = displayAccountLabel(tower.id);
+                const labelWidth = label.length * 7 + 8;
+                return (
+                  <g key={tower.id} transform={`translate(${tower.x}, ${tower.y})`}>
+                    {/* Strict, non-pulsing dot. Scales down to stay small. */}
+                    <circle r={4 / zoom} fill="#0284c7" />
+
+                    {/* Text label that scales down visually to stay constant font size */}
+                    <g transform={`scale(${1 / zoom})`}>
+                      <g transform="translate(14, -10)">
+                        <rect
+                          x={-4}
+                          y={-14}
+                          width={labelWidth}
+                          height={28}
+                          rx={4}
+                          fill="#ffffff"
+                          stroke="#cbd5e1"
+                          strokeWidth={0.5}
+                        />
+                        <text
+                          x={labelWidth / 2}
+                          y={-2}
+                          textAnchor="middle"
+                          fill="#0284c7"
+                          fontSize={9}
+                          fontFamily="JetBrains Mono, monospace"
+                          fontWeight={600}
+                        >
+                          {label}
+                        </text>
+                        <text
+                          x={labelWidth / 2}
+                          y={8}
+                          textAnchor="middle"
+                          fill="#64748b"
+                          fontSize={7}
+                          fontFamily="Inter, sans-serif"
+                        >
+                          {t(tower.cityKey)}
+                        </text>
+                      </g>
                     </g>
                   </g>
-                </g>
-              ))}
+                );
+              })}
 
               {/* Flights (Planes) */}
               {flights.map((flight, idx) => {

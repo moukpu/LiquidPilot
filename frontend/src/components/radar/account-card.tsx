@@ -78,7 +78,7 @@ export default function AccountCard({ account, transactions }: AccountCardProps)
 
       <div className="relative z-10 grid grid-cols-2 gap-4 pt-4 border-t border-slate-200/50">
         <div>
-          <div className="text-[10px] font-mono tracking-widest uppercase text-emerald-400/80 mb-1">
+          <div className="text-[10px] font-mono tracking-widest uppercase text-emerald-700/80 mb-1">
             {t("account.in")}
           </div>
           <div className="font-mono text-sm font-bold tabular-nums text-emerald-500">
@@ -90,7 +90,7 @@ export default function AccountCard({ account, transactions }: AccountCardProps)
           </div>
         </div>
         <div>
-          <div className="text-[10px] font-mono tracking-widest uppercase text-rose-400/80 mb-1">
+          <div className="text-[10px] font-mono tracking-widest uppercase text-rose-700/80 mb-1">
             {t("account.out")}
           </div>
           <div className="font-mono text-sm font-bold tabular-nums text-rose-500">

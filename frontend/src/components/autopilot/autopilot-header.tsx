@@ -53,9 +53,9 @@ export default function AutopilotHeader({
           {t("status.lastSync")} <span className="text-foreground">{formatTime(lastSync, intl)}</span>
         </span>
         {error ? (
-          <span className="text-rose-400">{t("status.offline")} · {error}</span>
+          <span className="text-rose-600">{t("status.offline")} · {error}</span>
         ) : (
-          <span className="text-emerald-400">{t("status.online")}</span>
+          <span className="text-emerald-600">{t("status.online")}</span>
         )}
       </div>
 

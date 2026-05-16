@@ -137,7 +137,7 @@ export default function ActionQueue({
                 <button
                   type="button"
                   onClick={() => setExecutedOpen((v) => !v)}
-                  className="w-full flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-emerald-400/80 hover:text-emerald-400 py-1"
+                  className="w-full flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-emerald-700 hover:text-emerald-800 py-1"
                 >
                   {executedOpen ? (
                     <ChevronDown className="w-3 h-3" />
@@ -198,7 +198,7 @@ export default function ActionQueue({
 
             {infoOnlyAlerts.length > 0 && (
               <div className="pt-2 space-y-2">
-                <div className="text-[10px] font-mono uppercase tracking-wider text-amber-400/80">
+                <div className="text-[10px] font-mono uppercase tracking-wider text-amber-700">
                   {t("autopilot.queue.infoSection", {
                     n: infoOnlyAlerts.length,
                   })}

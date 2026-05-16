@@ -17,29 +17,32 @@ import countries110m from "world-atlas/countries-110m.json";
 import type { Transaction } from "@/types/api";
 import { useT } from "@/i18n/locale-context";
 import type { MessageKey } from "@/i18n/messages/en";
+import { displayAccountLabel } from "@/lib/format";
 
 // --- Tower definitions: same 3 cities as the flat map ----------------------
+// Label is derived at render time via displayAccountLabel(id) so the user-
+// visible string never drifts from the canonical formatting (`EUR · City`,
+// or just the bare currency code for legacy single-tower ids).
 interface Tower {
   id: string;
   cityKey: MessageKey;
   lat: number;
   lon: number;
-  label: string;
 }
 
 const TOWERS: Tower[] = [
-  { id: "EUR-Main", cityKey: "radar.city.frankfurt", lat: 50.11, lon: 8.68, label: "EUR-Main" },
-  { id: "USD-Correspondent", cityKey: "radar.city.newYork", lat: 40.71, lon: -74.0, label: "USD-Correspondent" },
-  { id: "GBP-Local", cityKey: "radar.city.london", lat: 51.51, lon: -0.13, label: "GBP-Local" },
+  { id: "EUR-Main", cityKey: "radar.city.frankfurt", lat: 50.11, lon: 8.68 },
+  { id: "USD-Correspondent", cityKey: "radar.city.newYork", lat: 40.71, lon: -74.0 },
+  { id: "GBP-Local", cityKey: "radar.city.london", lat: 51.51, lon: -0.13 },
   // Berlin / Frankfurt / Zurich are within ~5° of each other so the
   // markers visually cluster on the rotating globe — that's a realistic
   // illustration of intra-EU banking concentration, not a coordinate bug.
-  { id: "EUR-Berlin", cityKey: "radar.city.berlin", lat: 52.52, lon: 13.41, label: "EUR-Berlin" },
-  { id: "USD-LA", cityKey: "radar.city.losAngeles", lat: 34.05, lon: -118.24, label: "USD-LA" },
-  { id: "CHF-Zurich", cityKey: "radar.city.zurich", lat: 47.37, lon: 8.54, label: "CHF-Zurich" },
-  { id: "JPY-Tokyo", cityKey: "radar.city.tokyo", lat: 35.68, lon: 139.69, label: "JPY-Tokyo" },
-  { id: "SGD-Singapore", cityKey: "radar.city.singapore", lat: 1.35, lon: 103.82, label: "SGD-Singapore" },
-  { id: "KZT-Almaty", cityKey: "radar.city.almaty", lat: 43.25, lon: 76.95, label: "KZT-Almaty" },
+  { id: "EUR-Berlin", cityKey: "radar.city.berlin", lat: 52.52, lon: 13.41 },
+  { id: "USD-LA", cityKey: "radar.city.losAngeles", lat: 34.05, lon: -118.24 },
+  { id: "CHF-Zurich", cityKey: "radar.city.zurich", lat: 47.37, lon: 8.54 },
+  { id: "JPY-Tokyo", cityKey: "radar.city.tokyo", lat: 35.68, lon: 139.69 },
+  { id: "SGD-Singapore", cityKey: "radar.city.singapore", lat: 1.35, lon: 103.82 },
+  { id: "KZT-Almaty", cityKey: "radar.city.almaty", lat: 43.25, lon: 76.95 },
 ];
 
 const GLOBE_RADIUS = 1;
@@ -395,7 +398,12 @@ function World({
 
       {/* towers */}
       {towerPoints.map((tw) => (
-        <TowerMarker key={tw.id} position={tw.pos} label={tw.label} city={t(tw.cityKey)} />
+        <TowerMarker
+          key={tw.id}
+          position={tw.pos}
+          label={displayAccountLabel(tw.id)}
+          city={t(tw.cityKey)}
+        />
       ))}
 
       {/* flights */}
@@ -415,8 +423,8 @@ function World({
                 payment_type: f.tx.payment_type,
                 value_date: f.tx.value_date,
                 clearing_delay_days: f.tx.clearing_delay_days,
-                src: f.src,
-                dst: f.dst,
+                src: displayAccountLabel(f.src),
+                dst: displayAccountLabel(f.dst),
               },
               remainingMs
             )
