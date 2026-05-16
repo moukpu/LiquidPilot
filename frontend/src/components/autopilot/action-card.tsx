@@ -14,6 +14,11 @@ import { Button } from "@/components/ui/button";
 import { formatMoney } from "@/lib/format";
 import type { TransferSuggestion } from "@/types/api";
 import type { ActionState, ExecutedMeta } from "@/hooks/use-autopilot-state";
+import { useLocale, localeToIntl } from "@/i18n/locale-context";
+import {
+  translateBackendTransfer,
+  translateBackendNote,
+} from "@/i18n/translate-backend";
 
 const EXECUTING_DURATION_MS = 1600;
 const CONFIRM_TIMEOUT_MS = 5000;
@@ -40,7 +45,14 @@ function stateClasses(state: ActionState) {
 }
 
 export default function ActionCard({ transfer, meta, onChange }: ActionCardProps) {
+  const { t, locale } = useLocale();
+  const intl = localeToIntl(locale);
   const state = meta.state;
+  const amountStr = formatMoney(transfer.amount, transfer.currency_from, { fractionDigits: 0 }, intl);
+  const initiateByStr = transfer.initiate_by
+    ? t("action.initiateBy", { date: transfer.initiate_by })
+    : "";
+  const note = translateBackendNote(transfer, locale);
 
   // Auto-revert from confirming → queued after timeout
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -88,9 +100,7 @@ export default function ActionCard({ transfer, meta, onChange }: ActionCardProps
         </div>
         <div className="text-right shrink-0">
           <div className="font-mono font-bold tabular-nums text-base leading-tight">
-            {formatMoney(transfer.amount, transfer.currency_from, {
-              fractionDigits: 0,
-            })}
+            {amountStr}
           </div>
           <div className="text-[10px] font-mono text-muted-foreground">
             {transfer.currency_from}
@@ -109,23 +119,25 @@ export default function ActionCard({ transfer, meta, onChange }: ActionCardProps
         <span className="text-muted-foreground">·</span>
         <span className="text-muted-foreground inline-flex items-center gap-1">
           <Clock className="w-3 h-3" />
-          {transfer.initiate_by ? `by ${transfer.initiate_by}` : "ASAP"}
+          {transfer.initiate_by
+            ? t("action.initiatePrefix", { date: transfer.initiate_by })
+            : t("action.initiateAsap")}
         </span>
         {transfer.requires_fx && (
           <>
             <span className="text-muted-foreground">·</span>
-            <span className="text-amber-400">FX</span>
+            <span className="text-amber-400">{t("action.fxBadge")}</span>
           </>
         )}
       </div>
 
       <p className="text-xs text-muted-foreground leading-relaxed">
-        {transfer.rationale}
+        {translateBackendTransfer(transfer, locale)}
       </p>
 
-      {transfer.notes.length > 0 && (
+      {note && (
         <div className="text-[10px] font-mono text-amber-400/80 leading-snug border-l-2 border-amber-500/40 pl-2">
-          {transfer.notes.join(" ")}
+          {note}
         </div>
       )}
 
@@ -137,7 +149,7 @@ export default function ActionCard({ transfer, meta, onChange }: ActionCardProps
             className="gap-1.5"
           >
             <Zap className="w-3.5 h-3.5" />
-            Execute
+            {t("action.execute")}
           </Button>
           <Button
             size="sm"
@@ -146,7 +158,7 @@ export default function ActionCard({ transfer, meta, onChange }: ActionCardProps
             className="gap-1.5 text-muted-foreground"
           >
             <X className="w-3.5 h-3.5" />
-            Skip
+            {t("action.skip")}
           </Button>
         </div>
       )}
@@ -158,20 +170,16 @@ export default function ActionCard({ transfer, meta, onChange }: ActionCardProps
           className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 space-y-2"
         >
           <div className="text-xs font-medium text-amber-300">
-            Confirm transfer?
+            {t("action.confirmPrompt")}
           </div>
           <div className="text-[11px] font-mono text-foreground/80 leading-relaxed">
-            Move{" "}
-            <span className="font-semibold">
-              {formatMoney(transfer.amount, transfer.currency_from, {
-                fractionDigits: 0,
-              })}
-            </span>{" "}
-            from <span className="font-semibold">{transfer.from_account}</span>{" "}
-            to <span className="font-semibold">{transfer.to_account}</span> via{" "}
-            <span className="text-primary">{transfer.rail}</span>
-            {transfer.initiate_by ? `, initiate by ${transfer.initiate_by}` : ""}
-            .
+            {t("action.move", {
+              amount: amountStr,
+              from: transfer.from_account,
+              to: transfer.to_account,
+              rail: transfer.rail,
+              initiateBy: initiateByStr,
+            })}
           </div>
           <div className="flex items-center gap-2 pt-1">
             <Button
@@ -180,7 +188,7 @@ export default function ActionCard({ transfer, meta, onChange }: ActionCardProps
               className="gap-1.5"
             >
               <Check className="w-3.5 h-3.5" />
-              Confirm execution
+              {t("action.confirmExecution")}
             </Button>
             <Button
               size="sm"
@@ -188,10 +196,10 @@ export default function ActionCard({ transfer, meta, onChange }: ActionCardProps
               onClick={() => onChange("queued")}
               className="text-muted-foreground"
             >
-              Cancel
+              {t("action.cancel")}
             </Button>
             <span className="ml-auto text-[10px] font-mono text-muted-foreground">
-              auto-revert {Math.round(CONFIRM_TIMEOUT_MS / 1000)}s
+              {t("action.autoRevert", { n: Math.round(CONFIRM_TIMEOUT_MS / 1000) })}
             </span>
           </div>
         </motion.div>
@@ -202,7 +210,7 @@ export default function ActionCard({ transfer, meta, onChange }: ActionCardProps
           <div className="flex items-center gap-2 text-xs text-primary">
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
             <span className="font-mono uppercase tracking-wider">
-              Executing on {transfer.rail}…
+              {t("action.executingOn", { rail: transfer.rail })}
             </span>
           </div>
           <div className="h-1 w-full rounded-full bg-primary/10 overflow-hidden">
@@ -224,12 +232,12 @@ export default function ActionCard({ transfer, meta, onChange }: ActionCardProps
           <div className="flex items-center gap-2 text-emerald-400">
             <Check className="w-4 h-4" />
             <span className="font-mono uppercase tracking-wider">
-              Settled on {transfer.rail}
+              {t("action.settledOn", { rail: transfer.rail })}
             </span>
           </div>
           <span className="font-mono text-[10px] text-muted-foreground">
             {meta.executedAt
-              ? new Date(meta.executedAt).toLocaleTimeString("en-US", {
+              ? new Date(meta.executedAt).toLocaleTimeString(intl, {
                   hour12: false,
                 })
               : ""}
@@ -241,7 +249,7 @@ export default function ActionCard({ transfer, meta, onChange }: ActionCardProps
         <div className="flex items-center justify-between gap-2 pt-1">
           <div className="flex items-center gap-2 text-muted-foreground text-xs">
             <X className="w-3.5 h-3.5" />
-            <span className="font-mono uppercase tracking-wider">Skipped</span>
+            <span className="font-mono uppercase tracking-wider">{t("action.skipped")}</span>
           </div>
           <Button
             size="sm"
@@ -249,7 +257,7 @@ export default function ActionCard({ transfer, meta, onChange }: ActionCardProps
             onClick={() => onChange("queued")}
             className="text-[10px] h-6 px-2 text-muted-foreground"
           >
-            Restore
+            {t("action.restore")}
           </Button>
         </div>
       )}

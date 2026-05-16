@@ -9,6 +9,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { formatTime } from "@/lib/format";
+import { useLocale, localeToIntl } from "@/i18n/locale-context";
 
 export interface AutopilotHeaderProps {
   demoMode: boolean;
@@ -31,47 +32,39 @@ export default function AutopilotHeader({
   error,
   counts,
 }: AutopilotHeaderProps) {
+  const { t, locale } = useLocale();
+  const intl = localeToIntl(locale);
   return (
     <header className="h-14 shrink-0 border-b border-border bg-card/40 backdrop-blur-sm flex items-center px-6 gap-6">
       <div className="flex flex-col leading-tight">
         <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-primary">
-          Autopilot · Command Center
+          {t("autopilot.eyebrow")}
         </span>
-        <span className="text-sm font-semibold">Action queue & risk telemetry</span>
+        <span className="text-sm font-semibold">{t("autopilot.title")}</span>
       </div>
 
       <div className="flex-1 flex items-center justify-center gap-4 text-[11px] font-mono">
         <span className="text-muted-foreground">
-          Last sync <span className="text-foreground">{formatTime(lastSync)}</span>
+          {t("status.lastSync")} <span className="text-foreground">{formatTime(lastSync, intl)}</span>
         </span>
         {error ? (
-          <span className="text-rose-400">offline · {error}</span>
+          <span className="text-rose-400">{t("status.offline")} · {error}</span>
         ) : (
-          <span className="text-emerald-400">online</span>
+          <span className="text-emerald-400">{t("status.online")}</span>
         )}
       </div>
 
       <div className="flex items-center gap-5">
-        <div className="flex items-center gap-3 text-[10px] font-mono uppercase tracking-wider">
-          <span className="text-muted-foreground">
-            <span className="text-foreground tabular-nums">{counts.queued}</span> queued
-          </span>
+        <div className="flex items-center gap-3 text-[10px] font-mono uppercase tracking-wider tabular-nums">
+          <span className="text-muted-foreground">{t("autopilot.counter.queued", { n: counts.queued })}</span>
           {counts.confirming > 0 && (
-            <span className="text-amber-400">
-              <span className="tabular-nums">{counts.confirming}</span> confirm
-            </span>
+            <span className="text-amber-400">{t("autopilot.counter.confirm", { n: counts.confirming })}</span>
           )}
           {counts.executing > 0 && (
-            <span className="text-primary">
-              <span className="tabular-nums">{counts.executing}</span> exec
-            </span>
+            <span className="text-primary">{t("autopilot.counter.exec", { n: counts.executing })}</span>
           )}
-          <span className="text-emerald-400">
-            <span className="tabular-nums">{counts.executed}</span> done
-          </span>
-          <span className="text-muted-foreground">
-            <span className="tabular-nums">{counts.skipped}</span> skip
-          </span>
+          <span className="text-emerald-400">{t("autopilot.counter.done", { n: counts.executed })}</span>
+          <span className="text-muted-foreground">{t("autopilot.counter.skip", { n: counts.skipped })}</span>
         </div>
 
         <TooltipProvider delayDuration={200}>
@@ -84,18 +77,17 @@ export default function AutopilotHeader({
                   }`}
                 />
                 <span className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
-                  Demo Mode
+                  {t("autopilot.demoMode")}
                 </span>
                 <Switch
                   checked={demoMode}
                   onCheckedChange={onToggleDemoMode}
-                  aria-label="Toggle demo mode"
+                  aria-label={t("autopilot.demoMode")}
                 />
               </label>
             </TooltipTrigger>
             <TooltipContent className="max-w-xs">
-              Synthesizes alerts and transfers from current account data for
-              presentation purposes — no real backend trigger.
+              {t("autopilot.demoTooltip")}
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

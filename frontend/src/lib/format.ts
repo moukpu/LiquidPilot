@@ -1,3 +1,5 @@
+export type IntlLocale = "en-US" | "ru-RU";
+
 const SYMBOLS: Record<string, string> = {
   EUR: "\u20AC",
   USD: "$",
@@ -11,32 +13,37 @@ export function currencySymbol(currency: string): string {
 export function formatMoney(
   amount: number,
   currency: string,
-  opts: { fractionDigits?: number; compact?: boolean } = {}
+  opts: { fractionDigits?: number; compact?: boolean } = {},
+  locale: IntlLocale = "en-US"
 ): string {
   const { fractionDigits = 0, compact = false } = opts;
   const sym = currencySymbol(currency);
   const formatted = compact
-    ? new Intl.NumberFormat("en-US", {
+    ? new Intl.NumberFormat(locale, {
         notation: "compact",
         maximumFractionDigits: 1,
       }).format(amount)
-    : amount.toLocaleString("en-US", {
+    : amount.toLocaleString(locale, {
         minimumFractionDigits: fractionDigits,
         maximumFractionDigits: fractionDigits,
       });
   return `${sym}${formatted}`;
 }
 
-export function formatNumber(amount: number, fractionDigits = 0): string {
-  return amount.toLocaleString("en-US", {
+export function formatNumber(
+  amount: number,
+  fractionDigits = 0,
+  locale: IntlLocale = "en-US"
+): string {
+  return amount.toLocaleString(locale, {
     minimumFractionDigits: fractionDigits,
     maximumFractionDigits: fractionDigits,
   });
 }
 
-export function formatTime(d: Date | null): string {
+export function formatTime(d: Date | null, locale: IntlLocale = "en-US"): string {
   if (!d) return "--:--:--";
-  return d.toLocaleTimeString("en-US", { hour12: false });
+  return d.toLocaleTimeString(locale, { hour12: false });
 }
 
 export function formatDate(s: string): string {

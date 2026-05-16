@@ -5,6 +5,7 @@ import { AnimatePresence } from "framer-motion";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import type { TransferSuggestion } from "@/types/api";
 import { transferKey } from "@/lib/autopilot-synth";
+import { useT } from "@/i18n/locale-context";
 import type {
   ActionState,
   ExecutedMeta,
@@ -31,6 +32,7 @@ export default function ActionQueue({
   onChange,
   showEmptyState,
 }: ActionQueueProps) {
+  const t = useT();
   const [executedOpen, setExecutedOpen] = useState(true);
   const [skippedOpen, setSkippedOpen] = useState(false);
 
@@ -50,10 +52,14 @@ export default function ActionQueue({
     <section className="flex flex-col min-h-0 rounded-lg border border-border bg-card/30 overflow-hidden">
       <header className="h-10 shrink-0 px-4 flex items-center justify-between border-b border-border">
         <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-primary">
-          Transfer queue
+          {t("autopilot.queue.section")}
         </span>
         <span className="text-[10px] font-mono text-muted-foreground tabular-nums">
-          {active.length} active · {executed.length} done · {skipped.length} skipped
+          {t("autopilot.queue.summary", {
+            active: active.length,
+            done: executed.length,
+            skipped: skipped.length,
+          })}
         </span>
       </header>
 
@@ -62,7 +68,7 @@ export default function ActionQueue({
           <EmptyState />
         ) : queueIsEmpty ? (
           <div className="text-xs text-muted-foreground text-center py-8">
-            No suggested transfers from the engine right now.
+            {t("autopilot.queue.empty")}
           </div>
         ) : (
           <>
@@ -79,7 +85,7 @@ export default function ActionQueue({
 
             {active.length === 0 && (executed.length > 0 || skipped.length > 0) && (
               <div className="text-xs text-muted-foreground text-center py-4">
-                All actions resolved.
+                {t("autopilot.queue.allResolved")}
               </div>
             )}
 
@@ -95,7 +101,7 @@ export default function ActionQueue({
                   ) : (
                     <ChevronRight className="w-3 h-3" />
                   )}
-                  Recently executed · {executed.length}
+                  {t("autopilot.queue.recentlyExecuted", { n: executed.length })}
                 </button>
                 {executedOpen && (
                   <div className="space-y-2 mt-2">
@@ -126,7 +132,7 @@ export default function ActionQueue({
                   ) : (
                     <ChevronRight className="w-3 h-3" />
                   )}
-                  Skipped · {skipped.length}
+                  {t("autopilot.queue.skippedSection", { n: skipped.length })}
                 </button>
                 {skippedOpen && (
                   <div className="space-y-2 mt-2">

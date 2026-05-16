@@ -2,6 +2,10 @@
 
 import { AlertTriangle, CheckCircle2, Info } from "lucide-react";
 import type { Alert, TransferSuggestion } from "@/types/api";
+import { useLocale, localeToIntl } from "@/i18n/locale-context";
+import { formatNumber } from "@/lib/format";
+import type { MessageKey } from "@/i18n/messages/en";
+import { translateBackendAlert, translateBackendNote } from "@/i18n/translate-backend";
 
 interface AlertsPanelProps {
   alerts: Alert[];
@@ -31,6 +35,8 @@ function severityBadgeClass(severity: string): string {
 }
 
 export default function AlertsPanel({ alerts, transfers }: AlertsPanelProps) {
+  const { t, locale } = useLocale();
+  const intl = localeToIntl(locale);
   const empty = alerts.length === 0 && transfers.length === 0;
 
   if (empty) {
@@ -38,8 +44,8 @@ export default function AlertsPanel({ alerts, transfers }: AlertsPanelProps) {
       <div className="rounded-lg border border-border bg-card p-5 flex items-center gap-3">
         <CheckCircle2 className="w-5 h-5 text-emerald-400" />
         <div>
-          <div className="text-sm font-medium">All clear</div>
-          <div className="text-xs text-muted-foreground">No alerts or suggested transfers.</div>
+          <div className="text-sm font-medium">{t("alerts.allClear")}</div>
+          <div className="text-xs text-muted-foreground">{t("alerts.noAlerts")}</div>
         </div>
       </div>
     );
@@ -55,16 +61,18 @@ export default function AlertsPanel({ alerts, transfers }: AlertsPanelProps) {
           {severityIcon(alert.severity)}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[10px] font-bold uppercase tracking-wider">{alert.severity}</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider">
+                {t(`severity.${alert.severity}` as MessageKey)}
+              </span>
               <span className="font-mono text-[10px] text-muted-foreground">{alert.account_id}</span>
               <span className="font-mono text-[10px] text-muted-foreground">· {alert.breach_date}</span>
-              <span className="font-mono text-[10px] text-muted-foreground">· in {alert.days_until_breach}d</span>
+              <span className="font-mono text-[10px] text-muted-foreground">· {t("autopilot.alerts.inDays", { n: alert.days_until_breach })}</span>
             </div>
-            <p className="text-xs mt-1 leading-relaxed">{alert.message}</p>
+            <p className="text-xs mt-1 leading-relaxed">{translateBackendAlert(alert, locale)}</p>
             <div className="text-[10px] font-mono text-muted-foreground mt-1">
-              Shortfall {alert.shortfall.toLocaleString("en-US", { maximumFractionDigits: 0 })} {alert.currency}
+              {t("autopilot.alerts.shortfall")} {formatNumber(alert.shortfall, 0, intl)} {alert.currency}
               {" · "}
-              Projected {alert.projected_balance.toLocaleString("en-US", { maximumFractionDigits: 0 })} vs floor {alert.min_balance.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+              {t("autopilot.alerts.projected")} {formatNumber(alert.projected_balance, 0, intl)} / {t("autopilot.alerts.floor")} {formatNumber(alert.min_balance, 0, intl)}
             </div>
           </div>
         </div>
@@ -76,7 +84,7 @@ export default function AlertsPanel({ alerts, transfers }: AlertsPanelProps) {
           className="rounded-lg border border-border bg-card p-3 space-y-2"
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Suggested transfer</span>
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("autopilot.queue.section")}</span>
             <span className="text-[10px] font-mono text-primary">
               {tx.currency_from}→{tx.currency_to}
             </span>
@@ -88,14 +96,16 @@ export default function AlertsPanel({ alerts, transfers }: AlertsPanelProps) {
           </div>
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>{tx.rail}</span>
-            <span className="font-mono text-foreground">{tx.amount.toLocaleString()}</span>
+            <span className="font-mono text-foreground">{formatNumber(tx.amount, 0, intl)}</span>
           </div>
           <div className="text-[10px] text-muted-foreground">
-            Initiate by {tx.initiate_by ?? "ASAP"}
+            {tx.initiate_by
+              ? t("action.initiatePrefix", { date: tx.initiate_by })
+              : t("action.initiateAsap")}
           </div>
-          {tx.notes.length > 0 && (
+          {translateBackendNote(tx, locale) && (
             <div className="text-[10px] text-amber-400/80 leading-snug">
-              {tx.notes.join(" ")}
+              {translateBackendNote(tx, locale)}
             </div>
           )}
         </div>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { LocaleProvider } from "@/i18n/locale-context";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const jetbrainsMono = JetBrains_Mono({
@@ -10,7 +11,8 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "LiquidPilot — Predictive Liquidity Cockpit",
-  description: "Air Traffic Control for your treasury. Radar, Autopilot, Contagion Risk, and Time Machine.",
+  description:
+    "Air Traffic Control for your treasury. Radar, Autopilot, Contagion Risk, and Time Machine.",
 };
 
 export default function RootLayout({
@@ -23,7 +25,7 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased bg-background text-foreground`}
       >
-        {children}
+        <LocaleProvider>{children}</LocaleProvider>
       </body>
     </html>
   );

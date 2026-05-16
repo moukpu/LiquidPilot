@@ -2,12 +2,15 @@
 
 import type { Account } from "@/types/api";
 import { formatMoney } from "@/lib/format";
+import { useLocale, localeToIntl } from "@/i18n/locale-context";
 
 export interface AccountSummaryStripProps {
   accounts: Account[];
 }
 
 export default function AccountSummaryStrip({ accounts }: AccountSummaryStripProps) {
+  const { t, locale } = useLocale();
+  const intl = localeToIntl(locale);
   return (
     <div className="shrink-0 border-b border-border bg-background/40 px-6 py-3">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -38,7 +41,7 @@ export default function AccountSummaryStrip({ accounts }: AccountSummaryStripPro
                 <div className="font-mono font-semibold tabular-nums text-base leading-tight">
                   {formatMoney(acc.current_ledger_balance, acc.currency, {
                     fractionDigits: 0,
-                  })}
+                  }, intl)}
                 </div>
                 <div
                   className={`text-[10px] font-mono ${
@@ -49,9 +52,13 @@ export default function AccountSummaryStrip({ accounts }: AccountSummaryStripPro
                         : "text-rose-400"
                   }`}
                 >
-                  {headroom >= 0 ? "+" : ""}
-                  {formatMoney(headroom, acc.currency, { fractionDigits: 0 })}{" "}
-                  {breach ? "buffer" : headroom >= 0 ? "above floor" : "below floor"}
+                  {(() => {
+                    const amountStr = `${headroom >= 0 ? "+" : ""}${formatMoney(headroom, acc.currency, { fractionDigits: 0 }, intl)}`;
+                    if (breach) return t("account.bufferBreach");
+                    return headroom >= 0
+                      ? t("account.aboveFloor", { amount: amountStr })
+                      : t("account.belowFloor", { amount: amountStr });
+                  })()}
                 </div>
               </div>
             </div>

@@ -1,0 +1,124 @@
+import type en from "./en";
+
+const ru: Record<keyof typeof en, string> = {
+  "app.title": "LiquidPilot — Прогнозный кокпит ликвидности",
+  "app.description":
+    "Управление воздушным движением для вашей казны. Радар, Автопилот, Сетевой риск и Машина времени.",
+
+  "topbar.dashboard": "Панель",
+  "nav.radar": "Радар",
+  "nav.autopilot": "Автопилот",
+  "nav.contagion": "Сетевой риск",
+  "nav.timemachine": "Машина времени",
+
+  "switcher.aria": "Язык",
+
+  "status.lastSync": "Синхронизация",
+  "status.online": "онлайн",
+  "status.offline": "офлайн",
+
+  "severity.CRITICAL": "КРИТИЧНО",
+  "severity.WARNING": "ВНИМАНИЕ",
+  "severity.INFO": "ИНФО",
+
+  "radar.eyebrow": "Радар · Диспетчерская вышка",
+  "radar.title": "Деньги в полёте, прямо сейчас",
+  "radar.subtitle": "Поток платежей по вашим счетам в реальном времени.",
+  "radar.flowSize": "Размер потока",
+  "radar.legend.small": "<50K",
+  "radar.legend.medium": "<500K",
+  "radar.legend.large": "≥500K",
+  "radar.legend.hoverHint": "Наведите на самолёт, чтобы увидеть детали",
+  "radar.tooltip.direction": "Направление",
+  "radar.tooltip.amount": "Сумма",
+  "radar.tooltip.paymentType": "Тип платежа",
+  "radar.tooltip.valueDate": "Дата валютирования",
+  "radar.tooltip.delay": "Задержка клиринга",
+  "radar.tooltip.from": "Откуда",
+  "radar.tooltip.to": "Куда",
+  "radar.direction.IN": "ПРИХОД",
+  "radar.direction.OUT": "РАСХОД",
+  "radar.city.frankfurt": "Франкфурт",
+  "radar.city.newYork": "Нью-Йорк",
+  "radar.city.london": "Лондон",
+
+  "account.ledgerBalance": "Бухгалтерский баланс",
+  "account.percentOfOpening": "{percent}% от начального",
+  "account.aboveFloor": "{amount} выше минимума",
+  "account.belowFloor": "{amount} ниже минимума",
+  "account.bufferBreach": "Буфер пробит",
+  "account.in": "Приход",
+  "account.out": "Расход",
+  "account.txCount": "Транзакций: {n}",
+  "account.inTransit": "В пути: {amount}",
+
+  "alerts.title": "Алёрты и рекомендации",
+  "alerts.allClear": "Всё спокойно",
+  "alerts.noAlerts": "Алёртов и предложенных переводов нет.",
+
+  "autopilot.eyebrow": "Автопилот · Командный центр",
+  "autopilot.title": "Очередь действий и риск-телеметрия",
+  "autopilot.counter.queued": "В очереди: {n}",
+  "autopilot.counter.confirm": "Подтверждение: {n}",
+  "autopilot.counter.exec": "Исполняется: {n}",
+  "autopilot.counter.done": "Готово: {n}",
+  "autopilot.counter.skip": "Пропущено: {n}",
+  "autopilot.demoMode": "Демо-режим",
+  "autopilot.demoTooltip":
+    "Синтезирует алёрты и переводы из текущих данных счетов для презентации — реальные действия с бэкендом не выполняются.",
+
+  "autopilot.alerts.section": "Активные алёрты",
+  "autopilot.alerts.count": "Алёртов: {n}",
+  "autopilot.alerts.none": "Активных алёртов нет",
+  "autopilot.alerts.noneDetail":
+    "Прогнозируемые балансы выше минимума по всем счетам.",
+  "autopilot.alerts.inDays": "через {n}д.",
+  "autopilot.alerts.shortfall": "Нехватка",
+  "autopilot.alerts.projected": "Прогноз",
+  "autopilot.alerts.floor": "Минимум",
+
+  "autopilot.queue.section": "Очередь переводов",
+  "autopilot.queue.summary":
+    "Активных: {active} · Готово: {done} · Пропущено: {skipped}",
+  "autopilot.queue.empty": "Движок сейчас не предлагает переводов.",
+  "autopilot.queue.allResolved": "Все действия обработаны.",
+  "autopilot.queue.recentlyExecuted": "Недавно исполнено · {n}",
+  "autopilot.queue.skippedSection": "Пропущено · {n}",
+
+  "action.execute": "Исполнить",
+  "action.skip": "Пропустить",
+  "action.confirmPrompt": "Подтвердить перевод?",
+  "action.move": "Перевести {amount} с {from} на {to} через {rail}{initiateBy}.",
+  "action.initiateBy": ", инициировать до {date}",
+  "action.confirmExecution": "Подтвердить исполнение",
+  "action.cancel": "Отмена",
+  "action.autoRevert": "авто-сброс {n}с",
+  "action.executingOn": "Исполнение через {rail}…",
+  "action.settledOn": "Исполнено через {rail}",
+  "action.skipped": "Пропущено",
+  "action.restore": "Восстановить",
+  "action.fxBadge": "FX",
+  "action.initiateAsap": "Срочно",
+  "action.initiatePrefix": "до {date}",
+
+  "empty.standingBy": "Автопилот в режиме ожидания",
+  "empty.detail":
+    "Действий не требуется. Все счета выше минимума, прогнозируемых нарушений в горизонте планирования нет. Включите {demo} в шапке, чтобы пройти сценарий с синтетическими данными.",
+
+  "stub.contagion.title": "Сетевой риск",
+  "stub.contagion.body": "Граф сетевого контагиона — будет в Phase 5.",
+  "stub.timemachine.title": "Машина времени",
+  "stub.timemachine.body":
+    "Воспроизведение исторических сценариев — будет в Phase 6.",
+
+  "backend.alert.template":
+    "{accountId}: прогноз {projected} {currency} к {breachDate}, ниже минимума {floor} (нехватка {shortfall}).",
+  "backend.transfer.fund":
+    "Пополнить {to} ({severity} к {breachDate}) со счёта {from} через {rail}.",
+  "backend.transfer.note.fx":
+    "Требуется конвертация валют {fromCcy} → {toCcy}; считайте в валюте источника перед запросом котировки спот.",
+  "backend.transfer.note.escalate":
+    "Ни один счёт не может закрыть разрыв без пробития собственного буфера — нужна внешняя ликвидность (кредитная линия / репо / FX-своп).",
+};
+
+export default ru;

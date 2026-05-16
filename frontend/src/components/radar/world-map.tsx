@@ -5,18 +5,20 @@ import { motion } from "framer-motion";
 import { ComposableMap, Geographies, Geography } from "react-simple-maps";
 import { geoEqualEarth, geoPath } from "d3-geo";
 import type { Transaction } from "@/types/api";
+import { useT } from "@/i18n/locale-context";
+import type { MessageKey } from "@/i18n/messages/en";
 
 interface Tower {
   id: string;
-  city: string;
+  cityKey: MessageKey;
   coords: [number, number];
   label: string;
 }
 
 const TOWERS: Tower[] = [
-  { id: "EUR-Main", city: "Frankfurt", coords: [8.68, 50.11], label: "EUR-Main" },
-  { id: "USD-Correspondent", city: "New York", coords: [-74.0, 40.71], label: "USD-Correspondent" },
-  { id: "GBP-Local", city: "London", coords: [-0.13, 51.51], label: "GBP-Local" },
+  { id: "EUR-Main", cityKey: "radar.city.frankfurt", coords: [8.68, 50.11], label: "EUR-Main" },
+  { id: "USD-Correspondent", cityKey: "radar.city.newYork", coords: [-74.0, 40.71], label: "USD-Correspondent" },
+  { id: "GBP-Local", cityKey: "radar.city.london", coords: [-0.13, 51.51], label: "GBP-Local" },
 ];
 
 function fnv1a(str: string): number {
@@ -90,6 +92,7 @@ export interface WorldMapProps {
 }
 
 export default function WorldMap({ transactions, onHoverPlane }: WorldMapProps) {
+  const t = useT();
   const projection = useMemo(() => {
     return geoEqualEarth()
       .scale(190)
@@ -339,7 +342,7 @@ export default function WorldMap({ transactions, onHoverPlane }: WorldMapProps) 
                 fontSize={7}
                 fontFamily="Inter, sans-serif"
               >
-                {tower.city}
+                {t(tower.cityKey)}
               </text>
             </g>
           </g>

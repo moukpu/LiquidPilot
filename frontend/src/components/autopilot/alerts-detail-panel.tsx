@@ -3,6 +3,9 @@
 import { ShieldAlert, ShieldCheck, Info } from "lucide-react";
 import type { Alert } from "@/types/api";
 import { formatMoney } from "@/lib/format";
+import { useLocale, localeToIntl } from "@/i18n/locale-context";
+import type { MessageKey } from "@/i18n/messages/en";
+import { translateBackendAlert } from "@/i18n/translate-backend";
 
 export interface AlertsDetailPanelProps {
   alerts: Alert[];
@@ -41,14 +44,16 @@ function severityIcon(s: Alert["severity"]) {
 }
 
 export default function AlertsDetailPanel({ alerts }: AlertsDetailPanelProps) {
+  const { t, locale } = useLocale();
+  const intl = localeToIntl(locale);
   return (
     <section className="flex flex-col min-h-0 rounded-lg border border-border bg-card/30 overflow-hidden">
       <header className="h-10 shrink-0 px-4 flex items-center justify-between border-b border-border">
         <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-primary">
-          Active alerts
+          {t("autopilot.alerts.section")}
         </span>
         <span className="text-[10px] font-mono text-muted-foreground tabular-nums">
-          {alerts.length} {alerts.length === 1 ? "alert" : "alerts"}
+          {t("autopilot.alerts.count", { n: alerts.length })}
         </span>
       </header>
 
@@ -57,9 +62,9 @@ export default function AlertsDetailPanel({ alerts }: AlertsDetailPanelProps) {
           <div className="rounded-lg border border-border bg-card/50 p-5 flex items-center gap-3">
             <ShieldCheck className="w-5 h-5 text-emerald-400" />
             <div>
-              <div className="text-sm font-medium">No active alerts</div>
+              <div className="text-sm font-medium">{t("autopilot.alerts.none")}</div>
               <div className="text-xs text-muted-foreground">
-                Forecasted balances are above floor across all accounts.
+                {t("autopilot.alerts.noneDetail")}
               </div>
             </div>
           </div>
@@ -77,7 +82,7 @@ export default function AlertsDetailPanel({ alerts }: AlertsDetailPanelProps) {
                     <span
                       className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${c.pill}`}
                     >
-                      {alert.severity}
+                      {t(`severity.${alert.severity}` as MessageKey)}
                     </span>
                     <span className="font-mono text-[10px] text-muted-foreground">
                       {alert.account_id}
@@ -86,41 +91,35 @@ export default function AlertsDetailPanel({ alerts }: AlertsDetailPanelProps) {
                       · {alert.breach_date}
                     </span>
                     <span className="font-mono text-[10px] text-muted-foreground">
-                      · in {alert.days_until_breach}d
+                      · {t("autopilot.alerts.inDays", { n: alert.days_until_breach })}
                     </span>
                   </div>
                   <p className="text-xs leading-relaxed text-foreground/90">
-                    {alert.message}
+                    {translateBackendAlert(alert, locale)}
                   </p>
                   <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border/60">
                     <div>
                       <div className="text-[9px] uppercase tracking-wider text-muted-foreground">
-                        Shortfall
+                        {t("autopilot.alerts.shortfall")}
                       </div>
                       <div className={`text-xs font-mono font-semibold tabular-nums ${c.text}`}>
-                        {formatMoney(alert.shortfall, alert.currency, {
-                          fractionDigits: 0,
-                        })}
+                        {formatMoney(alert.shortfall, alert.currency, { fractionDigits: 0 }, intl)}
                       </div>
                     </div>
                     <div>
                       <div className="text-[9px] uppercase tracking-wider text-muted-foreground">
-                        Projected
+                        {t("autopilot.alerts.projected")}
                       </div>
                       <div className="text-xs font-mono tabular-nums">
-                        {formatMoney(alert.projected_balance, alert.currency, {
-                          fractionDigits: 0,
-                        })}
+                        {formatMoney(alert.projected_balance, alert.currency, { fractionDigits: 0 }, intl)}
                       </div>
                     </div>
                     <div>
                       <div className="text-[9px] uppercase tracking-wider text-muted-foreground">
-                        Floor
+                        {t("autopilot.alerts.floor")}
                       </div>
                       <div className="text-xs font-mono tabular-nums text-muted-foreground">
-                        {formatMoney(alert.min_balance, alert.currency, {
-                          fractionDigits: 0,
-                        })}
+                        {formatMoney(alert.min_balance, alert.currency, { fractionDigits: 0 }, intl)}
                       </div>
                     </div>
                   </div>

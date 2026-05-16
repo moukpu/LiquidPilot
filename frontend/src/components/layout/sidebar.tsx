@@ -4,16 +4,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Radar, Plane, Network, History } from "lucide-react";
 import Logo from "@/components/brand/logo";
+import { useT } from "@/i18n/locale-context";
+import type { MessageKey } from "@/i18n/messages/en";
 
-const nav = [
-  { href: "/radar", label: "Radar", icon: Radar },
-  { href: "/autopilot", label: "Autopilot", icon: Plane },
-  { href: "/contagion", label: "Contagion", icon: Network },
-  { href: "/timemachine", label: "Time Machine", icon: History },
+const nav: { href: string; key: MessageKey; icon: typeof Radar }[] = [
+  { href: "/radar", key: "nav.radar", icon: Radar },
+  { href: "/autopilot", key: "nav.autopilot", icon: Plane },
+  { href: "/contagion", key: "nav.contagion", icon: Network },
+  { href: "/timemachine", key: "nav.timemachine", icon: History },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const t = useT();
 
   return (
     <aside className="w-64 border-r border-border bg-card flex flex-col">
@@ -37,7 +40,7 @@ export default function Sidebar() {
               }`}
             >
               <item.icon className="w-5 h-5" />
-              {item.label}
+              {t(item.key)}
             </Link>
           );
         })}
