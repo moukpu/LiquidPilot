@@ -9,6 +9,36 @@ interface Props {
   intl: IntlLocale;
 }
 
+// Cardinal-spline path builder (tension 0.2). Mirrors d3.curveCardinal so
+// we get the Robinhood / Mercury "smooth swoop" look without pulling in
+// a chart library. Each segment's control points are derived from the
+// neighbouring data points as tangent vectors; endpoint tangents fold
+// back on themselves so the curve doesn't overshoot at the edges.
+function smoothPath(points: Array<[number, number]>): string {
+  if (points.length === 0) return "";
+  if (points.length === 1) return `M ${points[0][0]} ${points[0][1]}`;
+  if (points.length === 2) {
+    return `M ${points[0][0]} ${points[0][1]} L ${points[1][0]} ${points[1][1]}`;
+  }
+
+  const tension = 0.2;
+  let path = `M ${points[0][0].toFixed(1)} ${points[0][1].toFixed(1)}`;
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = i > 0 ? points[i - 1] : points[i];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = i < points.length - 2 ? points[i + 2] : p2;
+
+    const cp1x = p1[0] + (p2[0] - p0[0]) * tension;
+    const cp1y = p1[1] + (p2[1] - p0[1]) * tension;
+    const cp2x = p2[0] - (p3[0] - p1[0]) * tension;
+    const cp2y = p2[1] - (p3[1] - p1[1]) * tension;
+
+    path += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`;
+  }
+  return path;
+}
+
 export default function ResultCard({ result, intl }: Props) {
   const { t } = useLocale();
 
@@ -41,18 +71,14 @@ export default function ResultCard({ result, intl }: Props) {
     PAD_X + (i / Math.max(1, result.horizon.length - 1)) * innerW;
   const toY = (v: number) => PAD_TOP + ((yMax - v) / yRange) * innerH;
 
-  const baselinePath = result.horizon
-    .map(
-      (p, i) =>
-        `${i === 0 ? "M" : "L"} ${toX(i).toFixed(1)} ${toY(p.baseline_p50).toFixed(1)}`
-    )
-    .join(" ");
-  const stressPath = result.horizon
-    .map(
-      (p, i) =>
-        `${i === 0 ? "M" : "L"} ${toX(i).toFixed(1)} ${toY(p.stress_p50).toFixed(1)}`
-    )
-    .join(" ");
+  const baselinePoints: Array<[number, number]> = result.horizon.map(
+    (p, i) => [toX(i), toY(p.baseline_p50)]
+  );
+  const stressPoints: Array<[number, number]> = result.horizon.map(
+    (p, i) => [toX(i), toY(p.stress_p50)]
+  );
+  const baselinePath = smoothPath(baselinePoints);
+  const stressPath = smoothPath(stressPoints);
 
   const floorInRange = result.floor >= yMin && result.floor <= yMax;
   const floorY = toY(result.floor);
