@@ -225,7 +225,12 @@ def _transform(
         # catch_up term subtracts MORE than the baseline already did.
         if d < n:
             accumulated_drift = baseline[d] - flat_value
-            catch_up = accumulated_drift * 1.2
+            # Stress test semantics: always show downside risk. A holiday on
+            # an inflow-heavy day is, in reality, a temporary buffer — but
+            # the whole point of a stress page is "how bad can it get?", so
+            # we force the catch-up amplification to be a drop regardless
+            # of the natural drift's sign.
+            catch_up = -abs(accumulated_drift) * 1.2
             out[d] = baseline[d] + catch_up
 
             # Recovery: trajectory tapers back toward baseline over the
