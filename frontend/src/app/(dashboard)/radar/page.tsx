@@ -16,113 +16,114 @@ export default function RadarPage() {
   const intl = localeToIntl(locale);
 
   return (
-    <div className="-m-6 h-[calc(100vh-4rem)] flex overflow-hidden">
-      {/* Left: Map */}
-      <div className="flex-1 min-w-0 relative flex flex-col">
-        {/* Status bar */}
-        <div className="h-8 flex items-center justify-between px-4 border-b border-border bg-card/50 backdrop-blur-sm text-[10px] font-mono shrink-0 z-10">
-          <div className="flex items-center gap-4">
-            <span className="text-muted-foreground">
-              {t("status.lastSync")} <span className="text-foreground">{formatTime(lastSync, intl)}</span>
-            </span>
-            {loading && <span className="text-primary animate-pulse">…</span>}
-          </div>
-          {error ? (
-            <span className="text-rose-400">{t("status.offline")} · {error}</span>
-          ) : (
-            <span className="text-emerald-400">{t("status.online")}</span>
-          )}
-        </div>
-
-        <div className="flex-1 min-h-0 relative">
-          <WorldMap transactions={data.transactions} onHoverPlane={setTooltip} />
-
-          {/* Tooltip */}
-          {tooltip && (
-            <div className="absolute top-3 right-3 bg-card/95 backdrop-blur-sm border border-border rounded-lg p-3 shadow-xl z-20 min-w-[220px]">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-mono uppercase text-muted-foreground tracking-wider">
-                  {t("radar.tooltip.direction")}
-                </span>
-                <span
-                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                    tooltip.direction === "IN"
-                      ? "bg-emerald-500/20 text-emerald-400"
-                      : "bg-rose-500/20 text-rose-400"
-                  }`}
-                >
-                  {tooltip.direction === "IN" ? t("radar.direction.IN") : t("radar.direction.OUT")}
-                </span>
-              </div>
-              <div className="space-y-1 font-mono text-xs">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">{t("radar.tooltip.amount")}</span>
-                  <span>{formatNumber(tooltip.amount, 0, intl)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">{t("radar.tooltip.paymentType")}</span>
-                  <span>{tooltip.payment_type}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">{t("radar.tooltip.valueDate")}</span>
-                  <span>{tooltip.value_date}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">{t("radar.tooltip.delay")}</span>
-                  <span>{tooltip.clearing_delay_days}d</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">{t("radar.tooltip.from")} → {t("radar.tooltip.to")}</span>
-                  <span>
-                    {tooltip.src} → {tooltip.dst}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Legend */}
-        <div className="h-10 flex items-center gap-6 px-4 border-t border-border bg-card/50 backdrop-blur-sm text-[10px] font-mono shrink-0">
-          <span className="text-muted-foreground uppercase tracking-wider">{t("radar.flowSize")}</span>
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-2 h-2 rounded-full bg-[#22c55e]" />
-            <span className="text-muted-foreground">{t("radar.legend.small")}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-3 h-3 rounded-full bg-[#eab308]" />
-            <span className="text-muted-foreground">{t("radar.legend.medium")}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-4 h-4 rounded-full bg-[#ef4444]" />
-            <span className="text-muted-foreground">{t("radar.legend.large")}</span>
-          </div>
-          <span className="ml-auto text-muted-foreground/70">{t("radar.legend.hoverHint")}</span>
-        </div>
+    <div className="w-full h-full relative overflow-hidden bg-background">
+      {/* Background Map - Absolute Full Screen */}
+      <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-auto">
+        <WorldMap transactions={data.transactions} onHoverPlane={setTooltip} />
       </div>
 
-      {/* Right sidebar */}
-      <div className="w-80 border-l border-border bg-card flex flex-col overflow-auto shrink-0">
-        <div className="p-4 space-y-3">
-          {/* Account cards */}
-          {data.accounts.map((acc) => (
-            <AccountCard
-              key={acc.account_id}
-              account={acc}
-              transactions={data.transactions}
-            />
-          ))}
-
-          {/* Alerts */}
-          <div className="pt-1">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2 px-1">
-              {t("alerts.title")}
-            </div>
-            <AlertsPanel
-              alerts={data.recommendations.alerts}
-              transfers={data.recommendations.transfers}
-            />
+      {/* Floating Status Bar (Top Left) */}
+      <div className="absolute top-6 left-6 z-10 glass rounded-full px-5 py-2.5 flex items-center gap-4 text-xs font-mono shadow-[0_0_30px_rgba(0,190,255,0.1)]">
+        <span className="text-muted-foreground uppercase tracking-widest">
+          {t("status.lastSync")} <span className="text-white font-semibold ml-1">{formatTime(lastSync, intl)}</span>
+        </span>
+        {loading && <span className="text-primary animate-pulse tracking-widest uppercase">Syncing...</span>}
+        {error ? (
+          <span className="text-rose-400 font-medium tracking-widest uppercase">⚠ {t("status.offline")}</span>
+        ) : (
+          <div className="flex items-center gap-2 border-l border-white/10 pl-4">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+            <span className="text-emerald-400 font-medium tracking-widest uppercase">{t("status.online")}</span>
           </div>
+        )}
+      </div>
+
+      {/* Floating Legend (Bottom Left) */}
+      <div className="absolute bottom-6 left-6 z-10 glass rounded-2xl px-6 py-5 flex flex-col gap-4 text-xs font-mono shadow-[0_0_30px_rgba(0,190,255,0.1)] pointer-events-none">
+        <span className="text-muted-foreground uppercase tracking-widest text-[10px]">{t("radar.flowSize")}</span>
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3">
+            <span className="inline-block w-2 h-2 rounded-full bg-[#22c55e] shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+            <span className="text-white/90">{t("radar.legend.small")}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="inline-block w-3 h-3 rounded-full bg-[#eab308] shadow-[0_0_8px_rgba(234,179,8,0.6)]" />
+            <span className="text-white/90">{t("radar.legend.medium")}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="inline-block w-4 h-4 rounded-full bg-[#ef4444] shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
+            <span className="text-white/90">{t("radar.legend.large")}</span>
+          </div>
+        </div>
+        <span className="mt-1 text-[10px] text-muted-foreground/50 border-t border-white/5 pt-2">{t("radar.legend.hoverHint")}</span>
+      </div>
+
+      {/* Floating Tooltip */}
+      {tooltip && (
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 glass-card rounded-2xl p-4 shadow-[0_0_50px_rgba(0,190,255,0.2)] z-30 min-w-[280px] pointer-events-none">
+          <div className="flex items-center justify-between mb-3 border-b border-white/10 pb-3">
+            <span className="text-[10px] font-mono uppercase text-muted-foreground tracking-widest">
+              {t("radar.tooltip.direction")}
+            </span>
+            <span
+              className={`text-[10px] font-bold px-2 py-1 rounded uppercase tracking-widest ${
+                tooltip.direction === "IN"
+                  ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                  : "bg-rose-500/20 text-rose-400 border border-rose-500/30"
+              }`}
+            >
+              {tooltip.direction === "IN" ? t("radar.direction.IN") : t("radar.direction.OUT")}
+            </span>
+          </div>
+          <div className="space-y-2.5 font-mono text-xs">
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground uppercase tracking-widest text-[10px]">{t("radar.tooltip.amount")}</span>
+              <span className="font-bold text-white text-sm text-glow">{formatNumber(tooltip.amount, 0, intl)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground uppercase tracking-widest text-[10px]">{t("radar.tooltip.paymentType")}</span>
+              <span className="text-primary/90">{tooltip.payment_type}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground uppercase tracking-widest text-[10px]">{t("radar.tooltip.valueDate")}</span>
+              <span className="text-white/80">{tooltip.value_date}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground uppercase tracking-widest text-[10px]">{t("radar.tooltip.delay")}</span>
+              <span className="text-warning font-semibold">{tooltip.clearing_delay_days}d</span>
+            </div>
+            <div className="flex justify-between items-center pt-3 border-t border-white/5 mt-3">
+              <span className="text-muted-foreground uppercase tracking-widest text-[10px]">{t("radar.tooltip.from")} → {t("radar.tooltip.to")}</span>
+              <span className="font-semibold text-white">
+                {tooltip.src} → {tooltip.dst}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Right HUD Panel (Floating) */}
+      <div 
+        className="absolute right-6 top-6 bottom-6 w-[340px] z-20 flex flex-col gap-4 overflow-y-auto pr-2 pb-6 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/20"
+        style={{ maskImage: "linear-gradient(to bottom, black 90%, transparent 100%)" }}
+      >
+        {data.accounts.map((acc) => (
+          <AccountCard
+            key={acc.account_id}
+            account={acc}
+            transactions={data.transactions}
+          />
+        ))}
+
+        <div className="glass-card rounded-2xl p-5 shrink-0 mt-2">
+          <div className="text-[10px] font-mono uppercase tracking-widest text-primary mb-4 flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse shadow-[0_0_5px_rgba(0,190,255,0.8)]" />
+            {t("alerts.title")}
+          </div>
+          <AlertsPanel
+            alerts={data.recommendations.alerts}
+            transfers={data.recommendations.transfers}
+          />
         </div>
       </div>
     </div>
