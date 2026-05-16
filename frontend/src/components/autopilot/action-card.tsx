@@ -34,10 +34,22 @@ export interface ActionCardProps {
   alert?: Alert | null;
 }
 
+// Light-theme readable banner colours. The original `text-rose-300`
+// was tuned for the dark mock-up and disappeared on the live light
+// background. We pin the foreground to a 700/800-step shade so the
+// severity label and the alert text stay readable on every locale.
 const ALERT_BANNER_CLASS: Record<Alert["severity"], string> = {
-  CRITICAL: "border-rose-500/40 bg-rose-500/10 text-rose-300",
-  WARNING: "border-amber-500/40 bg-amber-500/10 text-amber-300",
-  INFO: "border-primary/30 bg-primary/5 text-primary",
+  CRITICAL: "border-rose-500/50 bg-rose-50 text-rose-700",
+  WARNING: "border-amber-500/50 bg-amber-50 text-amber-800",
+  INFO: "border-primary/40 bg-primary/5 text-foreground",
+};
+
+// `repeating-linear-gradient` paints faint diagonal hatching so a
+// skipped card still reads as 'put aside' even at opacity-70. The
+// previous opacity-50 made the text effectively invisible.
+const SKIPPED_STRIPE_STYLE: React.CSSProperties = {
+  backgroundImage:
+    "repeating-linear-gradient(135deg, rgba(0,0,0,0.04) 0 6px, transparent 6px 12px)",
 };
 
 function stateClasses(state: ActionState) {
@@ -49,9 +61,9 @@ function stateClasses(state: ActionState) {
     case "executed":
       return "border-emerald-500/40 bg-emerald-500/5 opacity-80";
     case "skipped":
-      return "border-border bg-muted/30 opacity-50";
+      return "border-border bg-muted/30 opacity-70";
     default:
-      return "border-border bg-card";
+      return "border-border bg-card shadow-sm";
   }
 }
 
@@ -104,6 +116,7 @@ export default function ActionCard({
       exit={{ opacity: 0, x: 24 }}
       transition={{ duration: 0.25 }}
       className={`rounded-lg border p-4 space-y-3 ${stateClasses(state)}`}
+      style={state === "skipped" ? SKIPPED_STRIPE_STYLE : undefined}
     >
       {alert && (
         <div
@@ -133,22 +146,22 @@ export default function ActionCard({
       )}
 
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           <ArrowRightLeft className="w-4 h-4 text-primary shrink-0" />
-          <div className="font-mono text-sm font-semibold truncate">
+          <div className="font-mono text-sm font-semibold truncate min-w-0">
             <span>{transfer.from_account}</span>
             <span className="text-muted-foreground mx-1.5">→</span>
             <span>{transfer.to_account}</span>
           </div>
         </div>
-        <div className="text-right shrink-0">
-          <div className="font-mono font-bold tabular-nums text-base leading-tight">
+        <div className="text-right shrink-0 max-w-[40%]">
+          <div className="font-mono font-bold tabular-nums text-base leading-tight break-all">
             {amountStr}
           </div>
           <div className="text-[10px] font-mono text-muted-foreground">
             {transfer.currency_from}
             {transfer.requires_fx && (
-              <span className="text-amber-400">
+              <span className="text-amber-500">
                 {" "}
                 → {transfer.currency_to}
               </span>
@@ -157,20 +170,20 @@ export default function ActionCard({
         </div>
       </div>
 
-      <div className="flex items-center gap-3 text-[10px] font-mono uppercase tracking-wider">
-        <span className="text-primary">{transfer.rail}</span>
-        <span className="text-muted-foreground">·</span>
-        <span className="text-muted-foreground inline-flex items-center gap-1">
+      <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider flex-wrap">
+        <span className="px-1.5 py-0.5 rounded bg-card border border-border text-primary">
+          {transfer.rail}
+        </span>
+        <span className="px-1.5 py-0.5 rounded bg-card border border-border text-muted-foreground inline-flex items-center gap-1">
           <Clock className="w-3 h-3" />
           {transfer.initiate_by
             ? t("action.initiatePrefix", { date: transfer.initiate_by })
             : t("action.initiateAsap")}
         </span>
         {transfer.requires_fx && (
-          <>
-            <span className="text-muted-foreground">·</span>
-            <span className="text-amber-400">{t("action.fxBadge")}</span>
-          </>
+          <span className="px-1.5 py-0.5 rounded bg-amber-50 border border-amber-500/40 text-amber-700">
+            {t("action.fxBadge")}
+          </span>
         )}
       </div>
 

@@ -41,6 +41,32 @@ export function formatNumber(
   });
 }
 
+export function formatMoneyCompact(
+  amount: number,
+  locale: IntlLocale = "en-US"
+): string {
+  return new Intl.NumberFormat(locale, {
+    notation: "compact",
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
+/**
+ * Display-only label for account_id strings. Backend ids stay verbatim
+ * (`EUR-Main`, `USD-Correspondent`) — this only affects user-facing
+ * text. Single-tower legacy accounts collapse to the bare currency
+ * code; everything else becomes `CCY · City`.
+ */
+export function displayAccountLabel(accountId: string): string {
+  if (accountId === "EUR-Main") return "EUR";
+  if (accountId === "USD-Correspondent") return "USD";
+  const sep = accountId.indexOf("-");
+  if (sep < 0) return accountId;
+  const ccy = accountId.slice(0, sep);
+  const city = accountId.slice(sep + 1);
+  return city ? `${ccy} · ${city}` : ccy;
+}
+
 export function formatTime(d: Date | null, locale: IntlLocale = "en-US"): string {
   if (!d) return "--:--:--";
   return d.toLocaleTimeString(locale, { hour12: false });

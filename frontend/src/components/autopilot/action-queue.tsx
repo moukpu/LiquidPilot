@@ -33,10 +33,12 @@ function alertKey(a: Alert): string {
   return `${a.account_id}|${a.breach_date}|${a.severity}`;
 }
 
+// Mirror action-card.tsx ALERT_BANNER_CLASS so alerts read the same
+// whether they ride alongside a transfer or sit in the info-only stack.
 const INFO_BANNER_CLASS: Record<Alert["severity"], string> = {
-  CRITICAL: "border-rose-500/40 bg-rose-500/10 text-rose-300",
-  WARNING: "border-amber-500/40 bg-amber-500/10 text-amber-300",
-  INFO: "border-primary/30 bg-primary/5 text-primary",
+  CRITICAL: "border-rose-500/50 bg-rose-50 text-rose-700",
+  WARNING: "border-amber-500/50 bg-amber-50 text-amber-800",
+  INFO: "border-primary/40 bg-primary/5 text-foreground",
 };
 
 export default function ActionQueue({

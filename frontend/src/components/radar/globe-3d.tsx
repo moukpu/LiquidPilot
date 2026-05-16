@@ -91,17 +91,40 @@ function sampleArc(a: THREE.Vector3, b: THREE.Vector3, n: number): THREE.Vector3
 }
 
 // --- Plane color/size by amount --------------------------------------------
-function planeColorHex(amount: number): string {
-  if (amount < 1_000_000) return "#22c55e"; // < 1M = green
-  if (amount < 10_000_000) return "#eab308"; // 1M..10M = yellow
-  return "#ef4444"; // 10M+ = red
+// USD-normalised thresholds. With 7 currencies in play (CHF/JPY/SGD/KZT
+// added on top of EUR/USD/GBP) the old per-currency cutoffs lit up every
+// KZT plane red because 10M KZT ≈ 22k USD. Convert via the same FX
+// table the backend uses, then bucket: <$100k green, <$1M yellow,
+// ≥$1M red. Eyeballs in line with what a treasurer would call
+// micro-payment / daily clearing / large.
+const FX_TO_USD: Record<string, number> = {
+  EUR: 1.08,
+  USD: 1.0,
+  GBP: 1.27,
+  CHF: 1.1,
+  JPY: 0.0067,
+  SGD: 0.74,
+  KZT: 0.0022,
+};
+
+function amountInUsd(tx: Transaction): number {
+  const fx = FX_TO_USD[tx.currency] ?? 1.0;
+  return Math.abs(tx.amount) * fx;
 }
 
-function planeSize(amount: number): number {
-  // Halved vs the old sprite tier because PlaneModel itself is ~4 model units
-  // long; final world size = planeSize * 4 ~= 0.016 / 0.024 / 0.036.
-  if (amount < 50000) return 0.004;
-  if (amount < 500000) return 0.006;
+function planeColorHex(tx: Transaction): string {
+  const usd = amountInUsd(tx);
+  if (usd < 100_000) return "#22c55e";
+  if (usd < 1_000_000) return "#eab308";
+  return "#ef4444";
+}
+
+function planeSize(tx: Transaction): number {
+  // PlaneModel itself is ~4 model units long; final world size =
+  // planeSize * 4 ≈ 0.016 / 0.024 / 0.036. Keeps colour/size in lockstep.
+  const usd = amountInUsd(tx);
+  if (usd < 100_000) return 0.004;
+  if (usd < 1_000_000) return 0.006;
   return 0.009;
 }
 
@@ -351,8 +374,8 @@ function World({
         samples,
         duration,
         phase,
-        color: planeColorHex(tx.amount),
-        size: planeSize(tx.amount),
+        color: planeColorHex(tx),
+        size: planeSize(tx),
       };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps

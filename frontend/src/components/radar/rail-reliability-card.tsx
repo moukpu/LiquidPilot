@@ -57,9 +57,6 @@ export default function RailReliabilityCard({ rails }: Props) {
           );
         })}
       </div>
-      <div className="mt-3 pt-3 border-t border-slate-200/50 text-[10px] text-muted-foreground">
-        {t("radar.reliability.hint")}
-      </div>
     </div>
   );
 }

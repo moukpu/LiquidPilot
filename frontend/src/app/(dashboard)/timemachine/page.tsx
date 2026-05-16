@@ -7,9 +7,11 @@ import { runStressTest } from "@/lib/api";
 import type {
   StressRequest,
   StressResult,
+  StressScenario,
 } from "@/types/api";
 import ScenarioPicker from "@/components/timemachine/scenario-picker";
 import ResultCard from "@/components/timemachine/result-card";
+import type { MessageKey } from "@/i18n/messages/en";
 
 export default function TimeMachinePage() {
   const { t, locale } = useLocale();
@@ -39,27 +41,25 @@ export default function TimeMachinePage() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-6 pt-4 pb-2 border-b border-border shrink-0">
-        <div className="flex items-baseline gap-3 flex-wrap">
-          <h1 className="text-lg font-bold">{t("timemachine.title")}</h1>
-          <p className="text-xs text-muted-foreground">
-            {t("timemachine.subtitle")}
-          </p>
-        </div>
+      <div className="glass-card rounded-2xl px-5 py-3 mx-6 mt-4 shrink-0">
+        <h1 className="text-xl font-bold leading-tight">
+          {t("timemachine.title")}
+        </h1>
+        <p className="text-xs text-muted-foreground mt-1 leading-snug">
+          {t("timemachine.subtitle")}
+        </p>
       </div>
 
       <div className="flex-1 min-h-0 overflow-auto p-4">
-        <div className="flex gap-4 mb-4 items-stretch">
-          <div className="w-72 shrink-0">
-            <ScenarioPicker
-              value={req}
-              onChange={setReq}
-              onRun={run}
-              loading={loading}
-            />
-          </div>
-          {result && (
-            <div className="flex-1 glass-card rounded-2xl p-4 flex items-center gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[18rem,1fr] gap-4 mb-4 items-stretch">
+          <ScenarioPicker
+            value={req}
+            onChange={setReq}
+            onRun={run}
+            loading={loading}
+          />
+          {result ? (
+            <div className="glass-card rounded-2xl p-4 flex items-center gap-6">
               <div>
                 <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
                   {t("timemachine.totalImpact")}
@@ -90,6 +90,8 @@ export default function TimeMachinePage() {
                 </div>
               </div>
             </div>
+          ) : (
+            <ScenarioHint scenario={req.scenario} />
           )}
         </div>
 
@@ -117,6 +119,29 @@ export default function TimeMachinePage() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function ScenarioHint({ scenario }: { scenario: StressScenario }) {
+  const { t } = useLocale();
+  // Empty-state placeholder shown before the user clicks Run. Each
+  // scenario gets a one-liner so the page is never visually blank;
+  // the line updates live as the user changes scenario in the picker.
+  const detailKey: MessageKey =
+    scenario === "rail_delay"
+      ? "timemachine.hint.railDelay"
+      : scenario === "volume_spike"
+      ? "timemachine.hint.volumeSpike"
+      : "timemachine.hint.bankHoliday";
+  return (
+    <div className="glass-card rounded-2xl p-5 flex flex-col gap-2 justify-center">
+      <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+        {t("timemachine.hint.pickScenario")}
+      </div>
+      <p className="text-xs leading-relaxed text-foreground/80">
+        {t(detailKey)}
+      </p>
     </div>
   );
 }

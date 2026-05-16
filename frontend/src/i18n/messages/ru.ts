@@ -25,9 +25,9 @@ const ru: Record<keyof typeof en, string> = {
   "radar.title": "Деньги в полёте, прямо сейчас",
   "radar.subtitle": "Поток платежей по вашим счетам в реальном времени.",
   "radar.flowSize": "Размер потока",
-  "radar.legend.small": "< 1M",
-  "radar.legend.medium": "< 10M",
-  "radar.legend.large": "≥ 10M",
+  "radar.legend.small": "< $100к",
+  "radar.legend.medium": "< $1М",
+  "radar.legend.large": "≥ $1М",
   "radar.legend.hoverHint": "Кликните на самолёт, чтобы увидеть детали",
   "radar.tooltip.direction": "Направление",
   "radar.tooltip.amount": "Сумма",
@@ -39,11 +39,8 @@ const ru: Record<keyof typeof en, string> = {
   "radar.tooltip.close": "Закрыть",
   "radar.frozen.title": "Замороженная ликвидность",
   "radar.frozen.ofTotal": "от общего баланса",
-  "radar.frozen.hint":
-    "Простаивающий капитал — можно вложить (overnight repo, MMF) без риска breach в течение 7 дней.",
+  "radar.frozen.allDeployed": "Свободного капитала нет — всё в работе.",
   "radar.reliability.title": "Надёжность рельсов",
-  "radar.reliability.hint":
-    "% транзакций, прошедших вовремя за последние 90 дней.",
   "radar.direction.IN": "ПРИХОД",
   "radar.direction.OUT": "РАСХОД",
   "radar.city.frankfurt": "Франкфурт",
@@ -57,14 +54,12 @@ const ru: Record<keyof typeof en, string> = {
   "radar.city.almaty": "Алматы",
 
   "account.ledgerBalance": "Бухгалтерский баланс",
-  "account.percentOfOpening": "{percent}% от начального",
-  "account.aboveFloor": "{amount} выше минимума",
-  "account.belowFloor": "{amount} ниже минимума",
   "account.bufferBreach": "Буфер пробит",
-  "account.in": "Приход",
-  "account.out": "Расход",
+  "account.vsFloor": "к минимуму",
+  "account.in": "Приход за сегодня",
+  "account.out": "Расход за сегодня",
   "account.txCount": "Транзакций: {n}",
-  "account.inTransit": "В пути: {amount}",
+  "account.inTransit.count": "В полёте · {n} тр-ций",
 
   "alerts.title": "Алёрты и рекомендации",
   "alerts.allClear": "Всё спокойно",
@@ -100,7 +95,6 @@ const ru: Record<keyof typeof en, string> = {
   "autopilot.queue.skippedSection": "Пропущено · {n}",
   "autopilot.queue.infoSection": "Открытые алерты · {n}",
   "autopilot.summary.label": "Счета",
-  "autopilot.summary.linkRadar": "Подробные метрики на Radar",
   "autopilot.header.statusLine": "{pending} ожидает · {resolved} решено",
   "autopilot.session.accepted": "Принято",
   "autopilot.session.moved": "Перемещено",
@@ -171,6 +165,14 @@ const ru: Record<keyof typeof en, string> = {
   "timemachine.method.flatValue": "База на день 0",
   "timemachine.method.accumulatedDrift": "Дрейф за праздник",
   "timemachine.method.catchUp": "Дроп при catch-up",
+  "timemachine.hint.pickScenario":
+    "Выберите сценарий и запустите симуляцию. Справа появятся карточки с эффектом на каждый счёт.",
+  "timemachine.hint.railDelay":
+    "Rail Delay — сдвиг clearing-окна рельса на N рабочих дней. Пример: SWIFT-корреспондент застрял на 3 дня — кто уходит в минус?",
+  "timemachine.hint.volumeSpike":
+    "Volume Spike — умножить расход по рельсу. Пример: чарджбеки по картам в 2× в ближайшие 7 дней.",
+  "timemachine.hint.bankHoliday":
+    "Bank Holiday — заморозка отходящего clearing’а на N дней в выбранной стране с последующим catch-up дропом.",
 
   "backend.alert.template":
     "{accountId}: прогноз {projected} {currency} к {breachDate}, ниже минимума {floor} (нехватка {shortfall}).",

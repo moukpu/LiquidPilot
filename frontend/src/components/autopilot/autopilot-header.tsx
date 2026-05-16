@@ -23,6 +23,10 @@ export interface AutopilotHeaderProps {
     executed: number;
     skipped: number;
   };
+  /** When true, draws a soft pulsing primary-coloured ring around the
+   *  Demo Mode switch. Used to nudge the user when the queue is empty
+   *  because Demo is off but accounts have loaded. */
+  demoHint?: boolean;
 }
 
 export default function AutopilotHeader({
@@ -31,6 +35,7 @@ export default function AutopilotHeader({
   lastSync,
   error,
   counts,
+  demoHint = false,
 }: AutopilotHeaderProps) {
   const { t, locale } = useLocale();
   const intl = localeToIntl(locale);
@@ -65,7 +70,13 @@ export default function AutopilotHeader({
         <TooltipProvider delayDuration={200}>
           <Tooltip>
             <TooltipTrigger asChild>
-              <label className="flex items-center gap-2 cursor-pointer select-none">
+              <label
+                className={`flex items-center gap-2 cursor-pointer select-none rounded-full px-2 py-1 transition-shadow ${
+                  demoHint
+                    ? "ring-2 ring-primary/40 animate-pulse"
+                    : ""
+                }`}
+              >
                 <Sparkles
                   className={`w-3.5 h-3.5 ${
                     demoMode ? "text-primary" : "text-muted-foreground"

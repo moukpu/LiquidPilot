@@ -2,6 +2,7 @@
 
 import type { Account, Alert } from "@/types/api";
 import { useT } from "@/i18n/locale-context";
+import { displayAccountLabel } from "@/lib/format";
 
 export interface AccountSummaryStripProps {
   accounts: Account[];
@@ -26,6 +27,11 @@ const DOT_CLASS: Record<Status, string> = {
   green: "bg-emerald-500",
 };
 
+// Drop shadow + brighter dot core lifts each status indicator off the
+// pill background. Without this the emerald-500 dot blends into the
+// pale card-background of the pill on the light theme.
+const DOT_SHADOW = "shadow-[0_0_4px_currentColor]";
+
 export default function AccountSummaryStrip({
   accounts,
   alerts,
@@ -48,16 +54,17 @@ export default function AccountSummaryStrip({
             return (
               <div
                 key={a.account_id}
-                className="flex items-center gap-1.5 px-2 py-1 rounded-full border border-border bg-card/50"
+                className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-card border border-border shadow-sm"
               >
-                <span className={`w-2 h-2 rounded-full ${DOT_CLASS[s]}`} />
-                <span className="font-mono text-xs">{a.account_id}</span>
+                <span
+                  className={`w-2.5 h-2.5 rounded-full ${DOT_CLASS[s]} ${DOT_SHADOW}`}
+                />
+                <span className="font-mono text-xs">
+                  {displayAccountLabel(a.account_id)}
+                </span>
               </div>
             );
           })}
-      <span className="ml-auto text-[10px] font-mono text-muted-foreground">
-        {t("autopilot.summary.linkRadar")}
-      </span>
     </div>
   );
 }

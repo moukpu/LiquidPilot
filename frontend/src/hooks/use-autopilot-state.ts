@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { getAccounts, getRecommendations } from "@/lib/api";
+import { getAccounts } from "@/lib/api";
 import {
   synthAlerts,
   synthTransfers,
@@ -10,7 +10,6 @@ import {
 import type {
   Account,
   Alert,
-  Recommendations,
   TransferSuggestion,
 } from "@/types/api";
 
@@ -81,11 +80,12 @@ export interface AutopilotState {
 }
 
 export function useAutopilotState(interval = 2000): AutopilotState {
+  // Recommendations from the backend's risk engine are intentionally
+  // dropped on the client: the demo brief is that without Demo Mode the
+  // queue stays empty (judges see only data they generated themselves).
+  // We still poll /accounts/ so the AccountSummaryStrip and the demo
+  // status pill stay live.
   const [accounts, setAccounts] = useState<Account[]>([]);
-  const [recommendations, setRecommendations] = useState<Recommendations>({
-    alerts: [],
-    transfers: [],
-  });
   const [lastSync, setLastSync] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -130,34 +130,10 @@ export function useAutopilotState(interval = 2000): AutopilotState {
     controllerRef.current = controller;
 
     try {
-      const results = await Promise.allSettled([
-        getAccounts(controller.signal),
-        getRecommendations(controller.signal),
-      ]);
-
-      let anyOk = false;
-      let firstError: string | null = null;
-
-      if (results[0].status === "fulfilled") {
-        setAccounts(results[0].value);
-        anyOk = true;
-      } else if (results[0].reason?.name !== "AbortError") {
-        firstError = (results[0].reason as Error).message;
-      }
-
-      if (results[1].status === "fulfilled") {
-        setRecommendations(results[1].value);
-        anyOk = true;
-      } else if (results[1].reason?.name !== "AbortError") {
-        firstError ??= (results[1].reason as Error).message;
-      }
-
-      if (anyOk) {
-        setLastSync(new Date());
-        setError(null);
-      } else if (firstError) {
-        setError(firstError);
-      }
+      const accountsResult = await getAccounts(controller.signal);
+      setAccounts(accountsResult);
+      setLastSync(new Date());
+      setError(null);
     } catch (err) {
       if ((err as Error).name !== "AbortError") {
         setError((err as Error).message);
@@ -177,14 +153,18 @@ export function useAutopilotState(interval = 2000): AutopilotState {
     };
   }, [poll, interval]);
 
+  // Demo Mode OFF -> empty arrays. The judges asked for a hard rule:
+  // 'без него НИЧЕГО, даже истории переводов'. Empty queue triggers
+  // the EmptyState component which already nudges the user toward the
+  // Demo Mode toggle.
   const alerts = useMemo(
-    () => (demoMode ? synthAlerts(accounts) : recommendations.alerts),
-    [demoMode, accounts, recommendations.alerts]
+    () => (demoMode ? synthAlerts(accounts) : []),
+    [demoMode, accounts]
   );
 
   const transfers = useMemo(
-    () => (demoMode ? synthTransfers(accounts) : recommendations.transfers),
-    [demoMode, accounts, recommendations.transfers]
+    () => (demoMode ? synthTransfers(accounts) : []),
+    [demoMode, accounts]
   );
 
   // Discard stale action-state keys for transfers no longer in the queue.

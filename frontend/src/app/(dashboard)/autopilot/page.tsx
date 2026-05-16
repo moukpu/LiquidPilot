@@ -31,19 +31,25 @@ export default function AutopilotPage() {
     return c;
   }, [transfers, actionStates]);
 
+  // Pulse the demo-mode pill when the page has loaded but the user
+  // hasn't flipped Demo on yet — without it the queue is permanently
+  // empty and the empty-state copy already prompts toggling Demo Mode.
+  const showDemoHint = !demoMode && accounts.length > 0;
+
   return (
-    <div className="-m-6 h-[calc(100vh-4rem)] flex flex-col overflow-hidden">
+    <div className="-mx-6 -mt-6 h-[calc(100vh-4rem)] flex flex-col bg-background">
       <AutopilotHeader
         demoMode={demoMode}
         onToggleDemoMode={toggleDemoMode}
         lastSync={lastSync}
         error={error}
         counts={counts}
+        demoHint={showDemoHint}
       />
 
       <AccountSummaryStrip accounts={accounts} alerts={alerts} />
 
-      <main className="flex-1 min-h-0 grid grid-cols-1 gap-4 p-6 overflow-hidden">
+      <main className="flex-1 min-h-0 overflow-hidden p-6">
         <ActionQueue
           transfers={transfers}
           alerts={alerts}

@@ -24,9 +24,9 @@ const en = {
   "radar.subtitle":
     "Real-time view of in-flight payments across your accounts.",
   "radar.flowSize": "Flow size",
-  "radar.legend.small": "< 1M",
-  "radar.legend.medium": "< 10M",
-  "radar.legend.large": "≥ 10M",
+  "radar.legend.small": "< $100k",
+  "radar.legend.medium": "< $1M",
+  "radar.legend.large": "≥ $1M",
   "radar.legend.hoverHint": "Click any plane for details",
   "radar.tooltip.direction": "Direction",
   "radar.tooltip.amount": "Amount",
@@ -38,11 +38,8 @@ const en = {
   "radar.tooltip.close": "Close",
   "radar.frozen.title": "Frozen liquidity",
   "radar.frozen.ofTotal": "of total balance",
-  "radar.frozen.hint":
-    "Idle capital that can be deployed (overnight repo, MMF) without breaching the floor over the next 7 days.",
+  "radar.frozen.allDeployed": "All capital deployed — no idle balances right now.",
   "radar.reliability.title": "Rail reliability",
-  "radar.reliability.hint":
-    "% of transactions settled on time over the last 90 days.",
   "radar.direction.IN": "IN",
   "radar.direction.OUT": "OUT",
   "radar.city.frankfurt": "Frankfurt",
@@ -56,14 +53,12 @@ const en = {
   "radar.city.almaty": "Almaty",
 
   "account.ledgerBalance": "Ledger balance",
-  "account.percentOfOpening": "{percent}% of opening",
-  "account.aboveFloor": "{amount} above floor",
-  "account.belowFloor": "{amount} below floor",
   "account.bufferBreach": "Buffer breach",
-  "account.in": "In",
-  "account.out": "Out",
+  "account.vsFloor": "vs floor",
+  "account.in": "Inflow today",
+  "account.out": "Outflow today",
   "account.txCount": "Transactions: {n}",
-  "account.inTransit": "In-transit: {amount}",
+  "account.inTransit.count": "In flight · {n} tx",
 
   "alerts.title": "Alerts & Recommendations",
   "alerts.allClear": "All clear",
@@ -100,7 +95,6 @@ const en = {
   "autopilot.queue.skippedSection": "Skipped · {n}",
   "autopilot.queue.infoSection": "Open alerts · {n}",
   "autopilot.summary.label": "Accounts",
-  "autopilot.summary.linkRadar": "Detailed metrics on Radar",
   "autopilot.header.statusLine": "{pending} pending · {resolved} resolved",
   "autopilot.session.accepted": "Accepted",
   "autopilot.session.moved": "Moved",
@@ -170,6 +164,14 @@ const en = {
   "timemachine.method.flatValue": "Day-0 baseline",
   "timemachine.method.accumulatedDrift": "Drift over holiday",
   "timemachine.method.catchUp": "Catch-up drop",
+  "timemachine.hint.pickScenario":
+    "Pick a scenario and run the simulation. Cards on the right will show projected impact per account.",
+  "timemachine.hint.railDelay":
+    "Rail Delay — slip a payment rail's clearing window by N business days. Example: SWIFT correspondent stalls 3 days, see who runs short.",
+  "timemachine.hint.volumeSpike":
+    "Volume Spike — multiply outflow on a specific rail. Example: card chargebacks 2× normal volume for the next 7 days.",
+  "timemachine.hint.bankHoliday":
+    "Bank Holiday — freeze all outbound clearing for accounts in a country for N days, then catch-up drop on day N+1.",
 
   "backend.alert.template":
     "{accountId}: forecast {projected} {currency} by {breachDate}, below floor of {floor} (shortfall {shortfall}).",

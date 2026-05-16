@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale } from "@/i18n/locale-context";
-import { formatNumber, type IntlLocale } from "@/lib/format";
+import { formatNumber, formatMoneyCompact, type IntlLocale } from "@/lib/format";
 import type { AccountStressResult, StressRequest } from "@/types/api";
 
 interface Props {
@@ -47,10 +47,11 @@ function smoothPath(points: Array<[number, number]>): string {
 export default function ResultCard({ result, intl }: Props) {
   const { t } = useLocale();
 
-  // Y range built from baseline + stress only — including the floor here
-  // would compress typical (balance >> floor) traces into a flat line at
-  // the top of the chart. The floor is drawn inline when it lands inside
-  // the data range, or rendered as a tiny corner label otherwise.
+  // Y range built from baseline + stress only. Floor used to render as
+  // a dashed reference line + 'floor' text label, but it confused the
+  // stress signal so it's gone entirely. The breach-count badge below
+  // still uses methodology_inputs.floor server-side; the chart itself
+  // shows just baseline (grey) vs stress (green/red).
   const baselineVals = result.horizon.map((p) => p.baseline_p50);
   const stressVals = result.horizon.map((p) => p.stress_p50);
   const dataVals = [...baselineVals, ...stressVals];
@@ -85,10 +86,6 @@ export default function ResultCard({ result, intl }: Props) {
   const baselinePath = smoothPath(baselinePoints);
   const stressPath = smoothPath(stressPoints);
 
-  const floorInRange = result.floor >= yMin && result.floor <= yMax;
-  const floorY = toY(result.floor);
-  const floorAbove = result.floor > yMax;
-
   const breachWorsened = result.stress_breaches > result.baseline_breaches;
   const stressColor = breachWorsened ? "#dc2626" : "#16a34a";
 
@@ -104,66 +101,31 @@ export default function ResultCard({ result, intl }: Props) {
       </div>
 
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-12 mb-2">
-        {floorInRange && (
-          <line
-            x1={PAD_X}
-            x2={W - PAD_X}
-            y1={floorY}
-            y2={floorY}
-            stroke="#dc2626"
-            strokeWidth="0.5"
-            strokeDasharray="2 2"
-            opacity="0.6"
-          />
-        )}
-        {!floorInRange && (
-          <text
-            x={PAD_X}
-            y={floorAbove ? PAD_TOP + 6 : H - 3}
-            fontSize="6"
-            fill="#dc2626"
-            opacity="0.7"
-          >
-            {floorAbove ? "\u2191" : "\u2193"} floor
-          </text>
-        )}
         <path d={baselinePath} fill="none" stroke="#94a3b8" strokeWidth="1.5" />
         <path d={stressPath} fill="none" stroke={stressColor} strokeWidth="1.5" />
       </svg>
 
       <div className="grid grid-cols-3 gap-2 text-[10px] font-mono pt-1 border-t border-border/50">
-        <div>
-          <div className="text-muted-foreground uppercase tracking-widest text-[9px]">
-            {t("timemachine.baselineMin")}
-          </div>
-          <div className="tabular-nums">
-            {result.currency}{" "}
-            {formatNumber(result.baseline_min_p50, 0, intl)}
-          </div>
-        </div>
-        <div>
-          <div className="text-muted-foreground uppercase tracking-widest text-[9px]">
-            {t("timemachine.stressMin")}
-          </div>
-          <div className="tabular-nums">
-            {result.currency}{" "}
-            {formatNumber(result.stress_min_p50, 0, intl)}
-          </div>
-        </div>
-        <div>
-          <div className="text-muted-foreground uppercase tracking-widest text-[9px]">
-            {t("timemachine.delta")}
-          </div>
-          <div
-            className={`tabular-nums font-bold ${
-              result.delta_min_p50 < 0 ? "text-rose-500" : "text-emerald-500"
-            }`}
-          >
-            {result.delta_min_p50 >= 0 ? "+" : ""}
-            {result.currency}{" "}
-            {formatNumber(result.delta_min_p50, 0, intl)}
-          </div>
-        </div>
+        <FooterStat
+          label={t("timemachine.baselineMin")}
+          currency={result.currency}
+          amount={result.baseline_min_p50}
+          intl={intl}
+        />
+        <FooterStat
+          label={t("timemachine.stressMin")}
+          currency={result.currency}
+          amount={result.stress_min_p50}
+          intl={intl}
+        />
+        <FooterStat
+          label={t("timemachine.delta")}
+          currency={result.currency}
+          amount={result.delta_min_p50}
+          intl={intl}
+          highlight={result.delta_min_p50 < 0 ? "negative" : "positive"}
+          showSign
+        />
       </div>
 
       <details className="mt-2 group">
@@ -181,6 +143,45 @@ export default function ResultCard({ result, intl }: Props) {
           />
         </div>
       </details>
+    </div>
+  );
+}
+
+function FooterStat({
+  label,
+  currency,
+  amount,
+  intl,
+  highlight,
+  showSign,
+}: {
+  label: string;
+  currency: string;
+  amount: number;
+  intl: IntlLocale;
+  highlight?: "positive" | "negative";
+  showSign?: boolean;
+}) {
+  const sign = showSign && amount >= 0 ? "+" : "";
+  // Compact notation keeps even KZT/JPY billions inside a 90-px column.
+  // Number sits on its own row so we never see `KZT 5 061 111 026` wrap
+  // mid-thousands-separator on narrow viewports.
+  const tone =
+    highlight === "negative"
+      ? "text-rose-500 font-bold"
+      : highlight === "positive"
+      ? "text-emerald-500 font-bold"
+      : "";
+  return (
+    <div className="min-w-0">
+      <div className="text-muted-foreground uppercase tracking-widest text-[9px] truncate">
+        {label}
+      </div>
+      <div className="text-[9px] text-muted-foreground/70 mt-0.5">{currency}</div>
+      <div className={`tabular-nums truncate text-right ${tone}`} title={`${sign}${currency} ${formatNumber(amount, 0, intl)}`}>
+        {sign}
+        {formatMoneyCompact(amount, intl)}
+      </div>
     </div>
   );
 }
