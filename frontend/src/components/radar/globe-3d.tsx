@@ -4,6 +4,16 @@ import { Suspense, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, type ThreeEvent } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
+import { feature } from "topojson-client";
+import type { Topology } from "topojson-specification";
+import type {
+  Feature,
+  FeatureCollection,
+  Geometry,
+  MultiPolygon,
+  Polygon,
+} from "geojson";
+import countries110m from "world-atlas/countries-110m.json";
 import type { Transaction } from "@/types/api";
 import { useT } from "@/i18n/locale-context";
 import type { MessageKey } from "@/i18n/messages/en";
@@ -26,6 +36,8 @@ const TOWERS: Tower[] = [
 const GLOBE_RADIUS = 1;
 const ARC_LIFT = 0.32; // peak altitude above surface
 const PLANE_COUNT = 28;
+const BORDER_LIFT = 1.003; // sit borders just above surface to avoid z-fight
+const GRID_LIFT = 1.001;
 
 // --- Deterministic hash for stable plane assignment ------------------------
 function fnv1a(str: string): number {
@@ -77,9 +89,9 @@ function planeColorHex(amount: number): string {
 }
 
 function planeSize(amount: number): number {
-  if (amount < 50000) return 0.018;
-  if (amount < 500000) return 0.026;
-  return 0.036;
+  if (amount < 50000) return 0.024;
+  if (amount < 500000) return 0.034;
+  return 0.046;
 }
 
 // --- Choose deterministic counterparty tower for OUT/IN tx -----------------
@@ -108,13 +120,68 @@ export interface Globe3DProps {
 // ---------------------------------------------------------------------------
 // Earth — stylised dark navy sphere + cyan latitude/longitude grid
 // ---------------------------------------------------------------------------
+// build a LineSegments geometry for real country borders (world-atlas 110m)
+function buildBorderGeometry(): THREE.BufferGeometry {
+  const topo = countries110m as unknown as Topology;
+  const fc = feature(
+    topo,
+    topo.objects.countries
+  ) as unknown as FeatureCollection<Geometry>;
+
+  const positions: number[] = [];
+  const stepDeg = 3; // subdivide segments so borders follow curvature
+
+  const addArc = (lon0: number, lat0: number, lon1: number, lat1: number) => {
+    const a = latLonToVec3(lat0, lon0, BORDER_LIFT);
+    const b = latLonToVec3(lat1, lon1, BORDER_LIFT);
+    const an = a.clone().normalize();
+    const bn = b.clone().normalize();
+    const dot = Math.min(1, Math.max(-1, an.dot(bn)));
+    const angleDeg = (Math.acos(dot) * 180) / Math.PI;
+    const subs = Math.max(1, Math.ceil(angleDeg / stepDeg));
+    let prev = a;
+    for (let i = 1; i <= subs; i++) {
+      const t = i / subs;
+      const p = arcPoint(a, b, t);
+      // flatten back to BORDER_LIFT shell (arcPoint adds peak lift)
+      p.setLength(BORDER_LIFT);
+      positions.push(prev.x, prev.y, prev.z, p.x, p.y, p.z);
+      prev = p;
+    }
+  };
+
+  const addRing = (ring: number[][]) => {
+    for (let i = 0; i < ring.length - 1; i++) {
+      const [lon0, lat0] = ring[i];
+      const [lon1, lat1] = ring[i + 1];
+      addArc(lon0, lat0, lon1, lat1);
+    }
+  };
+
+  for (const f of fc.features as Feature<Polygon | MultiPolygon>[]) {
+    const g = f.geometry;
+    if (!g) continue;
+    if (g.type === "Polygon") {
+      for (const ring of g.coordinates) addRing(ring);
+    } else if (g.type === "MultiPolygon") {
+      for (const poly of g.coordinates) {
+        for (const ring of poly) addRing(ring);
+      }
+    }
+  }
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  return geo;
+}
+
 function Earth() {
   const gridGeometry = useMemo(() => {
     const positions: number[] = [];
     // parallels (lines of latitude)
     for (let lat = -75; lat <= 75; lat += 15) {
-      const yOff = Math.sin((lat * Math.PI) / 180) * GLOBE_RADIUS;
-      const r = Math.cos((lat * Math.PI) / 180) * GLOBE_RADIUS;
+      const yOff = Math.sin((lat * Math.PI) / 180) * GRID_LIFT;
+      const r = Math.cos((lat * Math.PI) / 180) * GRID_LIFT;
       const segs = 96;
       for (let i = 0; i < segs; i++) {
         const a0 = (i / segs) * Math.PI * 2;
@@ -131,10 +198,10 @@ function Earth() {
       for (let i = 0; i < segs; i++) {
         const t0 = (i / segs) * Math.PI - Math.PI / 2;
         const t1 = ((i + 1) / segs) * Math.PI - Math.PI / 2;
-        const r0 = Math.cos(t0) * GLOBE_RADIUS;
-        const r1 = Math.cos(t1) * GLOBE_RADIUS;
-        const y0 = Math.sin(t0) * GLOBE_RADIUS;
-        const y1 = Math.sin(t1) * GLOBE_RADIUS;
+        const r0 = Math.cos(t0) * GRID_LIFT;
+        const r1 = Math.cos(t1) * GRID_LIFT;
+        const y0 = Math.sin(t0) * GRID_LIFT;
+        const y1 = Math.sin(t1) * GRID_LIFT;
         const ang = (lon * Math.PI) / 180;
         positions.push(
           r0 * Math.cos(ang), y0, -r0 * Math.sin(ang),
@@ -147,32 +214,39 @@ function Earth() {
     return geo;
   }, []);
 
+  const borderGeometry = useMemo(() => buildBorderGeometry(), []);
+
   return (
     <group>
-      {/* solid sphere (very slightly smaller so grid sits on top) */}
+      {/* ocean sphere — lighter blue */}
       <mesh>
-        <sphereGeometry args={[GLOBE_RADIUS * 0.995, 64, 64]} />
+        <sphereGeometry args={[GLOBE_RADIUS * 0.995, 96, 96]} />
         <meshStandardMaterial
-          color="#0b1426"
-          roughness={1}
+          color="#1f3a64"
+          roughness={0.85}
           metalness={0}
-          emissive="#06121f"
-          emissiveIntensity={0.6}
+          emissive="#142a4a"
+          emissiveIntensity={0.5}
         />
       </mesh>
 
-      {/* lat/lon wireframe grid */}
+      {/* lat/lon wireframe grid (subtle) */}
       <lineSegments geometry={gridGeometry}>
-        <lineBasicMaterial color="#1e3a5f" transparent opacity={0.55} />
+        <lineBasicMaterial color="#3b5e8f" transparent opacity={0.35} />
+      </lineSegments>
+
+      {/* country borders (real natural-earth 110m via world-atlas) */}
+      <lineSegments geometry={borderGeometry}>
+        <lineBasicMaterial color="#8ab4e8" transparent opacity={0.9} />
       </lineSegments>
 
       {/* outer atmosphere glow */}
       <mesh>
-        <sphereGeometry args={[GLOBE_RADIUS * 1.06, 48, 48]} />
+        <sphereGeometry args={[GLOBE_RADIUS * 1.08, 48, 48]} />
         <meshBasicMaterial
           color="#06b6d4"
           transparent
-          opacity={0.07}
+          opacity={0.12}
           side={THREE.BackSide}
         />
       </mesh>
@@ -415,7 +489,8 @@ function SpriteLabel({ label, city }: { label: string; city: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// Plane — small sphere that travels along sampled arc; hover to expose tooltip
+// Plane — actual dart-shape mesh (cone body + wings + tail), oriented along
+// the velocity vector with +Y aligned to the surface normal.
 // ---------------------------------------------------------------------------
 function Plane({
   samples,
@@ -434,19 +509,38 @@ function Plane({
   onEnter: () => void;
   onLeave: () => void;
 }) {
-  const ref = useRef<THREE.Mesh>(null);
+  const planeRef = useRef<THREE.Group>(null);
   const haloRef = useRef<THREE.Mesh>(null);
 
+  // scratch vectors / matrix
+  const tmpForward = useMemo(() => new THREE.Vector3(), []);
+  const tmpRight = useMemo(() => new THREE.Vector3(), []);
+  const tmpUp = useMemo(() => new THREE.Vector3(), []);
+  const tmpMat = useMemo(() => new THREE.Matrix4(), []);
+
   useFrame((state) => {
-    if (!ref.current) return;
+    if (!planeRef.current) return;
     const elapsed = state.clock.elapsedTime + phase * duration;
     const t = (elapsed / duration) % 1;
     const idx = t * (samples.length - 1);
     const i0 = Math.floor(idx);
     const i1 = Math.min(samples.length - 1, i0 + 1);
+    const i2 = Math.min(samples.length - 1, i0 + 2);
     const frac = idx - i0;
     const p = samples[i0].clone().lerp(samples[i1], frac);
-    ref.current.position.copy(p);
+
+    // basis: forward = velocity, up = outward radial, right = up × forward
+    tmpForward.copy(samples[i2]).sub(samples[i1]);
+    if (tmpForward.lengthSq() < 1e-8) tmpForward.set(0, 0, 1);
+    tmpForward.normalize();
+    tmpUp.copy(p).normalize();
+    tmpRight.crossVectors(tmpUp, tmpForward).normalize();
+    tmpForward.crossVectors(tmpRight, tmpUp).normalize();
+
+    tmpMat.makeBasis(tmpRight, tmpUp, tmpForward);
+    planeRef.current.position.copy(p);
+    planeRef.current.quaternion.setFromRotationMatrix(tmpMat);
+
     if (haloRef.current) haloRef.current.position.copy(p);
   });
 
@@ -464,20 +558,57 @@ function Plane({
     document.body.style.cursor = "default";
   };
 
+  const scale = hovered ? 1.5 : 1;
+
   return (
     <group>
+      {/* soft halo */}
       <mesh ref={haloRef}>
-        <sphereGeometry args={[size * 2.2, 12, 12]} />
+        <sphereGeometry args={[size * 1.8, 12, 12]} />
         <meshBasicMaterial color={color} transparent opacity={0.18} />
       </mesh>
-      <mesh
-        ref={ref}
+
+      {/* plane: body + wings + tail */}
+      <group
+        ref={planeRef}
+        scale={scale}
         onPointerOver={handlePointerOver}
         onPointerOut={handlePointerOut}
       >
-        <sphereGeometry args={[size * (hovered ? 1.35 : 1), 16, 16]} />
-        <meshBasicMaterial color={color} />
-      </mesh>
+        {/* body: cone with apex pointing forward (+Z) */}
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <coneGeometry args={[size * 0.85, size * 3, 12]} />
+          <meshStandardMaterial
+            color={color}
+            emissive={color}
+            emissiveIntensity={0.9}
+            roughness={0.4}
+            metalness={0.1}
+          />
+        </mesh>
+        {/* wings: thin flat box along X */}
+        <mesh position={[0, 0, -size * 0.3]}>
+          <boxGeometry args={[size * 3.4, size * 0.12, size * 0.7]} />
+          <meshStandardMaterial
+            color={color}
+            emissive={color}
+            emissiveIntensity={0.9}
+            roughness={0.4}
+            metalness={0.1}
+          />
+        </mesh>
+        {/* tail fin: vertical at the back */}
+        <mesh position={[0, size * 0.35, -size * 1.1]}>
+          <boxGeometry args={[size * 0.12, size * 0.7, size * 0.5]} />
+          <meshStandardMaterial
+            color={color}
+            emissive={color}
+            emissiveIntensity={0.9}
+            roughness={0.4}
+            metalness={0.1}
+          />
+        </mesh>
+      </group>
     </group>
   );
 }
@@ -502,9 +633,10 @@ export default function Globe3D({ transactions, onHoverPlane }: Globe3DProps) {
         dpr={[1, 2]}
         gl={{ antialias: true, alpha: true }}
       >
-        <ambientLight intensity={0.55} />
-        <directionalLight position={[3, 2, 5]} intensity={0.8} color="#cfe7ff" />
-        <pointLight position={[-4, -2, -3]} intensity={0.3} color="#06b6d4" />
+        <ambientLight intensity={0.95} />
+        <directionalLight position={[3, 2, 5]} intensity={1.1} color="#e6f1ff" />
+        <directionalLight position={[-3, -1, -4]} intensity={0.5} color="#bfe7ff" />
+        <pointLight position={[-4, -2, -3]} intensity={0.4} color="#06b6d4" />
 
         <Suspense fallback={null}>
           <World transactions={transactions} onHoverPlane={onHoverPlane} t={t} />
