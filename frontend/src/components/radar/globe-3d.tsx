@@ -83,9 +83,9 @@ function sampleArc(a: THREE.Vector3, b: THREE.Vector3, n: number): THREE.Vector3
 
 // --- Plane color/size by amount --------------------------------------------
 function planeColorHex(amount: number): string {
-  if (amount < 50000) return "#22c55e";
-  if (amount < 500000) return "#eab308";
-  return "#ef4444";
+  if (amount < 1_000_000) return "#22c55e"; // < 1M = green
+  if (amount < 10_000_000) return "#eab308"; // 1M..10M = yellow
+  return "#ef4444"; // 10M+ = red
 }
 
 function planeSize(amount: number): number {
@@ -598,6 +598,7 @@ function Plane({
 
   useFrame((state) => {
     if (!ref.current) return;
+    if (hovered) return; // freeze while hovered so the tooltip is readable
     const elapsed = state.clock.elapsedTime + phase * duration;
     const t = (elapsed / duration) % 1;
     const idx = t * (samples.length - 1);

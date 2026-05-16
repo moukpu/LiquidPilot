@@ -5,7 +5,6 @@ import dynamic from "next/dynamic";
 import { useRadarPolling } from "@/hooks/use-radar-polling";
 import type { TooltipData } from "@/components/radar/globe-3d";
 import AccountCard from "@/components/radar/account-card";
-import AlertsPanel from "@/components/radar/alerts-panel";
 import { useLocale } from "@/i18n/locale-context";
 import { formatTime, formatNumber } from "@/lib/format";
 import { localeToIntl } from "@/i18n/locale-context";
@@ -125,17 +124,6 @@ export default function RadarPage() {
             transactions={data.transactions}
           />
         ))}
-
-        <div className="glass-card rounded-2xl p-5 shrink-0 mt-2">
-          <div className="text-[10px] font-mono uppercase tracking-widest text-primary mb-4 flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            {t("alerts.title")}
-          </div>
-          <AlertsPanel
-            alerts={data.recommendations.alerts}
-            transfers={data.recommendations.transfers}
-          />
-        </div>
       </div>
     </div>
   );

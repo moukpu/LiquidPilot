@@ -24,9 +24,9 @@ const en = {
   "radar.subtitle":
     "Real-time view of in-flight payments across your accounts.",
   "radar.flowSize": "Flow size",
-  "radar.legend.small": "<50K",
-  "radar.legend.medium": "<500K",
-  "radar.legend.large": "≥500K",
+  "radar.legend.small": "< 1M",
+  "radar.legend.medium": "< 10M",
+  "radar.legend.large": "≥ 10M",
   "radar.legend.hoverHint": "Hover any plane for details",
   "radar.tooltip.direction": "Direction",
   "radar.tooltip.amount": "Amount",
