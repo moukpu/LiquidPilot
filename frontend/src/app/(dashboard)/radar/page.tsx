@@ -1,13 +1,24 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { useRadarPolling } from "@/hooks/use-radar-polling";
-import WorldMap, { type TooltipData } from "@/components/radar/world-map";
+import type { TooltipData } from "@/components/radar/globe-3d";
 import AccountCard from "@/components/radar/account-card";
 import AlertsPanel from "@/components/radar/alerts-panel";
 import { useLocale } from "@/i18n/locale-context";
 import { formatTime, formatNumber } from "@/lib/format";
 import { localeToIntl } from "@/i18n/locale-context";
+
+// 3D globe is client-only (uses three.js / WebGL)
+const Globe3D = dynamic(() => import("@/components/radar/globe-3d"), {
+  ssr: false,
+  loading: () => (
+    <div className="absolute inset-0 flex items-center justify-center text-[10px] font-mono text-muted-foreground tracking-wider uppercase">
+      Loading globe…
+    </div>
+  ),
+});
 
 export default function RadarPage() {
   const { data, lastSync, error, loading } = useRadarPolling(2000);
@@ -17,9 +28,9 @@ export default function RadarPage() {
 
   return (
     <div className="w-full h-full relative overflow-hidden bg-background">
-      {/* Background Map - Absolute Full Screen */}
-      <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-auto">
-        <WorldMap transactions={data.transactions} onHoverPlane={setTooltip} />
+      {/* Background 3D Globe — full screen, interactive (drag to rotate, scroll to zoom) */}
+      <div className="absolute inset-0 z-0 pointer-events-auto">
+        <Globe3D transactions={data.transactions} onHoverPlane={setTooltip} />
       </div>
 
       {/* Floating Status Bar (Top Left) */}
