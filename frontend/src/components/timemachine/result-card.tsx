@@ -1,16 +1,33 @@
 "use client";
 
 import { useLocale } from "@/i18n/locale-context";
+import type { MessageKey } from "@/i18n/messages/en";
 import { formatNumber, formatMoneyCompact, type IntlLocale } from "@/lib/format";
 import type { AccountStressResult, StressRequest } from "@/types/api";
 
 function formatStatAmount(amount: number, intl: IntlLocale): string {
-  // Compact only for absolute values ≥ 1,000,000.
-  // Smaller values show full number with separators so thousands read.
-  if (Math.abs(amount) >= 1_000_000) {
+  // Compact for absolute values ≥ 100k. Below that, the three-digit
+  // figure is short enough to read uncompacted in a 280px card. The
+  // currency code is dropped from the visible cell (it lives in the
+  // card header `account_id`); full amount + currency stays in the
+  // hover `title` for the precise number.
+  if (Math.abs(amount) >= 100_000) {
     return formatMoneyCompact(amount, intl);
   }
   return formatNumber(amount, 0, intl);
+}
+
+function translateReason(
+  raw: unknown,
+  t: (k: MessageKey) => string
+): string {
+  const s = String(raw ?? "");
+  if (s.includes("no inbound")) return t("timemachine.reason.noInboundOnRail");
+  if (s.includes("no outbound")) return t("timemachine.reason.noOutboundOnRail");
+  if (s.includes("country") && s.includes("not"))
+    return t("timemachine.reason.countryMismatch");
+  if (s.includes("multiplier")) return t("timemachine.reason.zeroMultiplier");
+  return t("timemachine.reason.unknown");
 }
 
 interface Props {
@@ -168,6 +185,22 @@ export default function ResultCard({ result, intl }: Props) {
           />
         )}
       </div>
+
+      <details className="mt-2 group">
+        <summary className="cursor-pointer text-[10px] font-mono uppercase tracking-widest text-muted-foreground hover:text-foreground py-1 list-none flex items-center gap-1">
+          <span className="group-open:rotate-90 transition-transform inline-block">
+            ▸
+          </span>
+          {t("timemachine.methodologyLabel")}
+        </summary>
+        <div className="mt-1 p-2 rounded bg-card/50 border border-border/50 space-y-1">
+          <MethodologyDetails
+            inputs={result.methodology_inputs}
+            currency={result.currency}
+            intl={intl}
+          />
+        </div>
+      </details>
     </div>
   );
 }
@@ -206,8 +239,122 @@ function FooterStat({
         title={`${sign}${currency} ${formatNumber(amount, 0, intl)}`}
       >
         {sign}
-        {currency} {formatStatAmount(amount, intl)}
+        {formatStatAmount(amount, intl)}
       </div>
+    </div>
+  );
+}
+
+function MethodologyDetails({
+  inputs,
+  currency,
+  intl,
+}: {
+  inputs: Record<string, unknown>;
+  currency: string;
+  intl: IntlLocale;
+}) {
+  const { t } = useLocale();
+  const scenario = inputs.scenario as string | undefined;
+
+  if (inputs.applied === false) {
+    return (
+      <p className="text-[10px] text-muted-foreground italic">
+        {t("timemachine.method.notApplied")}: {translateReason(inputs.reason, t)}
+      </p>
+    );
+  }
+
+  if (scenario === "rail_delay") {
+    return (
+      <>
+        <Row
+          label={t("timemachine.method.sample")}
+          value={`${inputs.sample_size} tx · ${inputs.sample_days} ${t("timemachine.method.days")}`}
+        />
+        <Row
+          label={t("timemachine.method.avgInflow", { rail: String(inputs.rail) })}
+          value={`${currency} ${formatNumber(Number(inputs.avg_daily_inflow), 0, intl)}/d`}
+        />
+        <Row
+          label={t("timemachine.method.daysAffected")}
+          value={String(inputs.days_affected)}
+        />
+        <Row
+          label={t("timemachine.method.shiftPerDay")}
+          value={`−${currency} ${formatNumber(Number(inputs.shift_per_day), 0, intl)}`}
+          highlight
+        />
+      </>
+    );
+  }
+
+  if (scenario === "volume_spike") {
+    return (
+      <>
+        <Row
+          label={t("timemachine.method.sample")}
+          value={`${inputs.sample_size} tx · ${inputs.sample_days} ${t("timemachine.method.days")}`}
+        />
+        <Row
+          label={t("timemachine.method.avgOutflow", { rail: String(inputs.affected_rail) })}
+          value={`${currency} ${formatNumber(Number(inputs.avg_daily_outflow), 0, intl)}/d`}
+        />
+        <Row
+          label={t("timemachine.method.multiplier")}
+          value={`×${Number(inputs.multiplier).toFixed(2)}`}
+        />
+        <Row
+          label={t("timemachine.method.extraPerDay")}
+          value={`−${currency} ${formatNumber(Number(inputs.extra_per_day), 0, intl)}`}
+          highlight
+        />
+      </>
+    );
+  }
+
+  if (scenario === "bank_holiday") {
+    return (
+      <>
+        <Row
+          label={t("timemachine.method.country")}
+          value={`${String(inputs.country)} · ${inputs.holiday_days} ${t("timemachine.method.days")}`}
+        />
+        <Row
+          label={t("timemachine.method.dailyNetOutflow")}
+          value={`${currency} ${formatNumber(Number(inputs.daily_net_outflow), 0, intl)}/d`}
+        />
+        <Row
+          label={t("timemachine.method.deferred")}
+          value={`−${currency} ${formatNumber(Number(inputs.deferred_outflow), 0, intl)}`}
+          highlight
+        />
+      </>
+    );
+  }
+
+  return null;
+}
+
+function Row({
+  label,
+  value,
+  highlight,
+}: {
+  label: string;
+  value: string;
+  highlight?: boolean;
+}) {
+  return (
+    <div className="flex justify-between gap-2 text-[10px] font-mono">
+      <span className="text-muted-foreground">{label}</span>
+      <span
+        className={
+          highlight ? "tabular-nums font-bold" : "tabular-nums"
+        }
+      >
+        {value}
+      </span>
     </div>
   );
 }

@@ -4,11 +4,7 @@ import { useState } from "react";
 import { localeToIntl, useLocale } from "@/i18n/locale-context";
 import { formatNumber } from "@/lib/format";
 import { runStressTest } from "@/lib/api";
-import type {
-  StressRequest,
-  StressResult,
-  StressScenario,
-} from "@/types/api";
+import type { StressRequest, StressResult, StressScenario } from "@/types/api";
 import ScenarioPicker from "@/components/timemachine/scenario-picker";
 import ResultCard from "@/components/timemachine/result-card";
 import type { MessageKey } from "@/i18n/messages/en";
@@ -106,13 +102,6 @@ export default function TimeMachinePage() {
 
         {result && (
           <>
-            {result.new_breach_count === 0 && (
-              <div className="mb-4 p-3 rounded-xl bg-emerald-50/60 border border-emerald-200/60 text-emerald-700 text-xs leading-snug">
-                {t("timemachine.summary.noBreaches", {
-                  suggestion: harderSuggestion(req),
-                })}
-              </div>
-            )}
             <div className="flex items-center gap-3 text-[10px] font-mono text-muted-foreground mb-2">
               <LegendDot color="#94a3b8" label={t("timemachine.legend.baseline")} />
               <LegendDot color="#10b981" label={t("timemachine.legend.stress")} />
@@ -143,22 +132,6 @@ export default function TimeMachinePage() {
       </div>
     </div>
   );
-}
-
-// Suggest a strictly-harder parameter for the same scenario family.
-// Caps at the picker's hard maxes so we never recommend a value the
-// user can't actually input.
-function harderSuggestion(req: StressRequest): string {
-  if (req.scenario === "rail_delay") {
-    const next = Math.min(7, (req.extra_days ?? 1) + 2);
-    return `rail_delay ${next}d`;
-  }
-  if (req.scenario === "volume_spike") {
-    const next = Math.min(2.0, (req.multiplier ?? 1.3) + 0.3);
-    return `multiplier ×${next.toFixed(2)}`;
-  }
-  const next = Math.min(5, (req.holiday_days ?? 2) + 1);
-  return `bank_holiday ${next}d`;
 }
 
 function LegendDot({ color, label }: { color: string; label: string }) {

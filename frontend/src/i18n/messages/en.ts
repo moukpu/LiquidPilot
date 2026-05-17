@@ -154,6 +154,19 @@ const en = {
   "timemachine.baselineMin": "Baseline min",
   "timemachine.stressMin": "Stress min",
   "timemachine.delta": "Delta",
+  "timemachine.methodologyLabel": "Method",
+  "timemachine.method.notApplied": "Not applied",
+  "timemachine.method.sample": "Sample",
+  "timemachine.method.days": "days",
+  "timemachine.method.avgInflow": "Avg {rail} IN",
+  "timemachine.method.avgOutflow": "Avg {rail} OUT",
+  "timemachine.method.daysAffected": "Days affected",
+  "timemachine.method.shiftPerDay": "Daily shift",
+  "timemachine.method.multiplier": "Multiplier",
+  "timemachine.method.extraPerDay": "Extra OUT/day",
+  "timemachine.method.country": "Holiday",
+  "timemachine.method.dailyNetOutflow": "Daily net outflow",
+  "timemachine.method.deferred": "Deferred outflow",
   "timemachine.hint.pickScenario":
     "Pick a scenario and run the simulation. Cards on the right will show projected impact per account.",
   "timemachine.hint.railDelay":
@@ -162,7 +175,11 @@ const en = {
     "Volume Spike — multiply outflow on a specific rail. Example: card chargebacks 2× normal volume for the next 7 days.",
   "timemachine.hint.bankHoliday":
     "Bank Holiday — freeze all outbound clearing for accounts in a country for N days, then catch-up drop on day N+1.",
-  "timemachine.summary.noBreaches": "Stress passed — no account drops below floor. Try harder: {suggestion}.",
+  "timemachine.reason.noInboundOnRail": "no inbound transactions on this rail for this account",
+  "timemachine.reason.noOutboundOnRail": "no outbound transactions on this rail for this account",
+  "timemachine.reason.countryMismatch": "account country does not match holiday country",
+  "timemachine.reason.zeroMultiplier": "multiplier ≤ 1 — no spike",
+  "timemachine.reason.unknown": "scenario not applicable",
   "autopilot.queue.infoSectionHint": "Forecasted breaches the engine cannot auto-resolve — no donor account has surplus. Manual treasurer action: arrange credit line / FX swap / repo.",
   "radar.legend.totalInFlight": "{n} in flight",
 

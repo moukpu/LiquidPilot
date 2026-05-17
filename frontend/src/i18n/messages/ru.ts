@@ -155,6 +155,19 @@ const ru: Record<keyof typeof en, string> = {
   "timemachine.baselineMin": "Базовый минимум",
   "timemachine.stressMin": "Стрессовый минимум",
   "timemachine.delta": "Дельта",
+  "timemachine.methodologyLabel": "Методика",
+  "timemachine.method.notApplied": "Не применимо",
+  "timemachine.method.sample": "Выборка",
+  "timemachine.method.days": "дн",
+  "timemachine.method.avgInflow": "Средний приход {rail}",
+  "timemachine.method.avgOutflow": "Средний отток {rail}",
+  "timemachine.method.daysAffected": "Дней затронуто",
+  "timemachine.method.shiftPerDay": "Сдвиг в день",
+  "timemachine.method.multiplier": "Множитель",
+  "timemachine.method.extraPerDay": "Доп. OUT/день",
+  "timemachine.method.country": "Праздник",
+  "timemachine.method.dailyNetOutflow": "Чистый отток/день",
+  "timemachine.method.deferred": "Отложенный отток",
   "timemachine.hint.pickScenario":
     "Выберите сценарий и запустите симуляцию. Справа появятся карточки с эффектом на каждый счёт.",
   "timemachine.hint.railDelay":
@@ -163,7 +176,11 @@ const ru: Record<keyof typeof en, string> = {
     "Volume Spike — умножить расход по рельсу. Пример: чарджбеки по картам в 2× в ближайшие 7 дней.",
   "timemachine.hint.bankHoliday":
     "Bank Holiday — заморозка отходящего clearing'а на N дней в выбранной стране с последующим catch-up дропом.",
-  "timemachine.summary.noBreaches": "Стресс прошёл — ни один счёт не свалился под минимум. Попробуй жёстче: {suggestion}.",
+  "timemachine.reason.noInboundOnRail": "по этому рельсу нет входящих транзакций для этого счёта",
+  "timemachine.reason.noOutboundOnRail": "по этому рельсу нет исходящих транзакций для этого счёта",
+  "timemachine.reason.countryMismatch": "страна счёта не совпадает со страной праздника",
+  "timemachine.reason.zeroMultiplier": "множитель ≤ 1 — всплеска нет",
+  "timemachine.reason.unknown": "сценарий неприменим",
   "autopilot.queue.infoSectionHint": "Прогнозируемые пробои, которые движок не может закрыть автоматически — нет счёта-донора с излишком. Решает казначей вручную: кредитная линия / FX-своп / репо.",
   "radar.legend.totalInFlight": "{n} в полёте",
 
