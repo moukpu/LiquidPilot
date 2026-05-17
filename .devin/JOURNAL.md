@@ -314,3 +314,27 @@ Devin'а. Не удаляй старые записи. Только дописы
 **Outcome:** Промпт `0010-contagion-phase-5-frontend.md` в `.devin/prompts/`. INDEX: 0010 → HANDED TO USER. state.md: HEAD `26c5c38`, last updated 10:38 UTC, Phase 5 «BACKEND DONE, FRONTEND IN-FLIGHT (0010)», what's-queued #1 = «HANDED OUT 10:38 UTC». Push docs-PR через ветку → API → squash. Файл отдан юзеру для копи-пейста в Kimi/Opus/Gemini.
 
 **Lesson:** Когда планируешь фронт-граф под существующий бэк — **сначала проверь все `<deps>` в `package.json`**, потом решай делать ли «по-богатому» с либой или нативом. На этом проекте `framer-motion` уже есть, плюс `lucide-react`, плюс `tailwind-merge`. `d3-force` НЕ нужен — у нас всего 9 узлов с фиксированным hub'ом, аналитическая раскладка проще, детерминированнее и не имеет физики которую можно случайно сломать. Симуляция сил оправдана только когда узлов 50+ или связи реально динамические. На 9 узлах любая force-симуляция выглядит как «случайное движение» — это вредно для демо.
+
+---
+
+## 2026-05-17 10:58 UTC — 0010-shipped + phase-5-fully-done
+
+**User:** «Что сделано — Файлы (9): types/api.ts +6 интерфейсов, lib/api.ts +2 fetcher, en/ru.ts +28 ключей contagion.*, lib/contagion-layout.ts pure-функции, contagion/{shock-form,network-graph,result-panel}.tsx, app/(dashboard)/contagion/page.tsx 13→116. Один микро-deviation: void CENTER_X; void CENTER_Y; — заглушил ESLint unused-import. tsc/lint/build все зелёные, /contagion bundle 4.87 kB, 0 новых deps.»
+
+**Devin (план):**
+- `git fetch origin main` → `87416b0` на main, agent's PR squash-merged on top of мой docs-PR `75c47a0`. Diff stat: 13 файлов, +1929/-21. Agent корректно проигнорировал orphan `stub.contagion.*` (как и просили).
+- Прочитал commit message — мэтчит спеку 1-в-1. Defaults `USD-Correspondent / 1.0 / 7d` сохранены → screenshot воспроизводит `$47.85M / 2 breached / 9 affected` из 0009 verification.
+- Микро-deviation `void CENTER_X; void CENTER_Y;` — это **post-hoc маска ESLint unused-import**, а не «документация API». Чистый фикс: убрать импорты `CENTER_X / CENTER_Y` из `network-graph.tsx` (накат в 1 строку), оставить их только в `lib/contagion-layout.ts` где они нужны для `accountPositions`. Не блокер демо, но в чистом коде такого паттерна быть не должно. Записал в state.md как «micro-deviation», в queued — как опциональный polish.
+- Phase 5 закрыта end-to-end. Phase 6 (TM) — DONE. Остался блок Phase 7 (бренд/демо/landing) → Phase 8 (submission) → Phase 9 (finals). ~85 ч до 20 мая 23:59 UTC.
+
+**Что отдал юзеру по запросу:**
+- Acknowledgment: 0010 shipped at `87416b0`, INDEX 0009→0010 = SHIPPED, state.md HEAD → 87416b0, Phase 5 = FULLY DONE.
+- Flag `void CENTER_X` — это lint-bypass, не «документация». Цена фикса: 1 строка. Не блокер, но в backlog.
+- Phase 7 план: (a) 90-sec demo script — связать 4 модуля Radar → Time Machine → Contagion → Autopilot, (b) landing polish — добавить «как это работает» + «для кого» + demo CTA на `/`, (c) логотип — favicon SVG, не обязательно если pitch'им «product is the visual identity».
+- Не пушу 0011 пока — жду решения юзера по приоритету (script first / landing first / logo first / всё сразу).
+
+**Outcome:** INDEX: 0010 → SHIPPED `87416b0`. state.md: HEAD `87416b0`, last updated 10:58 UTC, Phase 5 FULLY DONE, Phase 7 = primary focus, what's-queued перестроен под Phase 7 → 8 → 9. Docs-PR через ветку → API → squash.
+
+**Lesson 1:** «Detect и сразу же скрыть» паттерны типа `void` или `// @ts-ignore` или `// eslint-disable-next-line` — это всегда red-flag в code review. В 95% случаев правильный фикс — **убрать причину**, не маску. В этом случае: вместо `import CENTER_X; void CENTER_X;` → просто не импортируй то что не используешь. Прописать в `prompt-craft.md` для следующих промптов: «Если ESLint ругается на unused import — не глуши `void`'ом и не disable-comment'ом, а удали импорт.»
+
+**Lesson 2:** Когда фаза закрывается end-to-end (back+front), это **триггер для смены приоритета**, не для «давай ещё polish». Phase 7-9 (демо, submission, finals) — это не код, это время owner'а. У меня минимум помощи могу оказать — драфтить script-v1, писать landing-копию, формулировать ответы на Q&A. Самое время убрать «давай ещё фичу» из дефолтного отклика.
