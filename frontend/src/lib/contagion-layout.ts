@@ -61,9 +61,9 @@ export function edgePath(
   const ux = dx / len;
   const uy = dy / len;
 
-  // The arrow tip will touch the edge of the circle (accounting for stroke width of ~3)
-  const paddingA = rA + 2;
-  const paddingB = rB + 2; 
+  // Add 12px gap so the arrowheads do NOT touch the glowing node borders
+  const paddingA = rA + 12;
+  const paddingB = rB + 12; 
 
   const x1 = a.x + ux * paddingA;
   const y1 = a.y + uy * paddingA;
@@ -73,15 +73,6 @@ export function edgePath(
   return `M ${x1.toFixed(1)} ${y1.toFixed(1)} L ${x2.toFixed(1)} ${y2.toFixed(1)}`;
 }
 
-export function edgeWidth(exposure_usd: number): number {
-  return Math.max(
-    1,
-    Math.min(
-      10,
-      Math.log10(Math.max(exposure_usd, 100_000) / 100_000) * 3
-    )
-  );
-}
 
 
 /**

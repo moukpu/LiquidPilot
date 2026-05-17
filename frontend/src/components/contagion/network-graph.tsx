@@ -8,7 +8,6 @@ import {
   NODE_RADIUS,
   accountPositions,
   edgePath,
-  edgeWidth,
 } from "@/lib/contagion-layout";
 import { displayAccountLabel } from "@/lib/format";
 import type {
@@ -122,14 +121,15 @@ export default function NetworkGraph({ nodes, edges, result }: Props) {
             <marker
               key={state}
               id={`arrow-${state}`}
-              viewBox="0 0 10 10"
+              markerUnits="userSpaceOnUse"
+              viewBox="0 0 12 12"
               refX="10"
-              refY="5"
-              markerWidth="5"
-              markerHeight="5"
+              refY="6"
+              markerWidth="7"
+              markerHeight="7"
               orient="auto-start-reverse"
             >
-              <path d="M 0 0 L 10 5 L 0 10 z" fill={EDGE_COLOR[state]} />
+              <path d="M 0 2 L 10 6 L 0 10 z" fill={EDGE_COLOR[state]} />
             </marker>
           )
         )}
@@ -140,25 +140,32 @@ export default function NetworkGraph({ nodes, edges, result }: Props) {
 
       {/* Edges */}
       <g>
-        {visualEdges.map((ve) => {
-          const d = edgePath({ from: ve.from, to: ve.to }, positions);
-          const isIdle = ve.overallState === "idle";
-          const strokeColor = EDGE_COLOR[ve.overallState];
+        {[...edges].sort((a, b) => {
+          const aState = nodeState(a.to, result);
+          const bState = nodeState(b.to, result);
+          const weight = (s: NodeState) => s === "idle" ? 0 : 1;
+          return weight(aState) - weight(bState);
+        }).map((e) => {
+          const dstState = nodeState(e.to, result);
+          const d = edgePath({ from: e.from, to: e.to }, positions);
+          const isIdle = dstState === "idle";
+          const strokeColor = EDGE_COLOR[dstState];
           
           return (
             <path
-              key={`${ve.from}-${ve.to}`}
+              key={`${e.from}->${e.to}`}
               d={d}
               fill="none"
               stroke={strokeColor}
-              strokeWidth={isIdle ? 1.5 : Math.min(8, edgeWidth(ve.exposure_usd))}
-              markerEnd={`url(#arrow-${ve.overallState})`}
-              markerStart={ve.isBidirectional ? `url(#arrow-${ve.overallState})` : undefined}
+              strokeWidth={isIdle ? 1.5 : 2.5}
+              markerEnd={`url(#arrow-${dstState})`}
               opacity={isIdle ? 0.6 : 1}
             >
               <title>
-                {ve.from} {ve.isBidirectional ? "↔" : "→"} {ve.to} · ${(ve.exposure_usd / 1_000_000).toFixed(1)}M
-                · {ve.kind}
+                {e.from} → {e.to} · {(e.exposure_usd / 1_000_000).toFixed(1)}M
+                · {e.kind}
+                {"\n"}
+                {e.description}
               </title>
             </path>
           );
