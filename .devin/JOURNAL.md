@@ -126,3 +126,20 @@ Devin'а. Не удаляй старые записи. Только дописы
 **Devin:** Обновляю `.devin/JOURNAL.md` (эта запись), `.devin/prompts/INDEX.md` (0005 → SHIPPED в `dd61793`), `.devin/state.md` (HEAD `28c3092`, Phase 6 DONE + SHIPPED, Phase 5 Contagion — следующий приоритетный блок). Открываю PR на эти docs-апдейты (push в main блокируется системой, нужна ветка + PR).
 
 **Outcome:** см. PR, ссылка ниже в сообщении юзеру.
+
+---
+
+## 2026-05-17 08:53 UTC — timemachine-polish-prompt
+
+**User:** «Стресс прошёл — ни один счёт не свалился под минимум. Попробуй жёстче: bank_holiday 4d. Не затронуто счетов: 8: EUR-Main, USD-Correspondent, GBP-Local, EUR-Berlin, USD-LA, CHF-Zurich, JPY-Tokyo, KZT-Almaty — это убрать надо. а еще видишь, когда я выбрал что то конкретное то оно растягивается вместо всех карточек. пусть как обычно. маленькая и все. также убери всякие ненужные или объясняющие комментарии, что значит множитель оттока? стоит ли это писать прям так?»
+
+Скрин: `/timemachine`, сценарий `bank_holiday SG 3d`, applied=1 карточка SGD-Singapore растянута на всю ширину, серая плашка «Не затронуто счетов: 8» с длинным списком account_ids, под результатом видна кнопка «▸ Методика».
+
+**Devin (план):** Три точечных правки:
+1. **Bug A:** Удалить блок `notApplied.length > 0` (строки 122-134 в `timemachine/page.tsx`) — серая плашка «Не затронуто счетов: …» уходит целиком. Удалить i18n ключ `timemachine.notAffected`.
+2. **Bug B:** `repeat(auto-fit, minmax(280px, 1fr))` → `repeat(auto-fill, minmax(280px, 1fr))` (одна строчка, одно слово). `auto-fit` коллапсил пустые треки → 1 карточка занимала всю ширину; `auto-fill` оставляет пустые треки → карточка ~280-300px как при 5-9 карточках.
+3. **Bug C:** Удалить `<details>` блок «Методика» из `result-card.tsx` целиком + функции `MethodologyDetails`, `Row`, `translateReason` + i18n ключи `timemachine.method.*` и `timemachine.methodologyLabel` и `timemachine.reason.*`. Owner назвал лейблы типа «Множитель» и «Чистый отток/день» академическим жаргоном.
+
+Не трогать: бэкенд `stress.py`, модели `AccountStressResult` / `methodology_inputs`, `ScenarioHint`, цвета delta/total/stress.
+
+**Outcome:** Промпт **0006** написан в `/home/ubuntu/prompt_timemachine_polish.md` и сохранён в `.devin/prompts/0006-timemachine-polish.md`. Статус: **HANDED TO USER**. Отдал юзеру аттачем — он закинет в Kimi/Opus. После мержа PR — обновлю INDEX.md с SHA.
