@@ -110,47 +110,26 @@ export default function TimeMachinePage() {
                 })}
               </div>
             )}
-            {(() => {
-              const applied = result.accounts.filter(
-                (a) => a.methodology_inputs?.applied !== false
-              );
-              const notApplied = result.accounts.filter(
-                (a) => a.methodology_inputs?.applied === false
-              );
-              return (
-                <>
-                  {notApplied.length > 0 && (
-                    <div className="mb-3 p-2 rounded-lg bg-muted/40 border border-border/50 text-xs flex items-center gap-2 flex-wrap">
-                      <span className="text-muted-foreground">
-                        {t("timemachine.notAffected", {
-                          count: notApplied.length,
-                        })}
-                        :
-                      </span>
-                      <span className="font-mono text-foreground/80">
-                        {notApplied.map((a) => a.account_id).join(", ")}
-                      </span>
-                    </div>
-                  )}
-                  <div
-                    className="grid gap-3"
-                    style={{
-                      gridTemplateColumns:
-                        "repeat(auto-fit, minmax(280px, 1fr))",
-                    }}
-                  >
-                    {applied.map((acc) => (
-                      <ResultCard
-                        key={acc.account_id}
-                        result={acc}
-                        intl={intl}
-                        scenarioParams={req}
-                      />
-                    ))}
-                  </div>
-                </>
-              );
-            })()}
+            <div
+              className="grid gap-3"
+              style={{
+                // auto-fill (not auto-fit): keeps empty tracks so a
+                // single applied card stays in its ~280px slot instead
+                // of stretching across the whole page.
+                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+              }}
+            >
+              {result.accounts
+                .filter((a) => a.methodology_inputs?.applied !== false)
+                .map((acc) => (
+                  <ResultCard
+                    key={acc.account_id}
+                    result={acc}
+                    intl={intl}
+                    scenarioParams={req}
+                  />
+                ))}
+            </div>
           </>
         )}
       </div>

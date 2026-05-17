@@ -149,19 +149,6 @@ const ru: Record<keyof typeof en, string> = {
   "timemachine.baselineMin": "Базовый минимум",
   "timemachine.stressMin": "Стрессовый минимум",
   "timemachine.delta": "Дельта",
-  "timemachine.methodologyLabel": "Методика",
-  "timemachine.method.notApplied": "Не применено",
-  "timemachine.method.sample": "Выборка",
-  "timemachine.method.days": "дн.",
-  "timemachine.method.avgInflow": "Ср. {rail} IN",
-  "timemachine.method.avgOutflow": "Ср. {rail} OUT",
-  "timemachine.method.daysAffected": "Дней затронуто",
-  "timemachine.method.shiftPerDay": "Сдвиг в день",
-  "timemachine.method.multiplier": "Множитель",
-  "timemachine.method.extraPerDay": "Доп. OUT/день",
-  "timemachine.method.country": "Праздник",
-  "timemachine.method.dailyNetOutflow": "Чистый отток/день",
-  "timemachine.method.deferred": "Отложенный отток",
   "timemachine.hint.pickScenario":
     "Выберите сценарий и запустите симуляцию. Справа появятся карточки с эффектом на каждый счёт.",
   "timemachine.hint.railDelay":
@@ -170,13 +157,7 @@ const ru: Record<keyof typeof en, string> = {
     "Volume Spike — умножить расход по рельсу. Пример: чарджбеки по картам в 2× в ближайшие 7 дней.",
   "timemachine.hint.bankHoliday":
     "Bank Holiday — заморозка отходящего clearing'а на N дней в выбранной стране с последующим catch-up дропом.",
-  "timemachine.reason.noInboundOnRail": "по этому рельсу для счёта нет входящих транзакций",
-  "timemachine.reason.noOutboundOnRail": "по этому рельсу для счёта нет исходящих транзакций",
-  "timemachine.reason.countryMismatch": "страна счёта не совпадает со страной выходного",
-  "timemachine.reason.zeroMultiplier": "множитель ≤ 1 — всплеска нет",
-  "timemachine.reason.unknown": "сценарий неприменим",
   "timemachine.summary.noBreaches": "Стресс прошёл — ни один счёт не свалился под минимум. Попробуй жёстче: {suggestion}.",
-  "timemachine.notAffected": "Не затронуто счетов: {count}",
   "autopilot.queue.infoSectionHint": "Прогнозируемые пробои, которые движок не может закрыть автоматически — нет счёта-донора с излишком. Решает казначей вручную: кредитная линия / FX-своп / репо.",
   "radar.legend.totalInFlight": "{n} в полёте",
 
