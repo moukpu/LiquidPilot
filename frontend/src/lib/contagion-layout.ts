@@ -61,9 +61,9 @@ export function edgePath(
   const ux = dx / len;
   const uy = dy / len;
 
-  // Add 12px gap so the arrowheads do NOT touch the glowing node borders
-  const paddingA = rA + 12;
-  const paddingB = rB + 12; 
+  // Small gap between arrowhead tip and the node border
+  const paddingA = rA + 4;
+  const paddingB = rB + 4; 
 
   const x1 = a.x + ux * paddingA;
   const y1 = a.y + uy * paddingA;
