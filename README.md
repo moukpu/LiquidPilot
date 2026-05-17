@@ -1,37 +1,156 @@
-# LiquidPilot
+# 💧 LiquidPilot
 
-> **SynergyX Hackathon 2026 — FinTech track**
+### _предиктивный cockpit для управления ликвидностью_
+
+**Live demo:** https://liquid-pilot.vercel.app
+**Repo:** https://github.com/moukpu/LiquidPilot
+**Трек:** SynergyX Hackathon 2026 — FinTech & Business
+
+---
+
+## Что это такое
+
+Это дашборд для финтех-команд, которые работают сразу с несколькими банками и хотят понимать куда идут деньги — прямо сейчас, а не завтра утром из Excel.
+
+Идея пришла от того, что диспетчерская управления авиацией видит каждый самолёт в реальном времени и заранее предотвращает столкновения. С деньгами так никто не делает, хотя, в общем-то, мог бы.
+
+Сделали четыре модуля:
+
+| Модуль | Что делает |
+|--------|-----------|
+| **Radar** | Показывает все счета и потоки между ними — как радар аэропорта |
+| **Autopilot** | Сам предлагает (и делает) ребаланс между счетами, без ручного переноса |
+| **Contagion** | Рисует граф рисков по банкам-партнёрам — видно где слишком много денег в одном месте |
+| **Time Machine** | Можно посмотреть как бы выглядели твои позиции во время кризиса 2008 или 2020 |
+
+---
+
+## Почему это проблема
+
+Честно — мы сами удивились насколько всё плохо, когда начали копать статистику.
+
+- **90%** компаний до сих пор используют Excel для прогнозирования потоков ([Centime, 2025](https://www.centime.com))
+- **64%** казначеев говорят что видимость по деньгам — это их главная головная боль ([Deloitte Treasury Survey](https://trovata.io/blog/treasury-management-tools/))
+- **50%** банковских казначеев не имеют ежедневного представления о своей книге целиком ([BCG](https://trovata.io/cash-forecasting-basics))
+- **88%** таблиц в Excel содержат ошибки. Когда речь про миллионы — одна лишняя цифра после запятой это катастрофа ([Forbes](https://www.kosh.ai))
+- Ручной подход завышает оценку ликвидности в среднем на **~30%** ([Centime, 2025](https://www.centime.com))
+- Плохое прогнозирование стоит средней компании **$420 000 в год** упущенного дохода ([Agicap, 2024](https://treasury-management.com))
+- **71%** организаций в 2023 году стали целью платёжного фрода ([AFP](https://www.kosh.ai))
+
+Goldman Sachs считает что автоматизация убирает до **80%** ручной нагрузки казначейства. Но большинство компаний до сих пор не дошли до этого.
+
+Готовые решения типа Kyriba или SAP стоят от $200 000 только на внедрение — это не для стартапов. Вот в чём дыра.
+
+---
+
+## Рынок
+
+| Сегмент | Описание | Оценка |
+|---------|----------|--------|
+| **TAM** | Весь глобальный рынок TMS | **$5.8B** (2024) → $15.1B к 2032, CAGR 12.8% |
+| **SAM** | Средний финтех ($10M–$500M выручки) которому enterprise не по карману | **~$1.5B** |
+| **SOM** | Финтех-стартапы APAC/MENA, cloud-first сегмент | **~$150M** за 3 года |
+
+> Источники: Verified Market Research (2024), Coherent Market Insights (2025), Bain & Company (2026)
+
+В 2022 году только **22%** средних компаний использовали специализированный treasury-софт. В 2025 уже **43%**. Рынок просыпается — и мы хотим войти пока он ещё не насыщен. ([AFP Liquidity Survey 2025](https://www.mexc.com/news/981013))
+
+---
+
+## Конкуренты
+
+| Продукт | В чём сильны | Почему нам не страшны |
+|---------|-------------|----------------------|
+| **Kyriba** | Всё что нужно крупному банку | $200K+ на внедрение, SMB не потянет |
+| **FIS Treasury** | Глубокие интеграции с банками | Архитектура из 2000-х, долгий онбординг |
+| **SAP TM** | Хорошо если уже весь стек SAP | Без SAP бессмысленно |
+| **Trovata** | Нормальное API к банкам | Нет contagion и стресс-тестов |
+| **Excel** | Есть у всех и бесплатно | 88% ошибок, данные вчерашние в лучшем случае |
+
+LiquidPilot — единственный инструмент где всё это в одном месте: real-time потоки + автоматический ребаланс + граф рисков + машина времени. И по цене SaaS-подписки, не корпоративного контракта.
+
+---
+
+## Как будем зарабатывать
+
+SaaS. Три тарифа:
+
+| Тариф | Цена | Что входит |
+|-------|------|------------|
+| **Starter** | $299 / мес | До 5 счетов, Radar + Autopilot |
+| **Growth** | $799 / мес | Без ограничений + Contagion |
+| **Enterprise** | договорная | Time Machine + API + white-label |
+
+Просто для понимания масштаба: при ставке 4.25% компания с $5M свободного кэша зарабатывает $212 500 в год если правильно им управляет. LiquidPilot окупается за несколько недель.
+
+---
+
+## Как устроено внутри
 
 ```
-    __    _       _       _       _
-   / /   (_)     | |     (_)     | |  _
-  / /____ _ _ __ | | ___  _ _ __ | |_| |_ ___
- / /______| | '_ \| |/ _ \| | '_ \| __| __/ _ \
-/ /       | | | | | | (_) | | | | | |_| || (_) |
-\/        |_|_| |_|_|\___/|_|_| |_|\__|\__\___/
+┌─────────────────────────────────────────┐
+│          Next.js 14 (App Router)        │
+│  Radar · Autopilot · Contagion · TM     │
+└──────────────────┬──────────────────────┘
+                   │ REST API
+┌──────────────────▼──────────────────────┐
+│              FastAPI Backend            │
+│  /radar · /autopilot · /contagion · /tm │
+└──────┬───────────────────────┬──────────┘
+       │                       │
+┌──────▼──────┐     ┌──────────▼──────────┐
+│   SQLite    │     │  Synthetic Data      │
+│  aiosqlite  │     │  + JSON Fixtures     │
+└─────────────┘     └─────────────────────┘
 ```
 
-LiquidPilot is a **predictive liquidity cockpit** for fintech treasury teams. Think air-traffic control, but for money: real-time radar of your cash flows, an autopilot that rebalances accounts, contagion-risk scoring for your banking partners, and a time machine that lets you replay historical financial crises to stress-test your positions.
+Каждый модуль живёт отдельно, не зависит от других. Данные синтетические — написали генераторы которые имитируют реальные потоки. Подробнее в [docs/architecture.md](docs/architecture.md).
 
-## Features
+---
 
-- **Radar** — Air-traffic-control view of all money flows across accounts, banks, and currencies in real time.
-- **Autopilot** — Automated cash rebalancing that keeps liquidity optimal without manual spreadsheet wrangling.
-- **Contagion** — Bank contagion risk scoring powered by network graph analytics and exposure mapping.
-- **Time Machine** — Replay historical financial crises (2008, 2020, 2023) and stress-test your treasury against real events.
+## Стек
 
-## Quick Start
+| Слой | Технология |
+|------|-----------|
+| Frontend | Next.js 14, TypeScript, Tailwind CSS |
+| Backend | FastAPI, Python 3.11, Pydantic v2, SQLAlchemy 2.0 |
+| БД | SQLite + aiosqlite |
+| Графы | NetworkX — для contagion-анализа |
+| DevOps | Docker Compose, uv, npm |
 
-### Docker Compose (recommended)
+---
+
+## Структура проекта
+
+```
+LiquidPilot/
+├── backend/          FastAPI backend
+│   ├── app/          routes, models, schemas, services
+│   └── tests/        pytest
+├── frontend/         Next.js
+│   ├── src/app/      страницы
+│   └── src/components/  компоненты и UI
+├── data/             генераторы и fixtures
+├── docs/             архитектура
+├── docker-compose.yml
+└── README.md
+```
+
+---
+
+## Запуск
+
+### Через Docker (проще всего)
 
 ```bash
 docker compose up --build
+
+# Frontend → http://localhost:3000
+# Backend  → http://localhost:8000
+# API docs → http://localhost:8000/docs
 ```
 
-- Frontend: http://localhost:3000
-- Backend: http://localhost:8000
-
-### Manual
+### Вручную
 
 **Backend:**
 ```bash
@@ -47,56 +166,32 @@ npm install
 npm run dev
 ```
 
-## Tech Stack
+---
 
-| Layer     | Technology                                          |
-|-----------|-----------------------------------------------------|
-| Frontend  | Next.js 14 (App Router), TypeScript, Tailwind CSS   |
-| Backend   | FastAPI, Python 3.11, Pydantic v2, SQLAlchemy 2.0   |
-| Data      | SQLite + aiosqlite, synthetic generators, fixtures  |
-| Graphs    | NetworkX (contagion network analysis)               |
-| DevOps    | Docker Compose, uv (Python), npm (Node)             |
+## Что показывать на демо
 
-## Architecture
-
-See [docs/architecture.md](docs/architecture.md) for the full system diagram.
-
-## Repo Structure
-
-```
-LiquidPilot/
-├── backend/          FastAPI backend
-│   ├── app/          API routes, models, schemas, services
-│   └── tests/        Pytest suite
-├── frontend/         Next.js frontend
-│   ├── src/app/      Pages and layouts
-│   ├── src/components/ UI, layout, brand
-│   └── tests/        Test placeholders
-├── data/             Synthetic generators + historical fixtures
-├── docs/             Architecture docs
-├── docker-compose.yml
-└── README.md
-```
-
-## Team
-
-| Role | Name | GitHub |
-|------|------|--------|
-| TBD  | TBD  | TBD    |
-| TBD  | TBD  | TBD    |
-
-## License
-
-MIT — see [LICENSE](LICENSE).
+1. Открываем **Radar** — видим все счета и потоки, обновляется в реальном времени
+2. Переходим в **Contagion** — находим банк с перегруженной экспозицией
+3. В **Autopilot** принимаем рекомендацию по ребалансу — Radar сразу меняется
+4. В **Time Machine** выбираем кризис 2008 — смотрим как бы выглядели позиции
 
 ---
 
-Built for **SynergyX Hackathon 2026 — FinTech track**. Deadline: May 20, 2026.
+## Что пока не готово
+
+- Данные синтетические, не реальные
+- Авторизации нет (в планах)
+- На больших графах Contagion будет медленно — нужна очередь задач
 
 ---
 
-## For AI agents
+## Команда
 
-This repo uses `.devin/` as cross-session memory for Devin agents. If
-you are an AI agent reading this, start with [`.devin/START.md`](.devin/START.md)
-and follow the reading order described there before making any changes.
+| Имя | Роль |
+|-----|------|
+| Алиханов Азамат | Full-stack Developer |
+| Какимжан Алдияр | Full-stack Developer |
+
+---
+
+_Сделано для SynergyX Hackathon 2026, трек FinTech. Дедлайн: 20 мая 2026._
