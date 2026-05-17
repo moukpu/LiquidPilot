@@ -68,7 +68,7 @@ export default function TimeMachinePage() {
                   className={`text-xl font-bold tabular-nums ${
                     result.total_delta_usd < 0
                       ? "text-rose-500"
-                      : "text-emerald-500"
+                      : "text-muted-foreground"
                   }`}
                 >
                   {result.total_delta_usd >= 0 ? "+" : ""}$
@@ -83,7 +83,7 @@ export default function TimeMachinePage() {
                   className={`text-xl font-bold ${
                     result.new_breach_count > 0
                       ? "text-rose-500"
-                      : "text-emerald-500"
+                      : "text-muted-foreground"
                   }`}
                 >
                   {result.new_breach_count}
@@ -105,29 +105,73 @@ export default function TimeMachinePage() {
           <>
             {result.new_breach_count === 0 && (
               <div className="mb-4 p-3 rounded-xl bg-emerald-50/60 border border-emerald-200/60 text-emerald-700 text-xs leading-snug">
-                {t("timemachine.summary.noBreaches")}
+                {t("timemachine.summary.noBreaches", {
+                  suggestion: harderSuggestion(req),
+                })}
               </div>
             )}
-            <div
-              className="grid gap-3"
-              style={{
-                gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-              }}
-            >
-              {result.accounts.map((acc) => (
-                <ResultCard
-                  key={acc.account_id}
-                  result={acc}
-                  intl={intl}
-                  scenarioParams={req}
-                />
-              ))}
-            </div>
+            {(() => {
+              const applied = result.accounts.filter(
+                (a) => a.methodology_inputs?.applied !== false
+              );
+              const notApplied = result.accounts.filter(
+                (a) => a.methodology_inputs?.applied === false
+              );
+              return (
+                <>
+                  {notApplied.length > 0 && (
+                    <div className="mb-3 p-2 rounded-lg bg-muted/40 border border-border/50 text-xs flex items-center gap-2 flex-wrap">
+                      <span className="text-muted-foreground">
+                        {t("timemachine.notAffected", {
+                          count: notApplied.length,
+                        })}
+                        :
+                      </span>
+                      <span className="font-mono text-foreground/80">
+                        {notApplied.map((a) => a.account_id).join(", ")}
+                      </span>
+                    </div>
+                  )}
+                  <div
+                    className="grid gap-3"
+                    style={{
+                      gridTemplateColumns:
+                        "repeat(auto-fit, minmax(280px, 1fr))",
+                    }}
+                  >
+                    {applied.map((acc) => (
+                      <ResultCard
+                        key={acc.account_id}
+                        result={acc}
+                        intl={intl}
+                        scenarioParams={req}
+                      />
+                    ))}
+                  </div>
+                </>
+              );
+            })()}
           </>
         )}
       </div>
     </div>
   );
+}
+
+// Suggest a strictly-harder parameter for the same scenario family.
+// Caps at the picker's hard maxes so we never recommend a value the
+// user can't actually input.
+function harderSuggestion(req: StressRequest): string {
+  if (req.scenario === "rail_delay") {
+    const next = Math.min(7, (req.extra_days ?? 1) + 2);
+    return `rail_delay ${next}d`;
+  }
+  if (req.scenario === "volume_spike") {
+    const next = Math.min(2.0, (req.multiplier ?? 1.3) + 0.3);
+    return `multiplier ×${next.toFixed(2)}`;
+  }
+  const next = Math.min(5, (req.holiday_days ?? 2) + 1);
+  return `bank_holiday ${next}d`;
 }
 
 function ScenarioHint({ scenario }: { scenario: StressScenario }) {

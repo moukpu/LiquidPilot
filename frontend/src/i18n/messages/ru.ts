@@ -160,9 +160,8 @@ const ru: Record<keyof typeof en, string> = {
   "timemachine.method.multiplier": "Множитель",
   "timemachine.method.extraPerDay": "Доп. OUT/день",
   "timemachine.method.country": "Праздник",
-  "timemachine.method.flatValue": "База на день 0",
-  "timemachine.method.accumulatedDrift": "Дрейф за праздник",
-  "timemachine.method.catchUp": "Дроп при catch-up",
+  "timemachine.method.dailyNetOutflow": "Чистый отток/день",
+  "timemachine.method.deferred": "Отложенный отток",
   "timemachine.hint.pickScenario":
     "Выберите сценарий и запустите симуляцию. Справа появятся карточки с эффектом на каждый счёт.",
   "timemachine.hint.railDelay":
@@ -176,7 +175,8 @@ const ru: Record<keyof typeof en, string> = {
   "timemachine.reason.countryMismatch": "страна счёта не совпадает со страной выходного",
   "timemachine.reason.zeroMultiplier": "множитель ≤ 1 — всплеска нет",
   "timemachine.reason.unknown": "сценарий неприменим",
-  "timemachine.summary.noBreaches": "Стресс прошёл — ни один счёт не свалился под минимум. Попробуй жёстче (rail_delay +5d / multiplier ≥1.6 / bank_holiday 4d).",
+  "timemachine.summary.noBreaches": "Стресс прошёл — ни один счёт не свалился под минимум. Попробуй жёстче: {suggestion}.",
+  "timemachine.notAffected": "Не затронуто счетов: {count}",
   "autopilot.queue.infoSectionHint": "Прогнозируемые пробои, которые движок не может закрыть автоматически — нет счёта-донора с излишком. Решает казначей вручную: кредитная линия / FX-своп / репо.",
   "radar.legend.totalInFlight": "{n} в полёте",
 

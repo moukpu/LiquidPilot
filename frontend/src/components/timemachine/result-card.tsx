@@ -70,11 +70,17 @@ function smoothPath(points: Array<[number, number]>): string {
 export default function ResultCard({ result, intl }: Props) {
   const { t } = useLocale();
 
+  // When the scenario is not applicable to this account (e.g. bank
+  // holiday for a non-matching country) we render a flat neutral
+  // stub instead of two overlapping curves, which would otherwise
+  // imply that something was computed.
+  const applied = result.methodology_inputs?.applied !== false;
+
   // Y range built from baseline + stress only. Floor used to render as
   // a dashed reference line + 'floor' text label, but it confused the
   // stress signal so it's gone entirely. The breach-count badge below
   // still uses methodology_inputs.floor server-side; the chart itself
-  // shows just baseline (grey) vs stress (green/red).
+  // shows just baseline (grey) vs stress (rose/grey).
   const baselineVals = result.horizon.map((p) => p.baseline_p50);
   const stressVals = result.horizon.map((p) => p.stress_p50);
   const dataVals = [...baselineVals, ...stressVals];
@@ -110,7 +116,9 @@ export default function ResultCard({ result, intl }: Props) {
   const stressPath = smoothPath(stressPoints);
 
   const breachWorsened = result.stress_breaches > result.baseline_breaches;
-  const stressColor = breachWorsened ? "#dc2626" : "#16a34a";
+  // No green: stress can never visually claim improvement. We only
+  // distinguish "worsened" (rose) from "neutral" (slate).
+  const stressColor = breachWorsened ? "#dc2626" : "#94a3b8";
 
   return (
     <div className="glass-card rounded-xl p-3">
@@ -124,11 +132,29 @@ export default function ResultCard({ result, intl }: Props) {
       </div>
 
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-12 mb-2">
-        <path d={baselinePath} fill="none" stroke="#94a3b8" strokeWidth="1.5" />
-        <path d={stressPath} fill="none" stroke={stressColor} strokeWidth="1.5" />
+        {applied ? (
+          <>
+            <path d={baselinePath} fill="none" stroke="#94a3b8" strokeWidth="1.5" />
+            <path d={stressPath} fill="none" stroke={stressColor} strokeWidth="1.5" />
+          </>
+        ) : (
+          <line
+            x1={PAD_X}
+            x2={W - PAD_X}
+            y1={H / 2}
+            y2={H / 2}
+            stroke="#cbd5e1"
+            strokeWidth="1.5"
+            strokeDasharray="3 3"
+          />
+        )}
       </svg>
 
-      <div className="grid grid-cols-3 gap-2 text-[10px] font-mono pt-1 border-t border-border/50">
+      <div
+        className={`grid gap-2 text-[10px] font-mono pt-1 border-t border-border/50 ${
+          applied ? "grid-cols-3" : "grid-cols-2"
+        }`}
+      >
         <FooterStat
           label={t("timemachine.baselineMin")}
           currency={result.currency}
@@ -141,14 +167,16 @@ export default function ResultCard({ result, intl }: Props) {
           amount={result.stress_min_p50}
           intl={intl}
         />
-        <FooterStat
-          label={t("timemachine.delta")}
-          currency={result.currency}
-          amount={result.delta_min_p50}
-          intl={intl}
-          highlight={result.delta_min_p50 < 0 ? "negative" : "positive"}
-          showSign
-        />
+        {applied && (
+          <FooterStat
+            label={t("timemachine.delta")}
+            currency={result.currency}
+            amount={result.delta_min_p50}
+            intl={intl}
+            highlight={result.delta_min_p50 < 0 ? "negative" : undefined}
+            showSign
+          />
+        )}
       </div>
 
       <details className="mt-2 group">
@@ -284,16 +312,12 @@ function MethodologyDetails({
           value={`${String(inputs.country)} · ${inputs.holiday_days} ${t("timemachine.method.days")}`}
         />
         <Row
-          label={t("timemachine.method.flatValue")}
-          value={`${currency} ${formatNumber(Number(inputs.flat_value), 0, intl)}`}
+          label={t("timemachine.method.dailyNetOutflow")}
+          value={`${currency} ${formatNumber(Number(inputs.daily_net_outflow), 0, intl)}/d`}
         />
         <Row
-          label={t("timemachine.method.accumulatedDrift")}
-          value={`${currency} ${formatNumber(Number(inputs.accumulated_drift), 0, intl)}`}
-        />
-        <Row
-          label={t("timemachine.method.catchUp")}
-          value={`${currency} ${formatNumber(Number(inputs.catch_up), 0, intl)}`}
+          label={t("timemachine.method.deferred")}
+          value={`−${currency} ${formatNumber(Number(inputs.deferred_outflow), 0, intl)}`}
           highlight
         />
       </>

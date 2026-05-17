@@ -263,30 +263,69 @@ def _transform(
                 "reason": "holiday_days=0",
             }
 
+        # Empirical daily net outflow for this account (positive = net
+        # outflow). Falls back to a tiny floor so monotonicity in
+        # holiday_days still holds when historical signal is absent.
+        # The treasury model: during a bank holiday the rail does not
+        # process payments, so outgoing settlements queue up. On day
+        # d (resume) the queued settlements release as one cliff drop.
+        acct_tx = transactions[transactions["account_id"] == account.account_id]
+        recent = acct_tx.tail(200)
+        sample_days = max(1, int(recent["booking_date"].nunique()))
+        out_amt = float(
+            recent.loc[recent["direction"] == "OUT", "amount"].sum()
+        )
+        in_amt = float(
+            recent.loc[recent["direction"] == "IN", "amount"].sum()
+        )
+        daily_net_outflow = max(0.0, (out_amt - in_amt) / sample_days)
+        if daily_net_outflow == 0.0:
+            # Even a perfectly balanced account loses *something* when
+            # frozen — settlement friction, FX corridor cost. Use 0.5%
+            # of baseline[0] as a floor so longer holidays always hurt
+            # at least monotonically.
+            daily_net_outflow = max(1.0, abs(baseline[0]) * 0.005)
+
+        # Freeze balance during holiday at value just before holiday
+        # started. baseline[0] is "today", so day 0..d-1 stay flat.
         out = list(baseline)
-        flat_value = baseline[0]
+        flat_value = float(baseline[0])
         for i in range(min(d, n)):
             out[i] = flat_value
 
-        accumulated_drift = baseline[d] - flat_value if d < n else 0.0
-        # Stress semantics: always a downside drop, sign-independent.
-        catch_up = -abs(accumulated_drift) * 1.2
+        # Deferred outflows queued over d holiday days, all released on
+        # day d. AMPLIFICATION accounts for queueing penalty (cut-off
+        # windows missed, emergency funding FX spread). Linear in d so
+        # |delta_min_p50| is monotone in holiday_days.
+        AMPLIFICATION = 1.1
+        deferred = d * daily_net_outflow * AMPLIFICATION
+
         if d < n:
-            out[d] = baseline[d] + catch_up
+            out[d] = baseline[d] - deferred
             remaining = n - d - 1
             if remaining > 0:
                 for i in range(d + 1, n):
                     fade = (i - d) / (remaining + 1)
-                    out[i] = baseline[i] + catch_up * (1.0 - fade)
+                    # Linear recovery — by horizon end we are back on
+                    # baseline.
+                    out[i] = baseline[i] - deferred * (1.0 - fade)
+
+        # Treasury invariant: a holiday cannot improve liquidity. If
+        # baseline naturally dips during the freeze window, the freeze
+        # would otherwise "lift" the trajectory above baseline_min and
+        # produce a spurious positive delta. Clamp elementwise.
+        out = [min(out[i], baseline[i]) for i in range(n)]
 
         return out, {
             "scenario": "bank_holiday",
             "country": params.country,
             "holiday_days": params.holiday_days,
-            "flat_value": float(flat_value),
-            "accumulated_drift": float(accumulated_drift),
-            "catch_up": float(catch_up),
-            "amplification": 1.2,
+            "flat_value": flat_value,
+            "daily_net_outflow": daily_net_outflow,
+            "deferred_outflow": deferred,
+            "amplification": AMPLIFICATION,
+            "sample_size": int(len(recent)),
+            "sample_days": int(sample_days),
             "applied": True,
         }
 

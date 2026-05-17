@@ -159,9 +159,8 @@ const en = {
   "timemachine.method.multiplier": "Multiplier",
   "timemachine.method.extraPerDay": "Extra OUT/day",
   "timemachine.method.country": "Holiday",
-  "timemachine.method.flatValue": "Day-0 baseline",
-  "timemachine.method.accumulatedDrift": "Drift over holiday",
-  "timemachine.method.catchUp": "Catch-up drop",
+  "timemachine.method.dailyNetOutflow": "Daily net outflow",
+  "timemachine.method.deferred": "Deferred outflow",
   "timemachine.hint.pickScenario":
     "Pick a scenario and run the simulation. Cards on the right will show projected impact per account.",
   "timemachine.hint.railDelay":
@@ -175,7 +174,8 @@ const en = {
   "timemachine.reason.countryMismatch": "account country does not match holiday country",
   "timemachine.reason.zeroMultiplier": "multiplier ≤ 1 — no spike",
   "timemachine.reason.unknown": "scenario not applicable",
-  "timemachine.summary.noBreaches": "Stress passed — no account drops below floor under this scenario. Try harder (rail_delay +5d / multiplier ≥1.6 / bank_holiday 4d).",
+  "timemachine.summary.noBreaches": "Stress passed — no account drops below floor. Try harder: {suggestion}.",
+  "timemachine.notAffected": "{count} accounts not affected",
   "autopilot.queue.infoSectionHint": "Forecasted breaches the engine cannot auto-resolve — no donor account has surplus. Manual treasurer action: arrange credit line / FX swap / repo.",
   "radar.legend.totalInFlight": "{n} in flight",
 

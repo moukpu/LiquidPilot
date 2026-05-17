@@ -15,5 +15,18 @@ def test_accounts_after_warmup():
         assert resp.status_code in (200, 503)
         if resp.status_code == 200:
             data = resp.json()
-            assert len(data) == 3
-            assert {a["account_id"] for a in data} == {"EUR-Main", "USD-Correspondent", "GBP-Local"}
+            # Fleet expanded over time (v3=3, v4=8, v5=9). Lock the
+            # current fleet so a regression in default_system_config
+            # surfaces here without re-pinning the count on every add.
+            assert len(data) == 9
+            assert {a["account_id"] for a in data} == {
+                "EUR-Main",
+                "USD-Correspondent",
+                "GBP-Local",
+                "EUR-Berlin",
+                "USD-LA",
+                "CHF-Zurich",
+                "JPY-Tokyo",
+                "SGD-Singapore",
+                "KZT-Almaty",
+            }
