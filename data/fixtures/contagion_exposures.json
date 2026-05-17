@@ -1,0 +1,114 @@
+[
+  {
+    "from": "EUR-Main",
+    "to": "EUR-Berlin",
+    "exposure_usd": 4500000,
+    "kind": "intra-group",
+    "description": "Sister account, daily INTERNAL sweeps from EUR-Main to EUR-Berlin operating float"
+  },
+  {
+    "from": "EUR-Berlin",
+    "to": "EUR-Main",
+    "exposure_usd": 2200000,
+    "kind": "intra-group",
+    "description": "Reverse INTERNAL sweeps Berlin → Main at month-end"
+  },
+  {
+    "from": "USD-Correspondent",
+    "to": "USD-LA",
+    "exposure_usd": 6800000,
+    "kind": "intra-group",
+    "description": "USD-Correspondent funds USD-LA West-Coast operations daily"
+  },
+  {
+    "from": "USD-LA",
+    "to": "USD-Correspondent",
+    "exposure_usd": 1500000,
+    "kind": "intra-group",
+    "description": "USD-LA sweeps surplus back to USD-Correspondent overnight"
+  },
+  {
+    "from": "USD-Correspondent",
+    "to": "EUR-Main",
+    "exposure_usd": 3500000,
+    "kind": "correspondent",
+    "description": "USD leg of EUR-Main SWIFT settlements clears through USD-Correspondent"
+  },
+  {
+    "from": "USD-Correspondent",
+    "to": "GBP-Local",
+    "exposure_usd": 2100000,
+    "kind": "correspondent",
+    "description": "USD/GBP FX leg for GBP-Local card acquiring"
+  },
+  {
+    "from": "USD-Correspondent",
+    "to": "CHF-Zurich",
+    "exposure_usd": 1800000,
+    "kind": "correspondent",
+    "description": "USD/CHF FX clearing for CHF-Zurich SWIFT outflows"
+  },
+  {
+    "from": "USD-Correspondent",
+    "to": "JPY-Tokyo",
+    "exposure_usd": 4200000,
+    "kind": "correspondent",
+    "description": "USD/JPY major FX leg, JPY-Tokyo's primary correspondent route"
+  },
+  {
+    "from": "USD-Correspondent",
+    "to": "SGD-Singapore",
+    "exposure_usd": 2600000,
+    "kind": "correspondent",
+    "description": "USD/SGD FX, SGD-Singapore APAC dollar funding"
+  },
+  {
+    "from": "USD-Correspondent",
+    "to": "KZT-Almaty",
+    "exposure_usd": 3100000,
+    "kind": "correspondent",
+    "description": "USD/KZT exotic FX clearing — Almaty's only convertible route"
+  },
+  {
+    "from": "EUR-Main",
+    "to": "CHF-Zurich",
+    "exposure_usd": 900000,
+    "kind": "market",
+    "description": "EUR/CHF cross-rate clearing via shared EUR clearing house"
+  },
+  {
+    "from": "EUR-Main",
+    "to": "GBP-Local",
+    "exposure_usd": 1100000,
+    "kind": "market",
+    "description": "SEPA/Faster Payments bridge EUR↔GBP via shared clearer"
+  },
+  {
+    "from": "JPY-Tokyo",
+    "to": "SGD-Singapore",
+    "exposure_usd": 1400000,
+    "kind": "market",
+    "description": "APAC JPY/SGD cross-clearing"
+  },
+  {
+    "from": "SGD-Singapore",
+    "to": "JPY-Tokyo",
+    "exposure_usd": 700000,
+    "kind": "market",
+    "description": "Reverse SGD/JPY exposure"
+  },
+  {
+    "from": "GBP-Local",
+    "to": "EUR-Main",
+    "exposure_usd": 1300000,
+    "kind": "market",
+    "description": "GBP/EUR receivable from London-Frankfurt CARD settlements"
+  },
+  {
+    "from": "CHF-Zurich",
+    "to": "EUR-Main",
+    "exposure_usd": 800000,
+    "kind": "market",
+    "description": "CHF/EUR cross-rate, end-of-day net long EUR"
+  }
+]
