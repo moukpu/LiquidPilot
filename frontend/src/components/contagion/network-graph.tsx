@@ -97,7 +97,12 @@ export default function NetworkGraph({ nodes, edges, result }: Props) {
 
       {/* Edges */}
       <g>
-        {edges.map((e) => {
+        {[...edges].sort((a, b) => {
+          const aState = nodeState(a.to, result);
+          const bState = nodeState(b.to, result);
+          const weight = (s: NodeState) => s === "idle" ? 0 : 1;
+          return weight(aState) - weight(bState);
+        }).map((e) => {
           const dstState = nodeState(e.to, result);
           const d = edgePath(e, positions, edges);
           const isIdle = dstState === "idle";
@@ -112,7 +117,6 @@ export default function NetworkGraph({ nodes, edges, result }: Props) {
               strokeWidth={isIdle ? 1.5 : Math.min(8, edgeWidth(e.exposure_usd))}
               markerEnd={`url(#arrow-${dstState})`}
               opacity={isIdle ? 0.6 : 1}
-              className={!isIdle ? "animate-pulse" : ""}
             >
               <title>
                 {e.from} → {e.to} · ${(e.exposure_usd / 1_000_000).toFixed(1)}M

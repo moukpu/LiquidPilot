@@ -236,6 +236,8 @@ const en = {
   "contagion.result.floorLabel": "Floor:",
   "contagion.result.postLabel": "Post:",
   "contagion.result.hopShort": "H{n}",
+  "contagion.loading": "Loading network...",
+  "contagion.loadingTopology": "Loading network topology...",
 } as const;
 
 export type MessageKey = keyof typeof en;

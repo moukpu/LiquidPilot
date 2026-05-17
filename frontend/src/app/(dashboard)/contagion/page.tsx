@@ -91,7 +91,7 @@ export default function ContagionPage() {
             />
           ) : (
             <div className="text-xs font-mono text-slate-400 py-4 text-center">
-              {networkError ?? "Loading network..."}
+              {networkError ?? t("contagion.loading")}
             </div>
           )}
         </div>
@@ -140,7 +140,7 @@ export default function ContagionPage() {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-slate-400 text-sm font-mono">
-            {networkError ?? "Loading network topology..."}
+            {networkError ?? t("contagion.loadingTopology")}
           </div>
         )}
       </div>

@@ -237,6 +237,8 @@ const ru: Record<keyof typeof en, string> = {
   "contagion.result.floorLabel": "Мин:",
   "contagion.result.postLabel": "Остаток:",
   "contagion.result.hopShort": "H{n}",
+  "contagion.loading": "Загрузка графа...",
+  "contagion.loadingTopology": "Загрузка топологии сети...",
 };
 
 export default ru;

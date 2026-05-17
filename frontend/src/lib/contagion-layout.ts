@@ -91,25 +91,14 @@ export function edgePath(
   const ux = dx / len;
   const uy = dy / len;
 
-  // Shorten by node radius + marker size so the arrowhead sits perfectly outside.
-  // We add ~12px to account for the marker width.
-  const paddingA = rA + 4;
-  const paddingB = rB + 16; 
+  // Symmetrical padding so A->B and B->A perfectly overlap and appear as a single line with two arrowheads.
+  const paddingA = rA + 6;
+  const paddingB = rB + 6; 
 
-  let x1 = a.x + ux * paddingA;
-  let y1 = a.y + uy * paddingA;
-  let x2 = b.x - ux * paddingB;
-  let y2 = b.y - uy * paddingB;
-
-  if (hasReverse(edge, edges)) {
-    // Parallel shift for bidirectional edges to prevent overlapping lines.
-    // Shift right relative to the edge direction.
-    const shift = 6;
-    x1 += -uy * shift;
-    y1 += ux * shift;
-    x2 += -uy * shift;
-    y2 += ux * shift;
-  }
+  const x1 = a.x + ux * paddingA;
+  const y1 = a.y + uy * paddingA;
+  const x2 = b.x - ux * paddingB;
+  const y2 = b.y - uy * paddingB;
 
   return `M ${x1.toFixed(1)} ${y1.toFixed(1)} L ${x2.toFixed(1)} ${y2.toFixed(1)}`;
 }
