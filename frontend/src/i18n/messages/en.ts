@@ -180,6 +180,16 @@ const en = {
   "timemachine.reason.countryMismatch": "account country does not match holiday country",
   "timemachine.reason.zeroMultiplier": "multiplier ≤ 1 — no spike",
   "timemachine.reason.unknown": "scenario not applicable",
+  "timemachine.empty.title": "No accounts affected",
+  "timemachine.empty.railNotUsed":
+    "No account in the fleet routes inbound traffic over {rail}. Pick a different rail to see impact.",
+  "timemachine.empty.noOutbound":
+    "No outbound transactions match the selected filter. Try a wider scope or different rail.",
+  "timemachine.empty.noCountryAccount":
+    "No account is booked in {country}. Pick a country where the fleet has presence.",
+  "timemachine.empty.hint":
+    "The simulation ran successfully but produced no impact for any account under these parameters.",
+  "timemachine.skippedAccounts": "{n} accounts skipped (scenario not applicable)",
   "autopilot.queue.infoSectionHint": "Forecasted breaches the engine cannot auto-resolve — no donor account has surplus. Manual treasurer action: arrange credit line / FX swap / repo.",
   "radar.legend.totalInFlight": "{n} in flight",
 

@@ -181,6 +181,16 @@ const ru: Record<keyof typeof en, string> = {
   "timemachine.reason.countryMismatch": "страна счёта не совпадает со страной праздника",
   "timemachine.reason.zeroMultiplier": "множитель ≤ 1 — всплеска нет",
   "timemachine.reason.unknown": "сценарий неприменим",
+  "timemachine.empty.title": "Нет затронутых счетов",
+  "timemachine.empty.railNotUsed":
+    "Ни один счёт в портфеле не получает входящие по {rail}. Выберите другой рельс, чтобы увидеть эффект.",
+  "timemachine.empty.noOutbound":
+    "Нет исходящих транзакций под выбранный фильтр. Расширьте охват или смените рельс.",
+  "timemachine.empty.noCountryAccount":
+    "Нет счетов, открытых в стране {country}. Выберите страну, где портфель присутствует.",
+  "timemachine.empty.hint":
+    "Симуляция отработала успешно, но при этих параметрах эффект на счета не возникает.",
+  "timemachine.skippedAccounts": "{n} счетов пропущено (сценарий неприменим)",
   "autopilot.queue.infoSectionHint": "Прогнозируемые пробои, которые движок не может закрыть автоматически — нет счёта-донора с излишком. Решает казначей вручную: кредитная линия / FX-своп / репо.",
   "radar.legend.totalInFlight": "{n} в полёте",
 

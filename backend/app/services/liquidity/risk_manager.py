@@ -86,6 +86,7 @@ class TransferSuggestion:
 _RAIL_WORST_CASE: Dict[PaymentType, int] = {
     PaymentType.INTERNAL: 0,
     PaymentType.SEPA: 1,
+    PaymentType.ACH: 2,
     PaymentType.SWIFT: 3,
     PaymentType.CARD: 5,
 }

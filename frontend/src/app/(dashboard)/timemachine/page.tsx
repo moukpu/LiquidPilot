@@ -100,25 +100,38 @@ export default function TimeMachinePage() {
           </div>
         )}
 
-        {result && (
-          <>
-            <div className="flex items-center gap-3 text-[10px] font-mono text-muted-foreground mb-2">
-              <LegendDot color="#94a3b8" label={t("timemachine.legend.baseline")} />
-              <LegendDot color="#10b981" label={t("timemachine.legend.stress")} />
-              <LegendDot color="#dc2626" label={t("timemachine.legend.breach")} />
-            </div>
-            <div
-              className="grid gap-3"
-              style={{
-                // auto-fill (not auto-fit): keeps empty tracks so a
-                // single applied card stays in its ~280px slot instead
-                // of stretching across the whole page.
-                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-              }}
-            >
-              {result.accounts
-                .filter((a) => a.methodology_inputs?.applied !== false)
-                .map((acc) => (
+        {result && (() => {
+          const applied = result.accounts.filter(
+            (a) => a.methodology_inputs?.applied !== false
+          );
+          const skippedCount = result.accounts.length - applied.length;
+          if (applied.length === 0) {
+            return <EmptyApplied scenario={req.scenario} req={req} />;
+          }
+          return (
+            <>
+              <div className="flex items-center gap-3 text-[10px] font-mono text-muted-foreground mb-2">
+                <LegendDot color="#94a3b8" label={t("timemachine.legend.baseline")} />
+                <LegendDot color="#10b981" label={t("timemachine.legend.stress")} />
+                <LegendDot color="#dc2626" label={t("timemachine.legend.breach")} />
+                {skippedCount > 0 && (
+                  <span className="ml-auto text-muted-foreground">
+                    {t("timemachine.skippedAccounts", {
+                      n: String(skippedCount),
+                    })}
+                  </span>
+                )}
+              </div>
+              <div
+                className="grid gap-3"
+                style={{
+                  // auto-fill (not auto-fit): keeps empty tracks so a
+                  // single applied card stays in its ~280px slot instead
+                  // of stretching across the whole page.
+                  gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                }}
+              >
+                {applied.map((acc) => (
                   <ResultCard
                     key={acc.account_id}
                     result={acc}
@@ -126,9 +139,10 @@ export default function TimeMachinePage() {
                     scenarioParams={req}
                   />
                 ))}
-            </div>
-          </>
-        )}
+              </div>
+            </>
+          );
+        })()}
       </div>
     </div>
   );
@@ -164,6 +178,39 @@ function ScenarioHint({ scenario }: { scenario: StressScenario }) {
       </div>
       <p className="text-xs leading-relaxed text-foreground/80">
         {t(detailKey)}
+      </p>
+    </div>
+  );
+}
+
+function EmptyApplied({
+  scenario,
+  req,
+}: {
+  scenario: StressScenario;
+  req: StressRequest;
+}) {
+  const { t } = useLocale();
+  // Shown when the simulation ran but no account in the fleet matches
+  // the selected parameters (e.g. a rail no account uses, or a country
+  // with no accounts). Tell the treasurer *why* nothing showed and
+  // suggest a parameter change — better than a blank page.
+  const reason: string =
+    scenario === "rail_delay"
+      ? t("timemachine.empty.railNotUsed", { rail: String(req.rail ?? "") })
+      : scenario === "volume_spike"
+      ? t("timemachine.empty.noOutbound")
+      : t("timemachine.empty.noCountryAccount", {
+          country: String(req.country ?? ""),
+        });
+  return (
+    <div className="glass-card rounded-2xl p-5 flex flex-col gap-2">
+      <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+        {t("timemachine.empty.title")}
+      </div>
+      <p className="text-xs leading-relaxed text-foreground/80">{reason}</p>
+      <p className="text-[11px] text-muted-foreground">
+        {t("timemachine.empty.hint")}
       </p>
     </div>
   );

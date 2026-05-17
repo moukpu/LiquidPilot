@@ -25,6 +25,7 @@ class PaymentType(str, Enum):
     SWIFT = "SWIFT"          # International wires, T+2 / T+3
     CARD = "CARD"            # Card acquiring settlements, up to T+5
     INTERNAL = "INTERNAL"    # Same-bank book transfer, instant
+    ACH = "ACH"              # US batch / NACHA, T+1 / T+2
 
 
 # Clearing delay distribution per rail, expressed in business days.
@@ -35,6 +36,7 @@ CLEARING_DELAYS: Dict[PaymentType, tuple] = {
     PaymentType.SWIFT: (2, 3),
     PaymentType.CARD: (1, 5),
     PaymentType.INTERNAL: (0, 0),
+    PaymentType.ACH: (1, 2),
 }
 
 
@@ -74,8 +76,7 @@ DELAY_OVERFLOW_PROB: Dict[str, float] = {
 
 
 # Human-readable SLA window per rail, surfaced in the Rail Reliability
-# widget. Keys are PaymentType values; ACH is listed for completeness
-# even though the current synthetic mix doesn't generate it.
+# widget. Keys are PaymentType values.
 EXPECTED_DELAY_RANGES: Dict[str, str] = {
     "INTERNAL": "T+0",
     "SEPA": "T+0..1",
@@ -169,8 +170,9 @@ def default_system_config() -> SystemConfig:
         outflow_mean=3_000_000,
         outflow_std=950_000,
         payment_mix={
-            PaymentType.SWIFT: 0.65,
-            PaymentType.CARD: 0.25,
+            PaymentType.SWIFT: 0.45,
+            PaymentType.ACH: 0.25,
+            PaymentType.CARD: 0.20,
             PaymentType.INTERNAL: 0.10,
         },
     )
@@ -227,9 +229,10 @@ def default_system_config() -> SystemConfig:
         outflow_mean=2_500_000,
         outflow_std=830_000,
         payment_mix={
-            PaymentType.SWIFT: 0.40,
-            PaymentType.CARD: 0.40,
-            PaymentType.INTERNAL: 0.20,
+            PaymentType.SWIFT: 0.25,
+            PaymentType.ACH: 0.30,
+            PaymentType.CARD: 0.30,
+            PaymentType.INTERNAL: 0.15,
         },
     )
 

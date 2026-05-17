@@ -33,13 +33,15 @@ logger = logging.getLogger(__name__)
 CACHE_DIR = Path("data/cache")
 # v2 added the `clearing_delayed` column; v3 bumped when the per-rail
 # overflow distribution replaced the scalar one; v4 bumped when the
-# default fleet grew from 3 -> 8 accounts; v5 bumps when KZT-Almaty
-# brought the fleet to 9. Cache shape is identical, but loading a v4
-# parquet would silently mask the new account in the UI.
-TX_CACHE = CACHE_DIR / "transactions_v5.parquet"
-BAL_CACHE = CACHE_DIR / "daily_balances_v5.parquet"
-MODELS_CACHE = CACHE_DIR / "forecaster_v5.pkl"
-FORECAST_CACHE = CACHE_DIR / "forecast_v5.pkl"
+# default fleet grew from 3 -> 8 accounts; v5 bumped when KZT-Almaty
+# brought the fleet to 9; v6 bumps when ACH joined PaymentType and the
+# US accounts (USD-Correspondent, USD-LA) got an ACH share in their mix.
+# Loading a v5 parquet would have zero ACH transactions and the Time
+# Machine "ACH" rail option would silently return applied=false.
+TX_CACHE = CACHE_DIR / "transactions_v6.parquet"
+BAL_CACHE = CACHE_DIR / "daily_balances_v6.parquet"
+MODELS_CACHE = CACHE_DIR / "forecaster_v6.pkl"
+FORECAST_CACHE = CACHE_DIR / "forecast_v6.pkl"
 
 
 @dataclass
