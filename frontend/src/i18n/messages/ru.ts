@@ -146,6 +146,12 @@ const ru: Record<keyof typeof en, string> = {
   "timemachine.totalImpact": "Совокупный эффект (USD)",
   "timemachine.newBreaches": "Новые пробои",
   "timemachine.breach": "Пробой",
+  "timemachine.breachTooltip":
+    "Пробой = стресс-прогноз ушёл ниже минимального резерва аккаунта. " +
+    "В обычном прогнозе аккаунт под минимум не падает.",
+  "timemachine.legend.baseline": "Базовый прогноз",
+  "timemachine.legend.stress": "Под стрессом",
+  "timemachine.legend.breach": "Пробой пола",
   "timemachine.baselineMin": "Базовый минимум",
   "timemachine.stressMin": "Стрессовый минимум",
   "timemachine.delta": "Дельта",

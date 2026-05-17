@@ -101,16 +101,21 @@ export default function ResultCard({ result, intl }: Props) {
   const stressPath = smoothPath(stressPoints);
 
   const breachWorsened = result.stress_breaches > result.baseline_breaches;
-  // No green: stress can never visually claim improvement. We only
-  // distinguish "worsened" (rose) from "neutral" (slate).
-  const stressColor = breachWorsened ? "#dc2626" : "#94a3b8";
+  // 3 visual states for the stress curve so it never overlaps with
+  // baseline: rose (breach worsened), emerald (no breach worsened),
+  // slate (not applicable to this account — handled by `applied`
+  // branch below as a dashed flat line).
+  const stressColor = breachWorsened ? "#dc2626" : "#10b981";
 
   return (
     <div className="glass-card rounded-xl p-3">
       <div className="flex items-center justify-between mb-2">
         <span className="font-mono text-xs font-semibold">{result.account_id}</span>
         {breachWorsened && (
-          <span className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-500 border border-rose-500/30">
+          <span
+            className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-500 border border-rose-500/30 cursor-help"
+            title={t("timemachine.breachTooltip")}
+          >
             {t("timemachine.breach")}
           </span>
         )}
@@ -191,11 +196,13 @@ function FooterStat({
       : "";
   return (
     <div className="min-w-0">
-      <div className="text-muted-foreground uppercase tracking-widest text-[9px]">
+      <div className="text-muted-foreground uppercase tracking-widest text-[9px] mb-0.5">
         {label}
       </div>
       <div
-        className={`tabular-nums text-right whitespace-nowrap text-[10px] ${tone}`}
+        className={`tabular-nums whitespace-nowrap text-xs font-semibold ${
+          tone || "text-foreground"
+        }`}
         title={`${sign}${currency} ${formatNumber(amount, 0, intl)}`}
       >
         {sign}

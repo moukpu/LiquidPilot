@@ -145,6 +145,12 @@ const en = {
   "timemachine.totalImpact": "Total impact (USD)",
   "timemachine.newBreaches": "New breaches",
   "timemachine.breach": "Breach",
+  "timemachine.breachTooltip":
+    "Breach = stress prognosis dropped below the account's minimum reserve. " +
+    "Under the baseline forecast the account never goes below floor.",
+  "timemachine.legend.baseline": "Baseline",
+  "timemachine.legend.stress": "Under stress",
+  "timemachine.legend.breach": "Floor breach",
   "timemachine.baselineMin": "Baseline min",
   "timemachine.stressMin": "Stress min",
   "timemachine.delta": "Delta",

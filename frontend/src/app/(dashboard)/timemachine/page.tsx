@@ -75,7 +75,10 @@ export default function TimeMachinePage() {
                   {formatNumber(result.total_delta_usd, 0, intl)}
                 </div>
               </div>
-              <div>
+              <div
+                title={t("timemachine.breachTooltip")}
+                className="cursor-help"
+              >
                 <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
                   {t("timemachine.newBreaches")}
                 </div>
@@ -110,6 +113,11 @@ export default function TimeMachinePage() {
                 })}
               </div>
             )}
+            <div className="flex items-center gap-3 text-[10px] font-mono text-muted-foreground mb-2">
+              <LegendDot color="#94a3b8" label={t("timemachine.legend.baseline")} />
+              <LegendDot color="#10b981" label={t("timemachine.legend.stress")} />
+              <LegendDot color="#dc2626" label={t("timemachine.legend.breach")} />
+            </div>
             <div
               className="grid gap-3"
               style={{
@@ -151,6 +159,18 @@ function harderSuggestion(req: StressRequest): string {
   }
   const next = Math.min(5, (req.holiday_days ?? 2) + 1);
   return `bank_holiday ${next}d`;
+}
+
+function LegendDot({ color, label }: { color: string; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span
+        className="inline-block w-3 h-[2px] rounded-full"
+        style={{ background: color }}
+      />
+      {label}
+    </span>
+  );
 }
 
 function ScenarioHint({ scenario }: { scenario: StressScenario }) {
