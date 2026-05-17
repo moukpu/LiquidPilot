@@ -109,11 +109,37 @@ export function edgePath(
   return `M ${x1.toFixed(1)} ${y1.toFixed(1)} Q ${mx.toFixed(1)} ${my.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}`;
 }
 
+export const HUB_RADIUS_MULTIPLIER = 1.4;
+
 /**
- * Edge stroke width as a function of exposure size. Clamped to keep
- * the smallest edges still legible (≥ 1.5px) and the largest from
- * dominating the view (≤ 7px).
+ * Edge stroke width as a function of exposure size. Uses log-scale so
+ * $0.8M vs $6.8M are visibly different without letting the largest edges
+ * dominate the view.
  */
 export function edgeWidth(exposure_usd: number): number {
-  return Math.max(1.5, Math.min(7, exposure_usd / 1_000_000));
+  return Math.max(
+    1,
+    Math.min(
+      10,
+      Math.log10(Math.max(exposure_usd, 100_000) / 100_000) * 3
+    )
+  );
+}
+
+/**
+ * Semantic edge styling based on the kind of exposure.
+ */
+export function edgeStyleByKind(kind: ContagionEdge["kind"]): {
+  stroke: string;
+  dasharray?: string;
+} {
+  switch (kind) {
+    case "correspondent":
+      return { stroke: "#3b82f6" }; // blue-500
+    case "market":
+      return { stroke: "#94a3b8", dasharray: "6 3" }; // slate-400 dashed
+    case "intra-group":
+    default:
+      return { stroke: "#94a3b8" }; // slate-400 solid
+  }
 }

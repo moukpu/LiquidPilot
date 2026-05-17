@@ -192,6 +192,7 @@ const ru: Record<keyof typeof en, string> = {
   "contagion.title": "Сетевой риск — симулятор каскада",
   "contagion.subtitle":
     "Уроните контрагента — увидите как шок пройдёт по сети ваших bilateral exposures. Эпидемиология банков для ликвидности.",
+  "contagion.hero.summary": "{loss} · {affected} затронуто · {breached} пробито",
 
   "contagion.shock.title": "Управление шоком",
   "contagion.shock.account": "Уронить контрагента",
@@ -199,6 +200,7 @@ const ru: Record<keyof typeof en, string> = {
   "contagion.shock.horizon": "Горизонт (дней)",
   "contagion.shock.run": "Запустить каскад",
   "contagion.shock.running": "Запуск...",
+  "contagion.shock.reset": "Сброс",
 
   "contagion.result.title": "Результат каскада",
   "contagion.result.empty":
@@ -207,9 +209,11 @@ const ru: Record<keyof typeof en, string> = {
   "contagion.result.totalLoss": "Совокупный убыток (USD)",
   "contagion.result.affectedCount": "Затронуто счетов",
   "contagion.result.hopBadge": "хоп {n}",
+  "contagion.result.hopGroup": "Хоп {n} (×{count})",
   "contagion.result.postBalance": "После шока",
   "contagion.result.minBalance": "Минимум",
   "contagion.result.loss": "Убыток",
+  "contagion.result.via": "через",
 
   "contagion.node.shocked": "Шок",
   "contagion.node.breached": "Пробой",

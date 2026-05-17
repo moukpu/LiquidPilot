@@ -9,6 +9,7 @@ interface Props {
   value: CascadeRequest;
   onChange: (v: CascadeRequest) => void;
   onRun: () => void;
+  onReset: () => void;
   loading: boolean;
 }
 
@@ -17,24 +18,19 @@ export default function ShockForm({
   value,
   onChange,
   onRun,
+  onReset,
   loading,
 }: Props) {
   const { t } = useLocale();
 
-  // Alphabetical for deterministic UI. The default is set in the page,
-  // not here, so this list is purely presentation.
   const sorted = [...nodes].sort((a, b) =>
     a.account_id.localeCompare(b.account_id)
   );
 
   return (
-    <div className="glass-card rounded-2xl p-4 space-y-3">
-      <h2 className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
-        {t("contagion.shock.title")}
-      </h2>
-
-      <div>
-        <label className="text-[9px] font-mono uppercase tracking-widest text-muted-foreground block mb-1">
+    <div className="flex flex-row items-center gap-3">
+      <div className="min-w-[14rem]">
+        <label className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground block mb-1">
           {t("contagion.shock.account")}
         </label>
         <select
@@ -52,8 +48,8 @@ export default function ShockForm({
         </select>
       </div>
 
-      <div>
-        <label className="text-[9px] font-mono uppercase tracking-widest text-muted-foreground block mb-1">
+      <div className="flex-1">
+        <label className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground block mb-1">
           {t("contagion.shock.intensity")}:{" "}
           <span className="text-foreground font-bold">
             {Math.round(value.intensity * 100)}%
@@ -72,8 +68,8 @@ export default function ShockForm({
         />
       </div>
 
-      <div>
-        <label className="text-[9px] font-mono uppercase tracking-widest text-muted-foreground block mb-1">
+      <div className="flex-1">
+        <label className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground block mb-1">
           {t("contagion.shock.horizon")}:{" "}
           <span className="text-foreground font-bold">{value.horizon_days}</span>
         </label>
@@ -89,14 +85,27 @@ export default function ShockForm({
         />
       </div>
 
-      <button
-        type="button"
-        onClick={onRun}
-        disabled={loading || value.intensity === 0}
-        className="w-full bg-primary text-primary-foreground rounded-md px-3 py-2 font-mono text-xs font-semibold uppercase tracking-widest hover:opacity-90 disabled:opacity-50 transition-opacity"
-      >
-        {loading ? t("contagion.shock.running") : t("contagion.shock.run")}
-      </button>
+      <div className="flex items-end self-stretch pb-1">
+        <button
+          type="button"
+          onClick={onRun}
+          disabled={loading || value.intensity === 0}
+          className="bg-primary text-primary-foreground rounded-md px-4 py-1.5 font-mono text-xs font-semibold uppercase tracking-widest hover:opacity-90 disabled:opacity-50 transition-opacity whitespace-nowrap"
+        >
+          {loading ? t("contagion.shock.running") : t("contagion.shock.run")}
+        </button>
+      </div>
+
+      <div className="flex items-end self-stretch pb-1">
+        <button
+          type="button"
+          onClick={onReset}
+          disabled={loading}
+          className="bg-slate-100 text-slate-700 rounded-md px-3 py-1.5 font-mono text-xs font-semibold uppercase tracking-widest hover:bg-slate-200 disabled:opacity-50 transition-colors whitespace-nowrap"
+        >
+          {t("contagion.shock.reset")}
+        </button>
+      </div>
     </div>
   );
 }

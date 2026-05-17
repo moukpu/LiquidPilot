@@ -191,6 +191,7 @@ const en = {
   "contagion.title": "Contagion — network cascade simulator",
   "contagion.subtitle":
     "Drop a counterparty, watch the shock propagate through your bilateral exposures. Bank epidemiology view of liquidity risk.",
+  "contagion.hero.summary": "{loss} · {affected} affected · {breached} breached",
 
   "contagion.shock.title": "Shock controls",
   "contagion.shock.account": "Drop counterparty",
@@ -198,6 +199,7 @@ const en = {
   "contagion.shock.horizon": "Horizon (days)",
   "contagion.shock.run": "Run cascade",
   "contagion.shock.running": "Running...",
+  "contagion.shock.reset": "Reset",
 
   "contagion.result.title": "Cascade result",
   "contagion.result.empty":
@@ -206,9 +208,11 @@ const en = {
   "contagion.result.totalLoss": "Total loss (USD)",
   "contagion.result.affectedCount": "Affected accounts",
   "contagion.result.hopBadge": "hop {n}",
+  "contagion.result.hopGroup": "Hop {n} (×{count})",
   "contagion.result.postBalance": "Post-shock",
   "contagion.result.minBalance": "Floor",
   "contagion.result.loss": "Loss",
+  "contagion.result.via": "via",
 
   "contagion.node.shocked": "Shocked",
   "contagion.node.breached": "Breached",
