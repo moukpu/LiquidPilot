@@ -9,7 +9,8 @@ per prompt. Status tracked in the table below. Numbered chronologically.
 | 0002 | Radar: downsize violet execute planes              | —          | SUPERSEDED |
 | 0003 | Radar: remove violet execute planes entirely       | `cef9347`  | SHIPPED    |
 | 0004 | ESLint: pin 8.57 + eslint-config-next 14.2         | `20e0982`  | SHIPPED    |
-| 0005 | Time Machine: bank_holiday monotonicity + UX bugs  | —          | IN FLIGHT  |
+| 0005 | Time Machine: bank_holiday monotonicity + UX bugs  | `dd61793`  | SHIPPED    |
+| 0006 | Time Machine polish: hide not-affected, fix card stretch, drop methodology | — | HANDED TO USER |
 
 ## How to add a new prompt
 

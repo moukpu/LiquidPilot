@@ -4,12 +4,12 @@
 
 ## Snapshot
 
-- **HEAD on main:** see `git log -1 --format=%H` (last analysis-Devin
-  commit was a `.devin/` docs push on 17 May 2026, 08:37 UTC; previous
-  code HEAD was `20e0982`).
-- **Last updated:** 17 May 2026, 08:37 UTC
-- **Memory live in repo:** YES — `.devin/` committed and pushed to `main`
-  (owner authorised direct push for docs only on 17 May 2026).
+- **HEAD on main:** `28c3092` (merge of PR #5 — `.devin/` memory system).
+  Previous code HEAD: `dd61793` (Time Machine bug-fix, all 5 bugs + tests).
+- **Last updated:** 17 May 2026, 08:46 UTC
+- **Memory live in repo:** YES — `.devin/` merged via PR #5 into `main`.
+  Owner authorised direct push for docs only; system blocks direct push
+  to `main`, so docs updates ship via short-lived branches + PR.
 - **Submit deadline:** 20 May 2026 23:59 (≈ 87 h left)
 - **Finals (Astana):** 24 May 2026 (≈ 7 days)
 
@@ -38,28 +38,28 @@
 | 3 | Radar (ATC view) | DONE + polished | latest `cef9347` removed violet planes |
 | 4 | Autopilot | DONE + polished | latest `a09cb0d` synced alerts ↔ transfers |
 | 5 | Contagion | **NOT DONE** | only ~13-line stub; biggest risk |
-| 6 | Time Machine | DONE logically, 5 UX + 1 mechanics bug | prompt in flight |
+| 6 | Time Machine | DONE + SHIPPED | `dd61793` — bank_holiday monotonicity + 5 UX bugs + 2 new tests |
 | 7 | Branding / landing / 90s demo | PARTIAL | logo missing, scenario not rehearsed |
 | 8 | Submission | PENDING | one-pager, video, form |
 | 9 | Finals | PENDING | slides, rehearsals, Q&A |
 
 ## What's in flight right now
 
-- **Time Machine bug-fix PR** — prompt #0004 handed to user. Expecting
-  PR title `fix(timemachine): bank holiday monotonicity + delta color
-  + dynamic hint + collapsed not-applied`. Acceptance test on monotonicity
-  must be added.
+- Nothing. Time Machine fix landed in `dd61793`. Memory system landed
+  in `28c3092` (PR #5 merged). Awaiting owner's next priority.
 
 ## What's queued, by priority for demo
 
-1. Land the Time Machine fix (waiting on coding agent).
-2. **Contagion Phase 5 from scratch** — graph (NetworkX) + `/contagion/simulate`
-   + react-flow / d3-force animation. No prompt yet — risky to start
-   before TM lands.
-3. Phase 7 — logo (text wordmark only today), 90-second connected demo
+1. **Contagion Phase 5 from scratch** — biggest risk. Need graph
+   (NetworkX) over the 9 accounts + cascade simulation API
+   (`POST /contagion/simulate`) + frontend page with react-flow or
+   d3-force animation. No prompt yet. Estimated 5-7 h of agent work.
+   If owner can't fit it, fall back: hide `/contagion` from nav and
+   pitch as "3 of 4 modules demo-ready, 4th in progress."
+2. Phase 7 — logo (text wordmark only today), 90-second connected demo
    script, landing polish.
-4. Phase 8 — one-pager PDF, 3-minute demo video, SynergyX submission form.
-5. Phase 9 — slides 10–12, ≥5 live demo rehearsals, Q&A bank.
+3. Phase 8 — one-pager PDF, 3-minute demo video, SynergyX submission form.
+4. Phase 9 — slides 10–12, ≥5 live demo rehearsals, Q&A bank.
 
 ## Known fragile spots
 
