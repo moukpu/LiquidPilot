@@ -356,3 +356,31 @@ Devin'а. Не удаляй старые записи. Только дописы
 **Outcome:** Промпт `0011` в `.devin/prompts/`, INDEX обновлён (0011 → HANDED TO USER). state.md: HEAD → `1911435` (этот docs-commit будет следующим), Phase 5 переведена из FULLY DONE в **BROKEN ON PROD**, OPEN PROD INCIDENT добавлен в Snapshot. Файл отдан юзеру для копи-пейста в Kimi/Opus/Gemini.
 
 **Lesson:** Никогда не использовать `Path(__file__).resolve().parents[N]` с большим `N` (>=3) для resolve'а data-файлов. Каждый лишний `.parents[]` — это допущение про tree-shape, которое в Docker-сборке с другим build-context'ом ломается тихо (локальный pytest проходит, прод горит). Якорь должен быть на максимально близком общем корне (обычно `parents[2]` = пакетный корень `app/`), и data-файлы должны жить **внутри того tree-shape, который Dockerfile реально копирует** (для этого проекта = `backend/app/`). Заодно: если эндпоинт читает диск на старте, в FastAPI-роуте обязан быть try/except, который превращает `FileNotFoundError`/`ValueError` в 500 с JSON-detail'ом — тогда дебаг на проде занимает 5 секунд по curl'у, а не «копаться в Railway-логах».
+
+---
+
+## 2026-05-17 11:33 UTC — 0011 verified shipped + contagion design review request
+
+**User (msg 1):** «Что сделано / корень бага / фикс / Acceptance / Lesson…» — отчёт coding-агента о приземлении `0011`. Описание совпадает с моим промптом: `git mv data/fixtures/contagion_exposures.json backend/app/fixtures/`, `_FIXTURE_PATH` → `parents[2]`, docstring обновлён, `data/fixtures/.gitkeep` удалён, локально `pytest backend/tests -q` → 11 passed.
+
+**User (msg 2):** «что ты можешь сказать об этом? объясни как все работает? честно мне не нравится дизайн этой хуйни... и по моему там числа неправильные.» + скрин `/contagion` (EUR shocked, intensity=0%, horizon=1, «пробои 3 / совокупный $0 / затронуто 4», 4 карточки с «−$0 млн»).
+
+**Devin (план):**
+- Сначала закрыть петлю по `0011`. Pull main → HEAD сменился на `0d5473d`. Прод-curl `/contagion/network` → `HTTP 200`, `nodes=9 edges=16`. `simulate {EUR-Main, 1.0, 7d}` → `affected=4 breached=1 total=$12.35M` — работает. Фикс верифицирован.
+- INDEX `0011 → SHIPPED 0d5473d`. state.md: HEAD → `0d5473d`, Phase 5 «BROKEN ON PROD» → **«FULLY DONE on prod (`0d5473d`)»**, OPEN PROD INCIDENT удалён, добавлен Prod-fix lesson в What's in flight.
+- Дальше — разобрать скрин юзера. Прокатил `simulate {EUR-Main, 0.0, 1d}` — получил raw response. Сравнил с тем что показывает фронт. Выявил **5 проблем**:
+  1. **Real bug (бэк, 1 строка):** shocked-узел попадает в `affected` через reverse-рёбра (фикстура содержит `EUR-Berlin → EUR-Main` и т.п., BFS на hop 1 пишет `losses[EUR-Main]=0`, guard сохраняет `hops_from_shock[shocked]=0`, узел остаётся в affected с `via=[обратные соседи]`). Source ≠ victim.
+  2. **Semantic bug (бэк, 1 строка):** `breached = post < min` без учёта baseline. При intensity=0 любой узел который **уже** под min получает breached=true. Должно быть `breached = post < min AND current >= min`.
+  3. **Cosmetic bug (фронт, `result-panel.tsx:91-96`):** хардкоженный литерал `-$` перед `formatMoneyCompact(loss)`. При loss=0 рендерится «−$0 млн». Фикс — `formatLoss()` helper.
+  4. **UX footgun (фронт):** при `intensity === 0` кнопка «Запустить каскад» активна и шлёт пустой запрос. Должна быть disabled.
+  5. **State-dependency (бэк, скрытая):** до warm_up `_account_balances_usd` берёт `opening_balance` из `config.py`, после — `daily_balances.tail(1)`. У некоторых счетов opening_balance отрицательный, отсюда «-$13.17M» на скрине у Berlin/Local — это **не результат каскада, это baseline cold-start**. Лечится либо «не показывать /contagion до state.ready», либо плашкой «прогреваем».
+- Дизайн (отдельно от багов): форма слева на 80% пустая, граф не различает edge-kind, USD-Correspondent хаб без emphasis, центральный лейбл «USD» (collapsing collapsing `-Correspondent`) выглядит как валюта, легенды нет, source ≠ visually distinct от victims (оба красные), result-карточки повторяют «−$0» 4 раза подряд без иерархии. Перечислил конкретные шаги в таблице.
+- Написал разбор в `/home/ubuntu/contagion-design-review.md` (≈170 строк, RU). Структура: (1) как это работает в 6 строк, (2) что баг/что нет с reproducible curl, (3) дизайн-таблица «зона / что плохо / что бы сделал», (4) два маршрута дальше — A) быстрый фикс-промпт `0012`, B) UX-редизайн с предварительным spec'ом, (5) вопрос юзеру какой маршрут катаем.
+
+**Outcome:** state.md, INDEX (0011 → SHIPPED `0d5473d`), JOURNAL обновлены и закоммичены в `main` через docs-PR. Файл `contagion-design-review.md` отдан юзеру как attachment. Юзер выбирает 1/2/3/4 → дальше пишу либо `0012-contagion-bug-fixes.md` (если 1 или 3), либо UX-spec (если 2), либо переключаюсь на Phase 7 (если 4).
+
+**Lesson 1:** Когда coding-agent shipped fix, **сначала верифицируй на проде сырым curl**, потом обновляй docs. Я мог бы написать «0011 SHIPPED» по словам агента, но прод мог не задеплоиться или задеплоиться поломанно. Cycle: pull main → check HEAD → curl prod endpoint → проверить JSON-структуру → ТОЛЬКО ТОГДА обновлять status. Это занимает 30 секунд и спасает от ложных «зелёных» в state.md.
+
+**Lesson 2:** Юзер прислал скрин с цифрами и сказал «числа неправильные». Я мог бы поверить и сразу написать фикс-промпт. Вместо этого — **сам прокатил тот же сценарий curl'ом**, и оказалось что часть «неправильных» цифр (Berlin = -$13.17M) **на моём прогоне другие** (Berlin = +$21M). Это **state-bug №5** (cold-start vs warm) который я бы не нашёл без воспроизведения. Правило: «жалоба юзера + скрин» = воспроизведи независимо, не доверяй визуализации без проверки. Скрин — это input, не диагноз.
+
+**Lesson 3:** Когда дизайн «не нравится» — это сигнал что **в проекте нет дизайн-spec'а**. Phase 5 frontend прошёл прямой реализацией без согласования визуала (промпт 0010 описывал поведение + layout сетки, но не emphasis / иерархию / типографику). На редизайн пришёл бы тот же промпт-стайл — «вот компоненты, рендерь» — и получили бы вторую попытку «средне». Для UX-итерации нужен **сначала текстовый spec'**, где зафиксирован зрительный приоритет (что первое, что второе, что в expand). Без него каждый агент рендерит «средне» по-своему. Эту мысль зашить в `prompt-craft.md` для следующих UX-задач.
