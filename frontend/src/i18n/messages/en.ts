@@ -177,7 +177,6 @@ const en = {
   "timemachine.reason.unknown": "scenario not applicable",
   "timemachine.summary.noBreaches": "Stress passed — no account drops below floor under this scenario. Try harder (rail_delay +5d / multiplier ≥1.6 / bank_holiday 4d).",
   "autopilot.queue.infoSectionHint": "Forecasted breaches the engine cannot auto-resolve — no donor account has surplus. Manual treasurer action: arrange credit line / FX swap / repo.",
-  "radar.executeInFlight": "Autopilot · {n} in flight",
   "radar.legend.totalInFlight": "{n} in flight",
 
   "backend.alert.template":

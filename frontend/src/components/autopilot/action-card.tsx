@@ -21,7 +21,6 @@ import {
   translateBackendTransfer,
 } from "@/i18n/translate-backend";
 import { convertFx, formatFxQuote } from "@/lib/fx";
-import { pushExecuteEvent } from "@/lib/execute-events";
 
 const EXECUTING_DURATION_MS = 1600;
 const CONFIRM_TIMEOUT_MS = 5000;
@@ -107,20 +106,6 @@ export default function ActionCard({
       return () => clearTimeout(t);
     }
   }, [state, onChange]);
-
-  // Push execute event to session store so Radar can animate violet planes
-  const pushedRef = useRef(false);
-  useEffect(() => {
-    if (state === "executed" && !pushedRef.current) {
-      pushedRef.current = true;
-      pushExecuteEvent({
-        from_account: transfer.from_account,
-        to_account: transfer.to_account,
-        amount: transfer.amount,
-        currency: transfer.currency_from,
-      });
-    }
-  }, [state, transfer]);
 
   return (
     <motion.article

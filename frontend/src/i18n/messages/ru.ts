@@ -178,7 +178,6 @@ const ru: Record<keyof typeof en, string> = {
   "timemachine.reason.unknown": "сценарий неприменим",
   "timemachine.summary.noBreaches": "Стресс прошёл — ни один счёт не свалился под минимум. Попробуй жёстче (rail_delay +5d / multiplier ≥1.6 / bank_holiday 4d).",
   "autopilot.queue.infoSectionHint": "Прогнозируемые пробои, которые движок не может закрыть автоматически — нет счёта-донора с излишком. Решает казначей вручную: кредитная линия / FX-своп / репо.",
-  "radar.executeInFlight": "Автопилот · {n} в полёте",
   "radar.legend.totalInFlight": "{n} в полёте",
 
   "backend.alert.template":
