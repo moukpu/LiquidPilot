@@ -1,12 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getAccounts } from "@/lib/api";
-import {
-  synthAlerts,
-  synthTransfers,
-  transferKey,
-} from "@/lib/autopilot-synth";
+import { nextSituation, transferKey } from "@/lib/autopilot-synth";
 import type {
   Account,
   Alert,
@@ -27,6 +23,21 @@ export interface ExecutedMeta {
 
 const ACTIONS_KEY = "autopilot-actions";
 const DEMO_KEY = "autopilot-demo-mode";
+
+// Initial situations dropped into the queue the moment demo flips on, so
+// the user sees a populated queue immediately rather than waiting for the
+// first emission tick.
+const SEED_COUNT = 3;
+
+// Cadence for new emissions while demo is on. Tight enough to feel like
+// a live ops queue, loose enough that the user can act on a card before
+// the next one lands.
+const EMIT_INTERVAL_MS = 9000;
+
+// Max concurrent unresolved (queued/confirming/executing) situations.
+// When the active queue hits this, emissions pause until the user works
+// some down. Prevents runaway pileups during long demos.
+const ACTIVE_CAP = 6;
 
 function readActions(): Record<string, ExecutedMeta> {
   if (typeof window === "undefined") return {};
@@ -80,11 +91,6 @@ export interface AutopilotState {
 }
 
 export function useAutopilotState(interval = 2000): AutopilotState {
-  // Recommendations from the backend's risk engine are intentionally
-  // dropped on the client: the demo brief is that without Demo Mode the
-  // queue stays empty (judges see only data they generated themselves).
-  // We still poll /accounts/ so the AccountSummaryStrip and the demo
-  // status pill stay live.
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [lastSync, setLastSync] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -94,8 +100,37 @@ export function useAutopilotState(interval = 2000): AutopilotState {
   );
   const [demoMode, setDemoMode] = useState(false);
 
+  // Demo situations live in component state (not derived) so newly emitted
+  // ones stick around until the user resolves them, and successive emissions
+  // accumulate instead of overwriting the previous batch.
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [transfers, setTransfers] = useState<TransferSuggestion[]>([]);
+
   const flyingRef = useRef(false);
   const controllerRef = useRef<AbortController | null>(null);
+  // Latest values mirrored into refs so the emission interval can read them
+  // without re-creating itself on every state change.
+  const accountsRef = useRef<Account[]>([]);
+  const actionStatesRef = useRef<Record<string, ExecutedMeta>>({});
+  const transfersRef = useRef<TransferSuggestion[]>([]);
+  const alertsRef = useRef<Alert[]>([]);
+  // Guard so we seed exactly once per demo-on session — survives React
+  // StrictMode's double-invoke of effects in dev and any hydration path
+  // that sets demoMode without going through toggleDemoMode.
+  const hasSeededRef = useRef(false);
+
+  useEffect(() => {
+    accountsRef.current = accounts;
+  }, [accounts]);
+  useEffect(() => {
+    actionStatesRef.current = actionStates;
+  }, [actionStates]);
+  useEffect(() => {
+    transfersRef.current = transfers;
+  }, [transfers]);
+  useEffect(() => {
+    alertsRef.current = alerts;
+  }, [alerts]);
 
   // Hydrate from sessionStorage on mount
   useEffect(() => {
@@ -119,6 +154,13 @@ export function useAutopilotState(interval = 2000): AutopilotState {
   const toggleDemoMode = useCallback((on: boolean) => {
     setDemoMode(on);
     writeDemoMode(on);
+    if (!on) {
+      // Wipe the queue immediately so the UI snaps back to the empty
+      // state instead of holding stale demo cards.
+      setAlerts([]);
+      setTransfers([]);
+      hasSeededRef.current = false;
+    }
   }, []);
 
   const poll = useCallback(async () => {
@@ -153,22 +195,81 @@ export function useAutopilotState(interval = 2000): AutopilotState {
     };
   }, [poll, interval]);
 
-  // Demo Mode OFF -> empty arrays. The judges asked for a hard rule:
-  // 'без него НИЧЕГО, даже истории переводов'. Empty queue triggers
-  // the EmptyState component which already nudges the user toward the
-  // Demo Mode toggle.
-  const alerts = useMemo(
-    () => (demoMode ? synthAlerts(accounts) : []),
-    [demoMode, accounts]
-  );
+  // Compute which recipients currently have an *active* (not executed,
+  // not skipped) situation. We exclude these when emitting new ones so
+  // the queue doesn't stack three CRITICALs on the same account.
+  const activeRecipients = useCallback((): Set<string> => {
+    const states = actionStatesRef.current;
+    const trs = transfersRef.current;
+    const active = new Set<string>();
+    for (const a of alertsRef.current) {
+      const tr = trs.find((t) => t.to_account === a.account_id);
+      if (!tr) {
+        // INFO-only alert with no paired transfer — treat as active until
+        // dismissed in the action-queue UI. The component owns dismiss
+        // state, so from the hook's view it's always live.
+        active.add(a.account_id);
+        continue;
+      }
+      const meta = states[transferKey(tr)];
+      const state = meta?.state ?? "queued";
+      if (state !== "executed" && state !== "skipped") {
+        active.add(a.account_id);
+      }
+    }
+    return active;
+  }, []);
 
-  const transfers = useMemo(
-    () => (demoMode ? synthTransfers(accounts) : []),
-    [demoMode, accounts]
-  );
+  // Seed the queue on demo enable. Runs the first time demo is on with
+  // enough accounts to synth — hasSeededRef makes it idempotent across
+  // StrictMode double-invokes and across the accounts-poll re-runs.
+  useEffect(() => {
+    if (!demoMode) {
+      hasSeededRef.current = false;
+      return;
+    }
+    if (hasSeededRef.current) return;
+    if (accounts.length < 2) return;
+
+    const seededAlerts: Alert[] = [];
+    const seededTransfers: TransferSuggestion[] = [];
+    const used = new Set<string>();
+    for (let i = 0; i < SEED_COUNT; i++) {
+      const s = nextSituation(accounts, used);
+      if (!s) break;
+      used.add(s.alert.account_id);
+      seededAlerts.push(s.alert);
+      if (s.transfer) seededTransfers.push(s.transfer);
+    }
+    if (seededAlerts.length > 0) {
+      hasSeededRef.current = true;
+      setAlerts(seededAlerts);
+      setTransfers(seededTransfers);
+    }
+  }, [demoMode, accounts]);
+
+  // Periodic emission. One new situation every EMIT_INTERVAL_MS while
+  // demo is on, capped at ACTIVE_CAP unresolved entries. Reads latest
+  // state via refs so the interval doesn't churn on every keystroke /
+  // every action-state update.
+  useEffect(() => {
+    if (!demoMode) return;
+    const id = setInterval(() => {
+      if (accountsRef.current.length < 2) return;
+      const active = activeRecipients();
+      if (active.size >= ACTIVE_CAP) return;
+      const s = nextSituation(accountsRef.current, active);
+      if (!s) return;
+      setAlerts((prev) => [...prev, s.alert]);
+      if (s.transfer) {
+        setTransfers((prev) => [...prev, s.transfer!]);
+      }
+    }, EMIT_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, [demoMode, activeRecipients]);
 
   // Discard stale action-state keys for transfers no longer in the queue.
-  // (Optional cleanup — keeps sessionStorage from growing unbounded.)
+  // Keeps sessionStorage from growing unbounded as demo emissions churn.
   useEffect(() => {
     const validKeys = new Set(transfers.map(transferKey));
     setActionStates((prev) => {
