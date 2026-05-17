@@ -4,7 +4,11 @@
 
 ## Snapshot
 
-- **HEAD on main:** `8e7a235` (TM ACH wiring — shipped by owner via separate coding-agent loop, **not through analysis-Devin's prompt-queue**). `fix(timemachine): wire ACH into PaymentType + empty-state for unmatched scenarios`. ACH был в frontend rail-picker но отсутствовал в backend `PaymentType` enum, из-за чего все сценарии с ACH возвращали `applied=false` и страница рендерилась пустой. Добавили ACH в enum + `CLEARING_DELAYS` + payment_mix двух US-счетов + `risk_manager.py` rail-table, бамп кэш-версии до v6 для регена, на фронте labeled empty-state вместо blank-screen. 6 файлов, +109/-36. **Этот fix я не верифицировал** — способ верификации = curl POST `/timemachine/replay` с сценарием использующим ACH rail, или открыть `/timemachine` на проде и проверить что ACH-сценарии больше не пустые. Touches `risk_manager.py` который раньше был в табу Но теперь вынесен вне (см. `services/liquidity/`-list внизу) — fair game для подобных enum/rail расширений, но не для model'-changes. **Не пропускать**: это первый случай, когда овнер провел code-change в обход analysis-Devin'ского prompt-flow'а — это ок, но нужно видеть в git-log'е и рефлексировать в state.md пост фактум.
+- **HEAD on main:** `8859373` (Contagion 0012 SHIPPED by agent — все 4 фикса один в один по промпту). `fix(contagion): drop source from affected + breach-baseline + formatLoss + intensity=0 disables Run`. Backend `contagion.py:309-313` skip neighbour==shocked_account_id в BFS (источник перестал приходить в `affected` через reverse-рёбра типа `EUR-Berlin → EUR-Main`). `contagion.py:343-346` breach с учётом baseline `post < min AND current >= min` (счёт уже под minimum'ом до шока больше не помечается breached). Frontend `lib/format.ts:54-67` новый `formatLoss(amountUsd, locale)` helper (0 → `$0` без минуса, >0 → `-$X.XM`, <0 → clamped to zero). `result-panel.tsx:94` adopts helper, tone neutral при loss=0. `shock-form.tsx:95` `disabled={loading || value.intensity === 0}`. **+3 pytest** в `test_contagion.py`: `test_source_not_in_affected` (3 узла включая reverse-edge), `test_zero_intensity_produces_no_loss` (total/breached/per-hop=0), `test_breach_requires_healthy_baseline` (структурный invariant — pre-shock balance ≥ min). Всего 14/14 green. Frontend tsc/lint/build green, /contagion route 4.91 kB (был 4.87). **Prod verified analysis-Devin'ом 12:05 UTC:** `simulate {USD-Correspondent, 1.0, 7d}` → `total=$37.95M breached=0 affected=8 source∉affected`. До фикса было `$47.85M / 2 / 9` — разница ровно из-за двух багов: source-leak инфлировал loss на ~$10M, breach-baseline ложно метил 2 cold-start-underwater счёта. `simulate {USD-Correspondent, 0.0, 7d}` → `total=$0 breached=0 per-hop-loss=[0]×8`. Cold-start `opening_balance` bug (Bug №5) intentionally out of scope, отдельный thread. Cycle: 11:25→prod-verify-0011, 11:33→design-review, 11:45→owner-picks-A, 11:48→0012-handed, 11:57→0012-shipped (12 минут от prompt'а до prod). Промпт качество: zero re-iteration, агент попал в exact line numbers + exact code.
+- **Previous HEAD:** `54ead71` (Autopilot real-time demo stream — varied scenarios, seeded + emitted). Shipped owner-direct, **не через analysis-Devin'ский prompt-queue**. Не верифицировано — способ верификации: открыть `/autopilot` и наблюдать live-stream alert'ов, или curl POST `/autopilot/run` несколько раз и сравнить вариативность scenarios.
+- **Previous HEAD:** `13b12d8` (Autopilot CHF FX align + dedupe FX map + drop dead i18n keys). Shipped owner-direct. Trivially safe (numeric+cleanup), не верифицировал.
+- **Previous HEAD:** `cf98aaf` (docs-only — INDEX/state/JOURNAL fixed for `0012 HANDED TO USER`, PR #16 squash).
+- **Previous HEAD:** `8e7a235` (TM ACH wiring — shipped by owner via separate coding-agent loop, **not through analysis-Devin's prompt-queue**). `fix(timemachine): wire ACH into PaymentType + empty-state for unmatched scenarios`. ACH был в frontend rail-picker но отсутствовал в backend `PaymentType` enum, из-за чего все сценарии с ACH возвращали `applied=false` и страница рендерилась пустой. Добавили ACH в enum + `CLEARING_DELAYS` + payment_mix двух US-счетов + `risk_manager.py` rail-table, бамп кэш-версии до v6 для регена, на фронте labeled empty-state вместо blank-screen. 6 файлов, +109/-36. **Этот fix я не верифицировал** — способ верификации = curl POST `/timemachine/replay` с сценарием использующим ACH rail, или открыть `/timemachine` на проде и проверить что ACH-сценарии больше не пустые. Touches `risk_manager.py` который раньше был в табу Но теперь вынесен вне (см. `services/liquidity/`-list внизу) — fair game для подобных enum/rail расширений, но не для model'-changes. **Не пропускать**: это первый случай, когда овнер провел code-change в обход analysis-Devin'ского prompt-flow'а — это ок, но нужно видеть в git-log'е и рефлексировать в state.md пост фактум.
 - **Previous HEAD:** `0d5473d` (Contagion fixture path fix — 0011 shipped). `git mv data/fixtures/contagion_exposures.json backend/app/fixtures/contagion_exposures.json`, `_FIXTURE_PATH` в `backend/app/services/liquidity/contagion.py` перепривязан на `parents[2]` (стабильно в local-tree и в Docker `/app/app/`), docstring обновлён, `data/fixtures/.gitkeep` удалён. Pytest 11/11 локально. Prod `curl /contagion/network` → `HTTP 200` `nodes=9 edges=16` (верифицировано analysis-Devin'ом 11:25 UTC). **Phase 5 снова FULLY DONE end-to-end на prod.**
 - **Previous HEAD:** `482bed2` (docs — `0011` prompt archived + state/INDEX update for the prompt) → перед этим `1911435` (0010 SHIPPED docs).
 - **Previous code HEAD:** `87416b0` (Contagion Phase 5 **frontend** — 0010 shipped:
@@ -36,7 +40,7 @@
   Previous: `205e535` (Contagion Phase 5 backend — 0009 shipped).
   Previous: `08ccf4e` (PR #10 squash — docs-only, 0009 prompt archived).
   Previous code: `059f0da` (TM round 4 — 0008 shipped).
-- **Last updated:** 17 May 2026, 11:45 UTC
+- **Last updated:** 17 May 2026, 12:06 UTC
 - **Memory live in repo:** YES — `.devin/` merged via PR #5 into `main`.
   Owner authorised direct push for docs only; system **hard-blocks**
   `git push origin main` (tested — error: «You should never push directly
@@ -71,7 +75,7 @@
 | 2.5 | Deploy fixes | DONE | `2302a99`, `10508c3`, `e3171c0`, `20e0982` |
 | 3 | Radar (ATC view) | DONE + polished | latest `cef9347` removed violet planes |
 | 4 | Autopilot | DONE + polished | latest `a09cb0d` synced alerts ↔ transfers |
-| 5 | Contagion | DONE + 0012 in-flight | Backend 0009 (`205e535`), frontend 0010 (`87416b0`), prod-fix 0011 (`0d5473d`). После design-review thread'а написан 0012 (HANDED TO USER 11:45 UTC) — 4 bug-фикса: backend source-leak через reverse-рёбра, breach с учётом baseline, frontend `formatLoss()` helper, intensity=0 → button disabled. +3 pytest invariant'a. Не trogano: UX-редизайн (route B, отдельный thread), cold-start opening_balance bug. Жду SHA от агента. |
+| 5 | Contagion | **FULLY DONE (5 bugs / 4 PRs)** | Backend 0009 (`205e535`), frontend 0010 (`87416b0`), prod-fix 0011 (`0d5473d`), bug-fixes 0012 (`8859373`). Prod verified 12:05 UTC: `simulate {USD-Correspondent, 1.0, 7d}` → `$37.95M / 0 breached / 8 affected / source∉affected`, zero-intensity → all-zeros, EUR-Main reverse-edge sanity → `source∉affected`. Cold-start `opening_balance` bug (отдельный thread, не блокер demo). UX-редизайн (route B) — owner не выбирал, в Phase 7 demo-readiness важнее. |
 | 6 | Time Machine | DONE + ACH wiring (`8e7a235`) | `dd61793` core (monotonicity + 5 UX bugs + 2 tests) → `c198c57` polish → `02857e9` readable card → `059f0da` round 4 → **`8e7a235` ACH в PaymentType enum + empty-state для unmatched rail/country** (owner direct ship, не через analysis-Devin). Cache v5→v6. ACH сценарии раньше возвращали `applied=false`, теперь работают. Стоит проверить на проде что empty-state рендерится правильно после Railway-redeploy. |
 | 7 | Branding / landing / 90s demo | **NOW PRIMARY FOCUS** | logo wordmark only (no symbol/favicon), 90-sec demo script not written, landing has no «как это работает» / no «для кого» / no demo CTA. ~85 h to deadline. |
 | 8 | Submission | PENDING | one-pager, video, form |
@@ -94,15 +98,32 @@
   state-dependency, 1 default footgun) и написал design-critique
   таблицу. Подробности в `/home/ubuntu/contagion-design-review.md`
   (attached to user) и JOURNAL entry 11:33 UTC.
-- **Owner picked route A (11:45 UTC).** Написал промпт **0012** —
-  `.devin/prompts/0012-contagion-bug-fixes.md`. 4 точечных фикса
-  (backend BFS skip-source + breach-with-baseline, frontend
-  `formatLoss()` helper + intensity=0 disables Run) + 3 новых pytest
-  invariant'a. PR title `fix(contagion): drop source from affected
-  + breach-baseline + formatLoss + intensity=0 disables Run`.
-  В scope **НЕ** входит: cold-start `opening_balance` (Bug №5,
-  отдельный thread), UX-редизайн (route B, отдельный thread).
-  Статус: HANDED TO USER. Жду SHA от агента.
+- **0012 SHIPPED at `8859373`** at 17-May ~11:57 UTC (12 минут от prompt'а
+  до prod). Все 4 фикса попали в exact line numbers по промпту: BFS skip
+  `neighbour == shocked_account_id` (`contagion.py:309-313`), breach с baseline
+  `post < min AND current >= min` (`contagion.py:343-346`), `formatLoss()` helper
+  в `lib/format.ts:54-67`, `result-panel.tsx:94` adopts helper + tone neutral
+  при loss=0, `shock-form.tsx:95` `disabled={loading || value.intensity === 0}`.
+  +3 pytest в `test_contagion.py` (total 14/14 green). Frontend tsc/lint/build
+  green. Prod verified analysis-Devin'ом: `simulate {USD-Correspondent, 1.0,
+  7d}` → `$37.95M / 0 breached / 8 affected / source∉affected` (до фикса было
+  `$47.85M / 2 breached / 9 affected` — разница ровно из-за source-leak inflating
+  loss на ~$10M + breach-baseline ложно метил 2 cold-start-underwater счёта).
+  `simulate {USD-Correspondent, 0.0, 7d}` → `$0 / 0 / all-per-hop=0`. **Cold-start
+  opening_balance bug (Bug №5)** intentionally out of scope, остаётся открытым
+  для отдельного thread'а — это infra-level (warm_up timing, не симулятор).
+- **Owner-direct ship `54ead71`** (Autopilot real-time demo stream — varied
+  scenarios, seeded + emitted) **и `13b12d8`** (Autopilot CHF FX align + dedupe
+  FX map + drop dead i18n keys) — оба прошли мимо analysis-Devin'ского
+  prompt-queue. Не верифицировано. Trivially-safe (FX rate harmonize +
+  scenario seeding), но если хочешь подтверждения — скажи `проверь autopilot-stream`.
+- **Owner попросил «объясни что такое контаджион» (11:55 UTC).** Написал
+  human-friendly RU explainer `/home/ubuntu/contagion-explainer.md` (~190
+  строк, метафора пожар-в-общаге → 9-счётный граф → цвета узлов → BFS
+  без жаргона → walkthrough USD-Correspondent / 1.0 / 7d по hop'ам).
+  Не для агента, не prompt — объяснительная для owner'а. Прикрепил
+  через `message_user`. INDEX не трогал (это не deliverable to agent),
+  только JOURNAL.
 - **0010 shipped at `87416b0`** at 17-May 10:58 UTC. Owner verified:
   tsc 0 errors, lint 0 errors, build green, `/contagion` route 4.87 kB
   (well under 30 kB cap), 0 new package.json deps. All 9 spec'd files

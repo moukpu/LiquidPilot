@@ -16,7 +16,7 @@ per prompt. Status tracked in the table below. Numbered chronologically.
 | 0009 | Contagion Phase 5 backend: bilateral exposure graph + cascade simulator | `205e535`  | SHIPPED        |
 | 0010 | Contagion Phase 5 frontend: graph viz + shock form + result panel       | `87416b0`  | SHIPPED        |
 | 0011 | Contagion: move fixture into backend image (fix Railway 500)            | `0d5473d`  | SHIPPED        |
-| 0012 | Contagion: 4 bug fixes (source-leak / breach-baseline / formatLoss / intensity=0 disables Run) | —          | HANDED TO USER |
+| 0012 | Contagion: 4 bug fixes (source-leak / breach-baseline / formatLoss / intensity=0 disables Run) | `8859373`  | SHIPPED        |
 
 ## How to add a new prompt
 
