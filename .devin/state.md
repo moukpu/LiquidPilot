@@ -4,7 +4,9 @@
 
 ## Snapshot
 
-- **HEAD on main:** `87416b0` (Contagion Phase 5 **frontend** — 0010 shipped:
+- **HEAD on main:** `1911435` (docs-only — `0011` prompt + state/INDEX update for Contagion fixture path fix on Railway).
+- **OPEN PROD INCIDENT (2026-05-17 11:13 UTC):** `/contagion` на prod показывает «Не удалось загрузить граф контагиона с бэкенда». `curl https://liquidpilot.up.railway.app/contagion/network` → `HTTP 500 Internal Server Error`; `POST /contagion/simulate` тоже 500. Корень — `_FIXTURE_PATH` в `backend/app/services/liquidity/contagion.py:57-62` использует `Path(__file__).resolve().parents[4]`, что в Docker-образе резолвится в `/data/fixtures/contagion_exposures.json` (директория `data/` вне build context'a `backend/`, в образ не копируется). Локально pytest зелёный т.к. `parents[4]` от `<repo>/backend/app/services/liquidity/contagion.py` = repo root, где `data/fixtures/` есть. Фикс — prompt **0011** (`.devin/prompts/0011-contagion-fixture-path-fix.md`): `git mv data/fixtures/contagion_exposures.json backend/app/fixtures/`, перевязать `_FIXTURE_PATH` на `parents[2]`. Передан юзеру. Phase 5 ниже **переводится из FULLY DONE в BROKEN ON PROD** до приземления фикса.
+- **Previous HEAD:** `87416b0` (Contagion Phase 5 **frontend** — 0010 shipped:
   REPLACE 13-line `/contagion` stub with full module — `frontend/src/types/api.ts`
   +6 interfaces (`ContagionNode`, `ContagionEdgeKind`, `ContagionEdge`,
   `ContagionNetwork`, `CascadeRequest`, `CascadeHop`, `CascadeResult`)
