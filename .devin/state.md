@@ -4,25 +4,29 @@
 
 ## Snapshot
 
-- **HEAD on main:** `059f0da` (TM round 4 — 0008 shipped: methodology
-  accordion `<details>` restored 1-to-1 from `c198c57^` including
-  `MethodologyDetails` + `Row` + `translateReason` + 13 ключей
-  `timemachine.method.*` / 5 ключей `timemachine.reason.*` /
-  `methodologyLabel` в en + ru; зелёная noBreaches-плашка и функция
-  `harderSuggestion` удалены из `page.tsx`; ключ
-  `timemachine.summary.noBreaches` снят; в `FooterStat` `{currency}`
-  убран из видимого текста — остался только в `title`-тултипе; порог
-  `formatStatAmount` понижен 1M → 100K → значения ≥ 100k идут как
-  `887K`/`352K`. 4 файла +188/−34. tsc 0 errors, lint clean, build
-  green, pytest 5 passed).
-  Previous: `b38635b` (PR #9 squash — docs-only re-hand 0008 +
-  journal 09:25).
-  Previous: `6dff903` (PR #8 squash — docs-only).
+- **HEAD on main:** `205e535` (Contagion Phase 5 **backend** — 0009 shipped:
+  `data/fixtures/contagion_exposures.json` (16 bilateral exposures, USD
+  numeraire, USD-Correspondent central hub w/ 5 outgoing edges) +
+  `backend/app/services/liquidity/contagion.py` (NEW module, NetworkX
+  DiGraph, BFS cascade w/ `HOP_DECAY=0.6` `MAX_HOPS=4`, FX via
+  `FX_RATES_TO_USD`, deterministic, no Monte Carlo) +
+  `backend/app/api/routes/contagion.py` (REPLACE 9-line stub, `GET
+  /network` no-warmup-required, `POST /simulate` requires warm-up) +
+  `backend/tests/test_contagion.py` (6 tests, all green). Verified:
+  ruff clean on new files, pytest 11/11 (5 pre-existing + 6 new),
+  `curl /network` → 9 nodes / 16 edges, `curl /simulate` USD-Corr
+  intensity=1.0 → breached_count=2 (JPY-Tokyo + SGD-Singapore),
+  total_loss_usd=$47.85M, affected=9. **One deviation from spec:**
+  agent anchored `_FIXTURE_PATH` via `Path(__file__).resolve().parents[4]`
+  instead of literal `Path("data/fixtures/...")` because pytest cwd is
+  `backend/` and the literal path resolved to a non-existent dir →
+  FileNotFoundError. Accept this — `__file__` anchor is the right
+  pattern for fixture paths, just not what I specced. Lesson recorded.
+  Previous: `08ccf4e` (PR #10 squash — docs-only, 0009 prompt archived).
+  Previous code: `059f0da` (TM round 4 — 0008 shipped).
+  Previous: `b38635b` (PR #9 squash — docs-only re-hand 0008).
   Previous code: `02857e9` (TM card readability — 0007 shipped).
-  Previous: `57fc32b` (journal + prompt 0007 archived).
-  Previous code: `c198c57` (TM polish 0006 — methodology over-deleted,
-  later restored in 0008).
-- **Last updated:** 17 May 2026, 09:50 UTC
+- **Last updated:** 17 May 2026, 10:05 UTC
 - **Memory live in repo:** YES — `.devin/` merged via PR #5 into `main`.
   Owner authorised direct push for docs only; system **hard-blocks**
   `git push origin main` (tested — error: «You should never push directly
@@ -57,7 +61,7 @@
 | 2.5 | Deploy fixes | DONE | `2302a99`, `10508c3`, `e3171c0`, `20e0982` |
 | 3 | Radar (ATC view) | DONE + polished | latest `cef9347` removed violet planes |
 | 4 | Autopilot | DONE + polished | latest `a09cb0d` synced alerts ↔ transfers |
-| 5 | Contagion | **IN FLIGHT — backend** | Stubs were 13 lines each (front + back). Backend prompt 0009 handed to user 09:50 UTC: NetworkX graph from `data/fixtures/contagion_exposures.json` + BFS cascade simulator + `GET /contagion/network` + `POST /contagion/simulate` + 6 pytest. Frontend = separate prompt 0010 after 0009 ships. |
+| 5 | Contagion | **BACKEND DONE (`205e535`), FRONTEND PENDING OWNER DECISION** | Backend 0009 shipped: NetworkX DiGraph from `data/fixtures/contagion_exposures.json`, BFS cascade w/ geometric decay, `GET /contagion/network` (no warm-up needed) + `POST /contagion/simulate` (requires warm-up), 6 pytest. Cascade math validated (hub shock → 2 breached, $47.85M total loss, full BFS). Frontend (`/contagion` page is still 13-line stub) blocked on owner's 17-May 10:05 UTC question «что это вообще?» — explanation sent, awaiting "go 0010" or "skip and hide nav". |
 | 6 | Time Machine | DONE round 4 (`059f0da`) | `dd61793` core (monotonicity + 5 UX bugs + 2 tests) → `c198c57` polish (no-aff badge / card stretch — methodology over-deleted here) → `02857e9` readable card (stress curve color / footer align / breach tooltip) → `059f0da` round 4 (methodology restored + advisory dropped + footer-overlap fix). No more TM rounds planned unless owner finds something. |
 | 7 | Branding / landing / 90s demo | PARTIAL | logo missing, scenario not rehearsed |
 | 8 | Submission | PENDING | one-pager, video, form |
@@ -65,39 +69,38 @@
 
 ## What's in flight right now
 
-- **Prompt 0009 — Contagion Phase 5, backend only.** Phase 5 был
-  единственной фазой целиком на заглушках (front + back). 09:50 UTC
-  отдан промпт на **backend-half** Phase 5, специально нарезанный
-  отдельно от фронта чтобы не словить over-delete на 7-часовом PR:
-  - `data/fixtures/contagion_exposures.json` — 16 направленных
-    bilateral exposures между 9 счетами в USD-numeraire. USD-Correspondent
-    специально центральный hub (5 исходящих) — самый зрелищный шок
-    на демо. Никаких counterparty-данных в `state.transactions`
-    нет, поэтому идём через статическую фикстуру, не через
-    реконструкцию из ленты.
-  - `backend/app/services/liquidity/contagion.py` (NEW) — `load_exposures`,
-    `build_graph(nx.DiGraph)`, `simulate_cascade(shocked, intensity,
-    horizon_days)` с BFS-каскадом и геометрическим decay 0.6 на хоп
-    (cap MAX_HOPS=4). FX через существующий `FX_RATES_TO_USD` из
-    `config.py`. **Не Азимовская территория** — новый модуль на
-    уровне `stress.py`.
-  - `backend/app/api/routes/contagion.py` (REPLACE 9-line stub):
-    `GET /contagion/network` (не требует warm-up, fallback на
-    opening_balance) + `POST /contagion/simulate` (требует
-    warm-up, читает `state.daily_balances`).
-  - `backend/tests/test_contagion.py` — 6 тестов: fleet match,
-    hub-shock direct neighbours, intensity monotonic, 9-node
-    snapshot, invalid account ValueError, invalid intensity
-    ValueError.
-  Expect PR title: `feat(contagion): bilateral exposure graph + cascade simulator (Phase 5 backend)`.
+- **0009 shipped at `205e535`** at 17-May 10:05 UTC. Owner reported
+  back with full verification: ruff clean on new files, pytest 11/11
+  green, `/contagion/network` returns 9 nodes / 16 edges, hub-shock
+  `POST /simulate` USD-Correspondent intensity=1.0 horizon=7 returns
+  breached_count=2 (JPY-Tokyo + SGD-Singapore), total_loss_usd=$47.85M,
+  affected=9, EUR-Berlin correctly arrives at hop=2 via EUR-Main →
+  EUR-Berlin edge. One deviation from spec (FIXTURE_PATH via
+  `__file__` anchor not literal Path) — agent's call was correct,
+  literal path was wrong for pytest cwd. Accepted.
+- **Owner asked «что это вообще? что оно дает нам для нашего кейса?»**
+  with the SynergyX hackathon brief PDF attached. Explanation sent
+  10:05 UTC mapping Contagion to brief's «риск-скоринг банков и
+  платежных каналов» (page 3, possible directions) and to brief's
+  problem #4 «избыточные резервы как защита» (knowing the exposure
+  map lets treasury reserve narrowly instead of holding $15M
+  blanket buffer). Awaiting owner verdict on whether to proceed to
+  prompt 0010 (Phase 5 frontend) or hide `/contagion` from nav and
+  pitch as 3-of-4 modules.
 
 ## What's queued, by priority for demo
 
-1. **0010 — Contagion Phase 5, frontend.** Только после shipping 0009.
-   d3-force (или нативный SVG) граф на `/contagion`, форма выбора
-   шокированного банка, ползунок intensity, side-panel пострадавших.
-   Зависит от `GET /contagion/network` и `POST /contagion/simulate`
-   из 0009. Без бэка фронт лепить нет смысла.
+1. **Prompt 0010 — Contagion Phase 5 frontend.** **PENDING OWNER GO.**
+   Plan if owner says yes: d3-force (or native SVG, react-flow if
+   stable peer-deps allow — checked once, will recheck) graph on
+   `/contagion`, dropdown to pick shocked account, slider for
+   intensity 0..1, side-panel listing affected accounts with
+   post-shock balance / breach badge / contributor chain. Calls the
+   shipped `GET /network` + `POST /simulate`. Estimated 2-3 h agent
+   work. Without this the backend exists only as a curl-demo.
+   Alternative if owner skips: hide `/contagion` from nav, mention
+   the API in PDF one-pager («risk scoring of correspondents
+   available via `POST /contagion/simulate`»).
 2. Phase 7 — logo (text wordmark only today), 90-second connected demo
    script, landing polish.
 3. Phase 8 — one-pager PDF, 3-minute demo video, SynergyX submission form.
