@@ -411,3 +411,46 @@ Devin'а. Не удаляй старые записи. Только дописы
 **Lesson 2:** **Перечитал свежий код перед написанием prompt'а**, не положился на состояние design-review thread'а (хотя он был ≈10 минут назад). За 10 минут owner мог что-то ship-нуть параллельно (как с `8e7a235`). Правило: между «нашёл баг» и «написал prompt» ВСЕГДА `git pull` + рекач line-numbers / current code. Это +30 секунд но спасает от тупого «строка 94 не такая как ты пишешь, агент» когда owner поправил что-то рядом.
 
 **Lesson 3:** Reverse-рёбра в bilateral exposure graph — **не баг фикстуры, это норма** (sweep'ы естественно bidi). Соответственно фикс должен идти в **симуляторе**, не в данных. Сначала была мысль «убрать из фикстуры reverse-pairs» — отверг, потому что (1) тогда BFS не пробрасывал бы шок обратно от USD-Correspondent на USD-LA когда USD-LA shocked, что **корректное поведение**, (2) реальные банковские sweep'ы bidirectional, фикстура их моделирует честно. Правило: «не баг данных, баг кода». Когда видишь странный output от algorithm-over-static-data, спрашивай «алгоритм правильно интерпретирует данные?», не «данные правильные?».
+
+---
+
+## 2026-05-17 11:55 UTC — contagion-explainer-for-owner
+
+**User:** «объясни мне что такое контаджион! я не понимаю что за графики, стрелочки,»
+
+**Devin (план):**
+- Owner — не финансист и не алгоритмист. Запрос «что за графики, стрелочки» = ему нужна **концептуальная модель**, а не API-документация. Скрин он уже видит на `/contagion`, но не понимает за что какая визуальная штука отвечает и почему вообще число в правой колонке отличается от его интуиции.
+- Решил написать `contagion-explainer.md` (RU, без жаргона). Структура: (1) метафора-пожар-в-общаге (что такое contagion как явление в банках, Lehman 2008 как референс), (2) что моделирует наш модуль (9 счетов + 16 рёбер + 3 типа связей с расшифровкой по фикстуре), (3) цвета узлов (серый/оранжевый/красный-пульс/красный — что каждый означает), (4) как работает симуляция БЕЗ слова BFS («волна», «затухает в 0.6 раз», «максимум 4 шага»), (5) как читать панель справа (три плитки + per-hop), (6) конкретный walkthrough дефолта USD-Correspondent / 100% / 7d с цифрами по hop'ам, (7) что модель НЕ делает (FX volatility, panic, recovery time — для честности на демо), (8) TL;DR в 5 буллетов.
+- Не давал готовый прыжок к коду, потому что owner не код спрашивает — он спрашивает «зачем это вообще и что я вижу». Любой код-разбор сразу вернул бы ему в режим «не понимаю».
+- Не упомянул баги 0012 в explainer'е — это другой thread'е, не смешивать. Здесь чисто концепция + UI-mapping.
+
+**Outcome:** `/home/ubuntu/contagion-explainer.md` (~190 строк RU). Отправлен attachment'ом с кратким cover'ом. INDEX/state не трогаю — это не promt, не deliverable агенту, это объяснительная для owner'а. JOURNAL обновлён.
+
+**Lesson:** Когда owner говорит «я не понимаю» — это **не запрос на больше деталей, это запрос на меньше абстракции**. Default-реакция аналитика-Devin'а — насыпать терминов («NetworkX DiGraph, BFS с HOP_DECAY 0.6, MAX_HOPS 4...») — это противоположно тому что нужно. Нужно: **метафора → конкретные цифры из его же UI → walkthrough одного сценария по шагам**. Без термина «BFS» можно говорить «волна», без «exposure» — «долг», без «node» — «счёт». Жаргон удаляется не из вежливости, а потому что он создаёт когнитивный барьер ровно там где его уже нет понимания.
+
+**Lesson 2:** Каждый раз когда фронт показывает что-то «непонятное» — это **сигнал что в UI отсутствует self-explanation**. Идеально, если бы график `/contagion` имел tooltip/legend «толщина стрелки = размер долга в $М», «цвет узла = состояние после симуляции», и popover-объяснялку по клику на «info»-иконку рядом с заголовком. Это уже в зоне route B (UX-редизайн), но эту мысль зафиксировать в design-review.md для будущего spec'а.
+
+---
+
+## 2026-05-17 12:06 UTC — 0012-shipped + autopilot-stream-and-fx-aligned-by-owner
+
+**Кэш событий за последний час (пока я писал explainer, owner ship-нул трижды):**
+- `13b12d8` (Sun May 17 ~11:54 UTC) — Autopilot CHF FX align + dedupe FX map + drop dead i18n keys. Owner-direct, не через prompt-queue. Trivially-safe (numeric harmonization + cleanup).
+- `54ead71` (Sun May 17 ~11:55 UTC) — Autopilot real-time demo stream — varied scenarios, seeded + emitted. Owner-direct. Затрагивает `frontend/src/hooks/use-autopilot-state.ts` (+106/-43), `frontend/src/lib/autopilot-synth.ts` (+135/-57), `frontend/src/components/autopilot/session-summary.tsx` (+8/-5), `frontend/src/lib/fx.ts` (+4/-1) и обрезает `i18n/messages/{en,ru}.ts` (-10 каждый). Не верифицировано — потребует визуала на `/autopilot`.
+- `8859373` (Sun May 17 ~11:57 UTC) — **0012 SHIPPED агентом ровно по моему промпту**. Все 4 фикса попали в exact line numbers без iteration: BFS skip-source в `contagion.py:309-313`, breach с baseline в `contagion.py:343-346`, `formatLoss()` helper в `lib/format.ts:54-67`, `result-panel.tsx:94` adopts + neutral tone, `shock-form.tsx:95` `disabled={loading || value.intensity === 0}`. +3 pytest в `test_contagion.py` (total 14/14 green). Frontend tsc/lint/build green. Cycle 0012-prompt→prod = **12 минут** (~11:45 handed → 11:57 commit).
+
+**Прод-смоки (12:05 UTC, прокатил три curl-сценария после Railway-redeploy):**
+- `simulate {USD-Correspondent, 1.0, 7d}` → `total_loss=$37.95M  breached=0  affected=8  source∉affected` ✓
+  - До фикса было `$47.85M / 2 / 9` (см. JOURNAL 11:33 UTC). Разница ровно объясняется: source-leak инфлировал loss на ~$10M (USD-Correspondent ложно сидел в `affected` с contributors от своих же neighbours, double-counting reverse-pair), breach-baseline ложно метил 2 cold-start-underwater счёта (`breached_count` упал с 2 → 0, потому что warmed-up fleet drift'ит балансы под floor pre-shock и breach-baseline-check теперь корректно отфильтровывает их как «not contagion's fault»).
+- `simulate {USD-Correspondent, 0.0, 7d}` → `total_loss=$0  breached=0  per-hop-losses=[0]×8  per-hop-breached=[False]×8` ✓
+- `simulate {EUR-Main, 0.5, 7d}` → `total_loss=$3.25M  breached=0  affected=3  source∉affected` ✓ (heavy reverse-edge node — EUR-Berlin / GBP-Local / CHF-Zurich все имеют reverse-edges к EUR-Main).
+
+**INDEX:** `0012 → SHIPPED 8859373`. **state.md:** HEAD bump на `8859373`, Phase 5 → `FULLY DONE (5 bugs / 4 PRs)`, in-flight section полностью переписан (drop «owner picked route A», add «0012 SHIPPED», add owner-direct autopilot pushes, add explainer note).
+
+**Cold-start `opening_balance` bug (Bug №5 из design-review)** — НЕ в scope 0012, остаётся открытым на отдельный thread. Это infra-level (warm_up timing/sequence vs config.py initial state), не симулятор. Не блокер demo: dashboard'у нужно `current_balance ≥ 0` для USD-Correspondent (а это и есть случай), остальные счета могут показывать negative balance первые секунды до warm_up, но контаджион-симуляция корректно работает поверх любых валидных балансов. **Не пишу 0013 на это** пока owner не попросит — Phase 7 (demo readiness) важнее.
+
+**Lesson 1:** Prompt-discipline pay'нула. 0012 на 4 точечных фикса с **exact line numbers + exact before/after code + 3 conrete pytest invariants** прошёл с **zero re-iteration** за 12 минут. Тот же агент, если бы получил «исправь баги контаджиона» без line numbers — это 60+ минут с 2-3 round-trip'ами на «что именно править». Правило: на bug-fix prompts я обязан давать **(а) точные строки в текущем HEAD**, **(b) полный diff before/after**, **(c) pytest invariant который покажет провал**. Это не over-engineering — это что отделяет 12-минутный ship от часового.
+
+**Lesson 2:** Owner ship'ает autopilot-related fixes (FX align, demo stream) напрямую, не через prompt-queue. Это паттерн с момента `8e7a235` (TM ACH). Реакция: продолжать tracking'ать в state.md как «owner-direct, не верифицировано», не пытаться «вернуть в свой канал» — это его право и его risk budget. Моя ответственность — заметить в `git log` post-factum, отразить в state.md, и спросить «хочешь чтоб я верифицировал?» а не «почему не через меня?». Уважение к чужому workflow.
+
+**Lesson 3:** Когда explainer выдаётся параллельно с code-ship'ом (а агент быстрее меня): explainer всё равно ценен. Owner получит **(а) понимание концепта** + **(б) исправленные числа на UI** одновременно. Это даже лучше, чем sequenced flow «сначала пойми, потом исправь» — он сразу видит правильную картинку и читает explainer'а на правильном фоне (не на `-$0 / 2 breached / 9 affected` пре-фикса).
