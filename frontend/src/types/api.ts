@@ -117,3 +117,51 @@ export interface Recommendations {
   alerts: Alert[];
   transfers: TransferSuggestion[];
 }
+
+export interface ContagionNode {
+  account_id: string;
+  currency: string;
+  country: string;
+  min_balance_usd: number;
+  current_balance_usd: number;
+}
+
+export type ContagionEdgeKind = "intra-group" | "correspondent" | "market";
+
+export interface ContagionEdge {
+  from: string;
+  to: string;
+  exposure_usd: number;
+  kind: ContagionEdgeKind;
+  description: string;
+}
+
+export interface ContagionNetwork {
+  nodes: ContagionNode[];
+  edges: ContagionEdge[];
+}
+
+export interface CascadeRequest {
+  shocked_account_id: string;
+  intensity: number;
+  horizon_days: number;
+}
+
+export interface CascadeHop {
+  account_id: string;
+  hops_from_shock: number;
+  incoming_loss_usd: number;
+  post_shock_balance_usd: number;
+  min_balance_usd: number;
+  breached: boolean;
+  contributors: string[];
+}
+
+export interface CascadeResult {
+  shocked_account_id: string;
+  intensity: number;
+  horizon_days: number;
+  affected: CascadeHop[];
+  breached_count: number;
+  total_loss_usd: number;
+}

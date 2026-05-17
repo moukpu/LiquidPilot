@@ -187,6 +187,43 @@ const en = {
     "{accountId}: forecast {projected} {currency} by {breachDate}, below floor of {floor} (shortfall {shortfall}).",
   "backend.transfer.fund":
     "Fund {to} ({severity} on {breachDate}) from {from} via {rail}.",
+
+  "contagion.title": "Contagion — network cascade simulator",
+  "contagion.subtitle":
+    "Drop a counterparty, watch the shock propagate through your bilateral exposures. Bank epidemiology view of liquidity risk.",
+
+  "contagion.shock.title": "Shock controls",
+  "contagion.shock.account": "Drop counterparty",
+  "contagion.shock.intensity": "Intensity",
+  "contagion.shock.horizon": "Horizon (days)",
+  "contagion.shock.run": "Run cascade",
+  "contagion.shock.running": "Running...",
+
+  "contagion.result.title": "Cascade result",
+  "contagion.result.empty":
+    "Pick a counterparty on the left and run the simulation. The affected accounts will appear here with breach status and hop distance.",
+  "contagion.result.breachedCount": "Breached",
+  "contagion.result.totalLoss": "Total loss (USD)",
+  "contagion.result.affectedCount": "Affected accounts",
+  "contagion.result.hopBadge": "hop {n}",
+  "contagion.result.postBalance": "Post-shock",
+  "contagion.result.minBalance": "Floor",
+  "contagion.result.loss": "Loss",
+
+  "contagion.node.shocked": "Shocked",
+  "contagion.node.breached": "Breached",
+  "contagion.node.affected": "Affected",
+  "contagion.node.idle": "Idle",
+
+  "contagion.legend.title": "Legend",
+  "contagion.edge.kind.intra-group": "Intra-group",
+  "contagion.edge.kind.correspondent": "Correspondent",
+  "contagion.edge.kind.market": "Market",
+
+  "contagion.error.engineWarming":
+    "Engine is still warming up. Wait ~30 seconds and click Run again.",
+  "contagion.error.network":
+    "Could not load contagion graph from backend.",
 } as const;
 
 export type MessageKey = keyof typeof en;

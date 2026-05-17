@@ -188,6 +188,43 @@ const ru: Record<keyof typeof en, string> = {
     "{accountId}: прогноз {projected} {currency} к {breachDate}, ниже минимума {floor} (нехватка {shortfall}).",
   "backend.transfer.fund":
     "Пополнить {to} ({severity} к {breachDate}) со счёта {from} через {rail}.",
+
+  "contagion.title": "Сетевой риск — симулятор каскада",
+  "contagion.subtitle":
+    "Уроните контрагента — увидите как шок пройдёт по сети ваших bilateral exposures. Эпидемиология банков для ликвидности.",
+
+  "contagion.shock.title": "Управление шоком",
+  "contagion.shock.account": "Уронить контрагента",
+  "contagion.shock.intensity": "Интенсивность",
+  "contagion.shock.horizon": "Горизонт (дней)",
+  "contagion.shock.run": "Запустить каскад",
+  "contagion.shock.running": "Запуск...",
+
+  "contagion.result.title": "Результат каскада",
+  "contagion.result.empty":
+    "Выберите контрагента слева и запустите симуляцию. Пострадавшие счета появятся здесь со статусом пробоя и хоп-дистанцией.",
+  "contagion.result.breachedCount": "Пробои",
+  "contagion.result.totalLoss": "Совокупный убыток (USD)",
+  "contagion.result.affectedCount": "Затронуто счетов",
+  "contagion.result.hopBadge": "хоп {n}",
+  "contagion.result.postBalance": "После шока",
+  "contagion.result.minBalance": "Минимум",
+  "contagion.result.loss": "Убыток",
+
+  "contagion.node.shocked": "Шок",
+  "contagion.node.breached": "Пробой",
+  "contagion.node.affected": "Затронут",
+  "contagion.node.idle": "Норма",
+
+  "contagion.legend.title": "Легенда",
+  "contagion.edge.kind.intra-group": "Внутри группы",
+  "contagion.edge.kind.correspondent": "Корреспондент",
+  "contagion.edge.kind.market": "Рыночный",
+
+  "contagion.error.engineWarming":
+    "Движок ещё прогревается. Подождите ~30 секунд и нажмите Запустить снова.",
+  "contagion.error.network":
+    "Не удалось загрузить граф контагиона с бэкенда.",
 };
 
 export default ru;

@@ -1,0 +1,119 @@
+import type { ContagionEdge, ContagionNode } from "@/types/api";
+
+// Center of the SVG viewport. Picked to leave room for labels under
+// the bottom-row nodes without clipping at viewBox height=640.
+export const CENTER_X = 400;
+export const CENTER_Y = 320;
+
+// Radius of the ring on which non-hub nodes sit. With viewBox 800x640
+// and node radius ~28, this gives ~70px gap to the edge of the box.
+export const RING_RADIUS = 220;
+
+// Account_id of the visual hub. This is the node that gets placed at
+// the center instead of on the ring. Picked because it has the most
+// outgoing edges (5) in the fixture — the cascade demo runs through it.
+export const HUB_ACCOUNT_ID = "USD-Correspondent";
+
+// Node circle radius. Used by both the graph and the layout (e.g. to
+// shorten edges so arrowheads don't get hidden inside the circle).
+export const NODE_RADIUS = 28;
+
+export interface Position {
+  x: number;
+  y: number;
+}
+
+/**
+ * Deterministic radial layout. The hub goes to the center; every other
+ * node is placed on a circle around it, sorted alphabetically by
+ * account_id so the screenshot is reproducible. Returns a map keyed
+ * by account_id for O(1) lookup in the graph component.
+ */
+export function accountPositions(
+  nodes: ContagionNode[]
+): Record<string, Position> {
+  const non_hub = nodes
+    .filter((n) => n.account_id !== HUB_ACCOUNT_ID)
+    .map((n) => n.account_id)
+    .sort();
+  const result: Record<string, Position> = {};
+  result[HUB_ACCOUNT_ID] = { x: CENTER_X, y: CENTER_Y };
+  const n = non_hub.length;
+  // Start at angle -90° (12 o'clock) and go clockwise. Slight offset
+  // by -Math.PI / 2 puts the first node directly above the hub.
+  for (let i = 0; i < n; i++) {
+    const angle = -Math.PI / 2 + (2 * Math.PI * i) / n;
+    result[non_hub[i]] = {
+      x: CENTER_X + RING_RADIUS * Math.cos(angle),
+      y: CENTER_Y + RING_RADIUS * Math.sin(angle),
+    };
+  }
+  return result;
+}
+
+/**
+ * Returns true if there is a reverse edge B→A for the given A→B edge.
+ * Used to decide whether to draw a curved arc (bidirectional pair) or
+ * a straight line (unique edge). Curved avoids two overlapping arrows.
+ */
+export function hasReverse(
+  edge: ContagionEdge,
+  edges: ContagionEdge[]
+): boolean {
+  return edges.some((e) => e.from === edge.to && e.to === edge.from);
+}
+
+/**
+ * Build the SVG `d` attribute for an edge. For unique edges, this is a
+ * straight line shortened on both ends so arrowheads don't get hidden
+ * inside the node circles. For bidirectional pairs, it's a quadratic
+ * Bezier curve offset perpendicular to the line midpoint, with the
+ * offset sign tied to the lex order of (from, to) so the two halves
+ * of the pair end up on opposite sides.
+ */
+export function edgePath(
+  edge: ContagionEdge,
+  positions: Record<string, Position>,
+  edges: ContagionEdge[]
+): string {
+  const a = positions[edge.from];
+  const b = positions[edge.to];
+  if (!a || !b) return "";
+
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const len = Math.hypot(dx, dy);
+  if (len < 1) return "";
+
+  const ux = dx / len;
+  const uy = dy / len;
+
+  // Shorten by NODE_RADIUS on both ends so the arrowhead sits outside
+  // the destination circle.
+  const x1 = a.x + ux * NODE_RADIUS;
+  const y1 = a.y + uy * NODE_RADIUS;
+  const x2 = b.x - ux * NODE_RADIUS;
+  const y2 = b.y - uy * NODE_RADIUS;
+
+  if (!hasReverse(edge, edges)) {
+    return `M ${x1.toFixed(1)} ${y1.toFixed(1)} L ${x2.toFixed(1)} ${y2.toFixed(1)}`;
+  }
+
+  // Perpendicular offset for a bidirectional pair. The sign depends on
+  // whether the edge is in "forward" alphabetical direction so both
+  // halves get opposite-side arcs.
+  const forward = edge.from < edge.to;
+  const offset = forward ? 22 : -22;
+  const mx = (x1 + x2) / 2 + -uy * offset;
+  const my = (y1 + y2) / 2 + ux * offset;
+  return `M ${x1.toFixed(1)} ${y1.toFixed(1)} Q ${mx.toFixed(1)} ${my.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}`;
+}
+
+/**
+ * Edge stroke width as a function of exposure size. Clamped to keep
+ * the smallest edges still legible (≥ 1.5px) and the largest from
+ * dominating the view (≤ 7px).
+ */
+export function edgeWidth(exposure_usd: number): number {
+  return Math.max(1.5, Math.min(7, exposure_usd / 1_000_000));
+}

@@ -1,5 +1,8 @@
 import type {
   Account,
+  CascadeRequest,
+  CascadeResult,
+  ContagionNetwork,
   RadarInsights,
   Recommendations,
   StressRequest,
@@ -47,4 +50,23 @@ export async function runStressTest(req: StressRequest): Promise<StressResult> {
     throw new Error(`stress test failed: ${res.status} ${res.statusText}${detail ? ` — ${detail}` : ""}`);
   }
   return (await res.json()) as StressResult;
+}
+
+export function getContagionNetwork(signal?: AbortSignal) {
+  return apiGet<ContagionNetwork>("/contagion/network", signal);
+}
+
+export async function runCascade(req: CascadeRequest): Promise<CascadeResult> {
+  const res = await fetch(`${API_BASE}/contagion/simulate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify(req),
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(
+      `cascade simulation failed: ${res.status} ${res.statusText}${detail ? ` — ${detail}` : ""}`
+    );
+  }
+  return (await res.json()) as CascadeResult;
 }
