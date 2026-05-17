@@ -36,7 +36,7 @@
   Previous: `205e535` (Contagion Phase 5 backend — 0009 shipped).
   Previous: `08ccf4e` (PR #10 squash — docs-only, 0009 prompt archived).
   Previous code: `059f0da` (TM round 4 — 0008 shipped).
-- **Last updated:** 17 May 2026, 11:37 UTC
+- **Last updated:** 17 May 2026, 11:45 UTC
 - **Memory live in repo:** YES — `.devin/` merged via PR #5 into `main`.
   Owner authorised direct push for docs only; system **hard-blocks**
   `git push origin main` (tested — error: «You should never push directly
@@ -71,7 +71,7 @@
 | 2.5 | Deploy fixes | DONE | `2302a99`, `10508c3`, `e3171c0`, `20e0982` |
 | 3 | Radar (ATC view) | DONE + polished | latest `cef9347` removed violet planes |
 | 4 | Autopilot | DONE + polished | latest `a09cb0d` synced alerts ↔ transfers |
-| 5 | Contagion | **FULLY DONE on prod (`0d5473d`)** | Backend 0009 (`205e535`): NetworkX DiGraph from static fixture, BFS cascade w/ `HOP_DECAY=0.6 MAX_HOPS=4`, `GET /network` + `POST /simulate`, 6 pytest. Frontend 0010 (`87416b0`): SVG-only radial graph (no d3-force / react-flow / cytoscape), `framer-motion` pulse on shocked node, native `<title>` tooltips, defaults `USD-Correspondent / 1.0 / 7d` mirror 0009 curl demo. Prod-fix 0011 (`0d5473d`): fixture перенесён в `backend/app/fixtures/`, `_FIXTURE_PATH` → `parents[2]`. Railway: `/contagion/network` → 200 (9 nodes / 16 edges) проверено 11:25 UTC. 0 new deps. Micro-deviation `void CENTER_X/Y` в `network-graph.tsx` всё ещё висит — опциональный одно-строчный polish, не блокер. |
+| 5 | Contagion | DONE + 0012 in-flight | Backend 0009 (`205e535`), frontend 0010 (`87416b0`), prod-fix 0011 (`0d5473d`). После design-review thread'а написан 0012 (HANDED TO USER 11:45 UTC) — 4 bug-фикса: backend source-leak через reverse-рёбра, breach с учётом baseline, frontend `formatLoss()` helper, intensity=0 → button disabled. +3 pytest invariant'a. Не trogano: UX-редизайн (route B, отдельный thread), cold-start opening_balance bug. Жду SHA от агента. |
 | 6 | Time Machine | DONE + ACH wiring (`8e7a235`) | `dd61793` core (monotonicity + 5 UX bugs + 2 tests) → `c198c57` polish → `02857e9` readable card → `059f0da` round 4 → **`8e7a235` ACH в PaymentType enum + empty-state для unmatched rail/country** (owner direct ship, не через analysis-Devin). Cache v5→v6. ACH сценарии раньше возвращали `applied=false`, теперь работают. Стоит проверить на проде что empty-state рендерится правильно после Railway-redeploy. |
 | 7 | Branding / landing / 90s demo | **NOW PRIMARY FOCUS** | logo wordmark only (no symbol/favicon), 90-sec demo script not written, landing has no «как это работает» / no «для кого» / no demo CTA. ~85 h to deadline. |
 | 8 | Submission | PENDING | one-pager, video, form |
@@ -93,9 +93,16 @@
   выявил 5 проблем (1 real bug, 1 semantic bug, 1 cosmetic, 1
   state-dependency, 1 default footgun) и написал design-critique
   таблицу. Подробности в `/home/ubuntu/contagion-design-review.md`
-  (attached to user) и JOURNAL entry 11:33 UTC. Owner выбирает
-  маршрут: (A) fix-prompt 0012 на 4 бага, (B) UX-redesign,
-  (C) A→B, (D) забить и сосредоточиться на Phase 7.
+  (attached to user) и JOURNAL entry 11:33 UTC.
+- **Owner picked route A (11:45 UTC).** Написал промпт **0012** —
+  `.devin/prompts/0012-contagion-bug-fixes.md`. 4 точечных фикса
+  (backend BFS skip-source + breach-with-baseline, frontend
+  `formatLoss()` helper + intensity=0 disables Run) + 3 новых pytest
+  invariant'a. PR title `fix(contagion): drop source from affected
+  + breach-baseline + formatLoss + intensity=0 disables Run`.
+  В scope **НЕ** входит: cold-start `opening_balance` (Bug №5,
+  отдельный thread), UX-редизайн (route B, отдельный thread).
+  Статус: HANDED TO USER. Жду SHA от агента.
 - **0010 shipped at `87416b0`** at 17-May 10:58 UTC. Owner verified:
   tsc 0 errors, lint 0 errors, build green, `/contagion` route 4.87 kB
   (well under 30 kB cap), 0 new package.json deps. All 9 spec'd files

@@ -384,3 +384,30 @@ Devin'а. Не удаляй старые записи. Только дописы
 **Lesson 2:** Юзер прислал скрин с цифрами и сказал «числа неправильные». Я мог бы поверить и сразу написать фикс-промпт. Вместо этого — **сам прокатил тот же сценарий curl'ом**, и оказалось что часть «неправильных» цифр (Berlin = -$13.17M) **на моём прогоне другие** (Berlin = +$21M). Это **state-bug №5** (cold-start vs warm) который я бы не нашёл без воспроизведения. Правило: «жалоба юзера + скрин» = воспроизведи независимо, не доверяй визуализации без проверки. Скрин — это input, не диагноз.
 
 **Lesson 3:** Когда дизайн «не нравится» — это сигнал что **в проекте нет дизайн-spec'а**. Phase 5 frontend прошёл прямой реализацией без согласования визуала (промпт 0010 описывал поведение + layout сетки, но не emphasis / иерархию / типографику). На редизайн пришёл бы тот же промпт-стайл — «вот компоненты, рендерь» — и получили бы вторую попытку «средне». Для UX-итерации нужен **сначала текстовый spec'**, где зафиксирован зрительный приоритет (что первое, что второе, что в expand). Без него каждый агент рендерит «средне» по-своему. Эту мысль зашить в `prompt-craft.md` для следующих UX-задач.
+
+---
+
+## 2026-05-17 11:45 UTC — owner-picked-route-A + 0012-drafted
+
+**User:** (через `user_question` UI после design-review attachment) выбрал «**A — фикс 4 багов одним промптом 0012 (~20-30 мин агенту)**».
+
+**Devin (план):**
+- Прежде чем писать prompt — перечитал текущий код 5 файлов на свежем main (HEAD `4333ccd` поверх кодового `8e7a235` + `0d5473d`), а не по памяти из design-review. Проверил что:
+  - `backend/app/services/liquidity/contagion.py:308` — место для guard `if neighbour == shocked_account_id: continue` — first thing inside out_edges-loop.
+  - `backend/app/services/liquidity/contagion.py:336` — `breached=post < node.min_balance_usd,` строкой, заменяется на `breached=(post < min) AND (current >= min)`.
+  - `frontend/src/components/contagion/result-panel.tsx:94` — литерал `` `-$${formatMoneyCompact(...)}` `` — заменяется на `formatLoss(hop.incoming_loss_usd, intl)` + bonus: tone становится conditional (rose когда loss>0, neutral когда loss=0).
+  - `frontend/src/lib/format.ts:44-52` — после `formatMoneyCompact` добавляется новая экспортированная функция `formatLoss(amountUsd, locale)`.
+  - `frontend/src/components/contagion/shock-form.tsx:95` — `disabled={loading}` → `disabled={loading || value.intensity === 0}`.
+  - `backend/tests/test_contagion.py` — `engine_ready` фикстура session-scoped, есть в `conftest.py`, переиспользуется в новых тестах.
+  - Фикстура `contagion_exposures.json` — действительно 5 reverse-пар, которые подтверждают баг #1: `EUR-Main ↔ EUR-Berlin`, `EUR-Main ↔ CHF-Zurich`, `JPY-Tokyo ↔ SGD-Singapore`, `USD-Correspondent ↔ USD-LA`, `EUR-Main ↔ GBP-Local`. Любой shock на узле из этих пар утекает обратно.
+- Написал `.devin/prompts/0012-contagion-bug-fixes.md` (~280 строк, RU + EN code). Структура копирует 0011: title + status + per-bug section (симптом → root cause → fix с before/after блоками) + 3 новых pytest + acceptance (local backend / local frontend / local smoke / prod после Railway-redeploy) + «Не трогать» + PR title + PR description с before/after curl + Lesson for next Devin.
+- В «Не трогать» явно прописал что `risk_manager.py` / `config.py` для этого PR — **полностью off-limits** (хотя они стали fair game в `8e7a235` для ACH wiring — это другой class задач), чтобы агент не зацепил их случайно.
+- Cold-start `opening_balance` баг (№5 из design-review) — **сознательно вне scope**. Это отдельная инфраструктурная задача: вернуть `warm_up_complete: bool` из `/health` или `/contagion/network`, и фронт прячет страницу до ready. Лечится либо backend-side (`HTTP 503` пока warm-up в процессе) либо frontend-side (poll + spinner). Это не баг логики каскада, его не нужно мешать с 4 контагион-фиксами.
+
+**Outcome:** Промпт `0012` в `.devin/prompts/0012-contagion-bug-fixes.md`, INDEX обновлён (`0012 → HANDED TO USER`), state.md: «What's in flight» обновлён — route A выбран, 0012 написан, ждём SHA. Phase 5 row table: «FULLY DONE on prod» → «DONE + 0012 in-flight». Backend engine read-only list актуализирован — `config.py` остался в fair-game но с ограничением «только enum/payment_mix/cache bumps». Файл отдан юзеру для копи-пейста в Kimi/Opus/Gemini.
+
+**Lesson 1:** Когда owner выбрал маршрут A через `user_question` — не надо переспрашивать «уверен?». UI-выбор это commit, прыгай прямо в работу. (Я этим грешил в ранних сессиях — слишком много confirm-loop'ов.)
+
+**Lesson 2:** **Перечитал свежий код перед написанием prompt'а**, не положился на состояние design-review thread'а (хотя он был ≈10 минут назад). За 10 минут owner мог что-то ship-нуть параллельно (как с `8e7a235`). Правило: между «нашёл баг» и «написал prompt» ВСЕГДА `git pull` + рекач line-numbers / current code. Это +30 секунд но спасает от тупого «строка 94 не такая как ты пишешь, агент» когда owner поправил что-то рядом.
+
+**Lesson 3:** Reverse-рёбра в bilateral exposure graph — **не баг фикстуры, это норма** (sweep'ы естественно bidi). Соответственно фикс должен идти в **симуляторе**, не в данных. Сначала была мысль «убрать из фикстуры reverse-pairs» — отверг, потому что (1) тогда BFS не пробрасывал бы шок обратно от USD-Correspondent на USD-LA когда USD-LA shocked, что **корректное поведение**, (2) реальные банковские sweep'ы bidirectional, фикстура их моделирует честно. Правило: «не баг данных, баг кода». Когда видишь странный output от algorithm-over-static-data, спрашивай «алгоритм правильно интерпретирует данные?», не «данные правильные?».
