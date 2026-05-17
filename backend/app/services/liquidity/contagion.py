@@ -7,7 +7,7 @@ expected an inbound payment from it loses cash they had earmarked.
 
 This module:
   * Loads the hand-curated bilateral exposure fixture (see
-    ``data/fixtures/contagion_exposures.json``). The fixture is the
+    ``backend/app/fixtures/contagion_exposures.json``). The fixture is the
     *static* part of the model — it changes when the business adds a
     new counterparty, not on every tick.
   * Builds a ``networkx.DiGraph`` keyed by account_id, with edge weight
@@ -49,14 +49,15 @@ HOP_DECAY: float = 0.6
 # growth and to keep ``simulate`` O(n_edges) bounded.
 MAX_HOPS: int = 4
 
-# Fixture path is resolved relative to the repo root so it works
-# regardless of the process cwd (pytest runs from ``backend/``, the
-# server runs from the repo root). ``__file__`` is
-# ``<repo>/backend/app/services/liquidity/contagion.py`` — four
-# parents up takes us to the repo root.
+# Fixture path is anchored on ``__file__`` so it resolves correctly
+# both in the local dev tree and inside the Railway Docker image
+# (build context is ``backend/``, so ``data/`` outside backend is not
+# in the image). ``__file__`` is
+# ``<root>/backend/app/services/liquidity/contagion.py`` locally and
+# ``/app/app/services/liquidity/contagion.py`` in the container — in
+# both cases ``parents[2]`` is ``backend/app/`` (or ``/app/app/``).
 _FIXTURE_PATH = (
-    Path(__file__).resolve().parents[4]
-    / "data"
+    Path(__file__).resolve().parents[2]
     / "fixtures"
     / "contagion_exposures.json"
 )
