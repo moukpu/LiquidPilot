@@ -1,8 +1,11 @@
+// Mirror of backend `FX_RATES_TO_USD` in config.py. Keep in sync — if
+// the two diverge, autopilot's "Moved" USD total and the converted
+// transfer amounts will silently disagree with what the backend reports.
 export const FX_TO_USD: Record<string, number> = {
   EUR: 1.08,
   USD: 1.0,
   GBP: 1.27,
-  CHF: 1.12,
+  CHF: 1.1,
   JPY: 0.0067,
   SGD: 0.74,
   KZT: 0.0022,

@@ -6,24 +6,13 @@ import { formatMoney } from "@/lib/format";
 import type { Alert, TransferSuggestion } from "@/types/api";
 import { transferKey } from "@/lib/autopilot-synth";
 import type { ExecutedMeta } from "@/hooks/use-autopilot-state";
+import { FX_TO_USD } from "@/lib/fx";
 
 interface Props {
   transfers: TransferSuggestion[];
   alerts: Alert[];
   actionStates: Record<string, ExecutedMeta>;
 }
-
-// Static FX snapshot for aggregating "moved" totals into a single USD figure.
-// Matches the backend's FX_RATES_TO_USD so the two surfaces agree.
-const FX_TO_USD: Record<string, number> = {
-  EUR: 1.08,
-  USD: 1.0,
-  GBP: 1.27,
-  CHF: 1.1,
-  JPY: 0.0067,
-  SGD: 0.74,
-  KZT: 0.0022,
-};
 
 export default function SessionSummary({
   transfers,

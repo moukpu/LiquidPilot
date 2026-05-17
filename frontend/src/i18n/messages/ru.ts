@@ -66,20 +66,10 @@ const ru: Record<keyof typeof en, string> = {
 
   "autopilot.eyebrow": "Автопилот · Командный центр",
   "autopilot.title": "Очередь действий и риск-телеметрия",
-  "autopilot.counter.queued": "В очереди: {n}",
-  "autopilot.counter.confirm": "Подтверждение: {n}",
-  "autopilot.counter.exec": "Исполняется: {n}",
-  "autopilot.counter.done": "Готово: {n}",
-  "autopilot.counter.skip": "Пропущено: {n}",
   "autopilot.demoMode": "Демо-режим",
   "autopilot.demoTooltip":
     "Синтезирует алёрты и переводы из текущих данных счетов для презентации — реальные действия с бэкендом не выполняются.",
 
-  "autopilot.alerts.section": "Активные алёрты",
-  "autopilot.alerts.count": "Алёртов: {n}",
-  "autopilot.alerts.none": "Активных алёртов нет",
-  "autopilot.alerts.noneDetail":
-    "Прогнозируемые балансы выше минимума по всем счетам.",
   "autopilot.alerts.inDays": "через {n}д.",
   "autopilot.alerts.shortfall": "Нехватка",
   "autopilot.alerts.projected": "Прогноз",

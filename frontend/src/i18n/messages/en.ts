@@ -65,20 +65,10 @@ const en = {
 
   "autopilot.eyebrow": "Autopilot · Command Center",
   "autopilot.title": "Action queue & risk telemetry",
-  "autopilot.counter.queued": "Queued: {n}",
-  "autopilot.counter.confirm": "Confirm: {n}",
-  "autopilot.counter.exec": "Executing: {n}",
-  "autopilot.counter.done": "Done: {n}",
-  "autopilot.counter.skip": "Skipped: {n}",
   "autopilot.demoMode": "Demo Mode",
   "autopilot.demoTooltip":
     "Synthesizes alerts and transfers from current account data for presentation purposes — no real backend trigger.",
 
-  "autopilot.alerts.section": "Active alerts",
-  "autopilot.alerts.count": "Alerts: {n}",
-  "autopilot.alerts.none": "No active alerts",
-  "autopilot.alerts.noneDetail":
-    "Forecasted balances are above floor across all accounts.",
   "autopilot.alerts.inDays": "in {n}d",
   "autopilot.alerts.shortfall": "Shortfall",
   "autopilot.alerts.projected": "Projected",
