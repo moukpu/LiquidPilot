@@ -1,34 +1,23 @@
 import type { ContagionEdge, ContagionNode } from "@/types/api";
 
-// Center of the SVG viewport. Picked to leave room for labels under
-// the bottom-row nodes without clipping at viewBox height=640.
+// Center of the SVG viewport.
 export const CENTER_X = 400;
 export const CENTER_Y = 320;
 
-// Radius of the ring on which non-hub nodes sit. With viewBox 800x640
-// and node radius ~28, this gives ~70px gap to the edge of the box.
+// Radius of the ring on which non-hub nodes sit.
 export const RING_RADIUS = 220;
 
-// Account_id of the visual hub. This is the node that gets placed at
-// the center instead of on the ring. Picked because it has the most
-// outgoing edges (5) in the fixture — the cascade demo runs through it.
 export const HUB_ACCOUNT_ID = "USD-Correspondent";
 
-// Node circle radius. Used by both the graph and the layout (e.g. to
-// shorten edges so arrowheads don't get hidden inside the circle).
-export const NODE_RADIUS = 28;
+// Increased node radius to fit labels inside
+export const NODE_RADIUS = 36;
+export const HUB_RADIUS_MULTIPLIER = 1.3;
 
 export interface Position {
   x: number;
   y: number;
 }
 
-/**
- * Deterministic radial layout. The hub goes to the center; every other
- * node is placed on a circle around it, sorted alphabetically by
- * account_id so the screenshot is reproducible. Returns a map keyed
- * by account_id for O(1) lookup in the graph component.
- */
 export function accountPositions(
   nodes: ContagionNode[]
 ): Record<string, Position> {
@@ -39,8 +28,6 @@ export function accountPositions(
   const result: Record<string, Position> = {};
   result[HUB_ACCOUNT_ID] = { x: CENTER_X, y: CENTER_Y };
   const n = non_hub.length;
-  // Start at angle -90° (12 o'clock) and go clockwise. Slight offset
-  // by -Math.PI / 2 puts the first node directly above the hub.
   for (let i = 0; i < n; i++) {
     const angle = -Math.PI / 2 + (2 * Math.PI * i) / n;
     result[non_hub[i]] = {
@@ -52,36 +39,19 @@ export function accountPositions(
 }
 
 /**
- * Returns true if there is a reverse edge B→A for the given A→B edge.
- * Used to decide whether to draw a curved arc (bidirectional pair) or
- * a straight line (unique edge). Curved avoids two overlapping arrows.
- */
-export function hasReverse(
-  edge: ContagionEdge,
-  edges: ContagionEdge[]
-): boolean {
-  return edges.some((e) => e.from === edge.to && e.to === edge.from);
-}
-
-/**
- * Build the SVG `d` attribute for an edge. For unique edges, this is a
- * straight line shortened on both ends so arrowheads don't get hidden
- * inside the node circles. For bidirectional pairs, it's a quadratic
- * Bezier curve offset perpendicular to the line midpoint, with the
- * offset sign tied to the lex order of (from, to) so the two halves
- * of the pair end up on opposite sides.
+ * Build the SVG `d` attribute for a straight edge.
+ * Symmetrical padding so A->B and B->A can perfectly overlap.
  */
 export function edgePath(
-  edge: ContagionEdge,
-  positions: Record<string, Position>,
-  edges: ContagionEdge[]
+  edge: { from: string; to: string },
+  positions: Record<string, Position>
 ): string {
   const a = positions[edge.from];
   const b = positions[edge.to];
   if (!a || !b) return "";
 
-  const rA = edge.from === HUB_ACCOUNT_ID ? NODE_RADIUS * 1.3 : NODE_RADIUS;
-  const rB = edge.to === HUB_ACCOUNT_ID ? NODE_RADIUS * 1.3 : NODE_RADIUS;
+  const rA = edge.from === HUB_ACCOUNT_ID ? NODE_RADIUS * HUB_RADIUS_MULTIPLIER : NODE_RADIUS;
+  const rB = edge.to === HUB_ACCOUNT_ID ? NODE_RADIUS * HUB_RADIUS_MULTIPLIER : NODE_RADIUS;
 
   const dx = b.x - a.x;
   const dy = b.y - a.y;
@@ -91,9 +61,9 @@ export function edgePath(
   const ux = dx / len;
   const uy = dy / len;
 
-  // Symmetrical padding so A->B and B->A perfectly overlap and appear as a single line with two arrowheads.
-  const paddingA = rA + 6;
-  const paddingB = rB + 6; 
+  // The arrow tip will touch the edge of the circle (accounting for stroke width of ~3)
+  const paddingA = rA + 2;
+  const paddingB = rB + 2; 
 
   const x1 = a.x + ux * paddingA;
   const y1 = a.y + uy * paddingA;
@@ -103,13 +73,6 @@ export function edgePath(
   return `M ${x1.toFixed(1)} ${y1.toFixed(1)} L ${x2.toFixed(1)} ${y2.toFixed(1)}`;
 }
 
-export const HUB_RADIUS_MULTIPLIER = 1.4;
-
-/**
- * Edge stroke width as a function of exposure size. Uses log-scale so
- * $0.8M vs $6.8M are visibly different without letting the largest edges
- * dominate the view.
- */
 export function edgeWidth(exposure_usd: number): number {
   return Math.max(
     1,
@@ -119,6 +82,7 @@ export function edgeWidth(exposure_usd: number): number {
     )
   );
 }
+
 
 /**
  * Semantic edge styling based on the kind of exposure.
