@@ -110,3 +110,75 @@ def test_invalid_intensity_raises():
             intensity=1.5,
             horizon_days=7,
         )
+
+
+def test_source_not_in_affected(engine_ready):
+    """The shocked node never appears in its own affected list.
+
+    Reverse edges in the fixture (e.g. ``EUR-Berlin → EUR-Main``) would
+    otherwise leak the source back at hop=1 with contributors made of
+    its own neighbours, which is semantically nonsense — the source is
+    the cause of the shock, it does not absorb its own loss.
+    """
+    for shocked in ("EUR-Main", "USD-Correspondent", "JPY-Tokyo"):
+        result = simulate_cascade(
+            shocked_account_id=shocked,
+            intensity=1.0,
+            horizon_days=7,
+            daily_balances=engine_ready.daily_balances,
+        )
+        affected_ids = {h.account_id for h in result.affected}
+        assert shocked not in affected_ids, (
+            f"shocked {shocked} leaked into affected via reverse edges"
+        )
+
+
+def test_zero_intensity_produces_no_loss(engine_ready):
+    """intensity=0 → zero total loss → zero shock-induced breaches.
+
+    Accounts already below their floor before the shock are NOT counted
+    as breached by the cascade — that's a pre-existing condition, not
+    contagion. ``breached_count`` must therefore be zero when the shock
+    contributes zero loss.
+    """
+    result = simulate_cascade(
+        shocked_account_id="USD-Correspondent",
+        intensity=0.0,
+        horizon_days=7,
+        daily_balances=engine_ready.daily_balances,
+    )
+    assert result.total_loss_usd == 0.0
+    assert result.breached_count == 0
+    for hop in result.affected:
+        assert hop.incoming_loss_usd == 0.0
+        assert hop.breached is False
+
+
+def test_breach_requires_healthy_baseline(engine_ready):
+    """A node already underwater pre-shock is NOT 'breached by contagion'.
+
+    For every node flagged ``breached=True`` in any non-trivial shock,
+    the pre-shock balance (= ``post_shock_balance_usd +
+    incoming_loss_usd``) must be at or above ``min_balance_usd``.
+    Otherwise the breach is a pre-existing condition surfaced by
+    accident. The check is vacuously true when no node is breached
+    (e.g. when the warmed-up fleet has already drifted below floor and
+    every candidate fails the baseline test) — that's correct
+    behaviour, not a regression.
+    """
+    for shocked in ("USD-Correspondent", "EUR-Main", "JPY-Tokyo"):
+        result = simulate_cascade(
+            shocked_account_id=shocked,
+            intensity=1.0,
+            horizon_days=7,
+            daily_balances=engine_ready.daily_balances,
+        )
+        for hop in result.affected:
+            if not hop.breached:
+                continue
+            pre_shock_balance = hop.post_shock_balance_usd + hop.incoming_loss_usd
+            assert pre_shock_balance >= hop.min_balance_usd, (
+                f"{hop.account_id} marked breached under {shocked} shock but "
+                f"pre-shock balance {pre_shock_balance:.2f} was already below "
+                f"floor {hop.min_balance_usd:.2f}"
+            )

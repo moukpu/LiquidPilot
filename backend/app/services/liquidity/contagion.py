@@ -306,6 +306,13 @@ def simulate_cascade(
             if node not in g:
                 continue
             for _, neighbour, data in g.out_edges(node, data=True):
+                # Reverse edges in the fixture (e.g. EUR-Berlin → EUR-Main)
+                # would otherwise leak the shocked node into ``affected``
+                # at hop=1 with contributors=[its own neighbours]. The
+                # source is the *cause* of the shock — it does not absorb
+                # its own loss in this model. Hard-skip it.
+                if neighbour == shocked_account_id:
+                    continue
                 edge_key = (node, neighbour, hop)
                 if edge_key in visited_edges:
                     continue
@@ -333,7 +340,10 @@ def simulate_cascade(
                 incoming_loss_usd=loss,
                 post_shock_balance_usd=post,
                 min_balance_usd=node.min_balance_usd,
-                breached=post < node.min_balance_usd,
+                breached=(
+                    post < node.min_balance_usd
+                    and node.current_balance_usd >= node.min_balance_usd
+                ),
                 contributors=sorted(set(contributors.get(account_id, []))),
             )
         )

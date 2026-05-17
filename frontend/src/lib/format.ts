@@ -52,6 +52,23 @@ export function formatMoneyCompact(
 }
 
 /**
+ * Compact-format a loss amount with proper sign handling. A loss of 0
+ * renders without the `-` prefix (otherwise `-$0` reads as a bug). A
+ * positive loss always carries the leading minus — it is money
+ * *leaving* the account, that's the convention the result panel uses.
+ * Negative inputs are treated as zero (we never display a "positive
+ * loss" — that would be cash *gained* and the cascade does not model
+ * that).
+ */
+export function formatLoss(
+  amountUsd: number,
+  locale: IntlLocale = "en-US"
+): string {
+  if (amountUsd <= 0) return `$${formatMoneyCompact(0, locale)}`;
+  return `-$${formatMoneyCompact(amountUsd, locale)}`;
+}
+
+/**
  * Display-only label for account_id strings. Backend ids stay verbatim
  * (`EUR-Main`, `USD-Correspondent`) — this only affects user-facing
  * text. Single-tower legacy accounts collapse to the bare currency

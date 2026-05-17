@@ -92,7 +92,7 @@ export default function ShockForm({
       <button
         type="button"
         onClick={onRun}
-        disabled={loading}
+        disabled={loading || value.intensity === 0}
         className="w-full bg-primary text-primary-foreground rounded-md px-3 py-2 font-mono text-xs font-semibold uppercase tracking-widest hover:opacity-90 disabled:opacity-50 transition-opacity"
       >
         {loading ? t("contagion.shock.running") : t("contagion.shock.run")}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale, localeToIntl } from "@/i18n/locale-context";
-import { displayAccountLabel, formatMoneyCompact } from "@/lib/format";
+import { displayAccountLabel, formatMoneyCompact, formatLoss } from "@/lib/format";
 import type { CascadeResult } from "@/types/api";
 
 interface Props {
@@ -91,8 +91,8 @@ export default function ResultPanel({ result, error }: Props) {
             <div className="grid grid-cols-3 gap-2 text-[10px] font-mono">
               <Stat
                 label={t("contagion.result.loss")}
-                value={`-$${formatMoneyCompact(hop.incoming_loss_usd, intl)}`}
-                tone="rose"
+                value={formatLoss(hop.incoming_loss_usd, intl)}
+                tone={hop.incoming_loss_usd > 0 ? "rose" : "neutral"}
               />
               <Stat
                 label={t("contagion.result.postBalance")}
