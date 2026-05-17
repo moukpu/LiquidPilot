@@ -39,6 +39,15 @@ const EMIT_INTERVAL_MS = 9000;
 // some down. Prevents runaway pileups during long demos.
 const ACTIVE_CAP = 6;
 
+// Severity priority used for "upgrade on merge" decisions. A CRITICAL
+// landing in a country that already has a WARNING upgrades the merged
+// card to CRITICAL; the inverse is a no-op.
+const SEV_RANK: Record<Alert["severity"], number> = {
+  CRITICAL: 3,
+  WARNING: 2,
+  INFO: 1,
+};
+
 function readActions(): Record<string, ExecutedMeta> {
   if (typeof window === "undefined") return {};
   try {
@@ -248,6 +257,30 @@ export function useAutopilotState(interval = 2000): AutopilotState {
     }
   }, [demoMode, accounts]);
 
+  // Find the recipient account's country, or null if not in the fleet.
+  const countryOf = useCallback((accountId: string): string | null => {
+    const acc = accountsRef.current.find((a) => a.account_id === accountId);
+    return acc?.country ?? null;
+  }, []);
+
+  // Locate an existing ACTIVE alert in the same country, so we can merge
+  // a duplicate emission into it instead of stacking a second card.
+  const findActiveInCountry = useCallback(
+    (country: string, alerts: Alert[]): number => {
+      const trs = transfersRef.current;
+      const states = actionStatesRef.current;
+      return alerts.findIndex((a) => {
+        if (countryOf(a.account_id) !== country) return false;
+        const tr = trs.find((t) => t.to_account === a.account_id);
+        if (!tr) return true; // info-only counts as active
+        const meta = states[transferKey(tr)];
+        const state = meta?.state ?? "queued";
+        return state !== "executed" && state !== "skipped";
+      });
+    },
+    [countryOf]
+  );
+
   // Periodic emission. One new situation every EMIT_INTERVAL_MS while
   // demo is on, capped at ACTIVE_CAP unresolved entries. Reads latest
   // state via refs so the interval doesn't churn on every keystroke /
@@ -260,13 +293,95 @@ export function useAutopilotState(interval = 2000): AutopilotState {
       if (active.size >= ACTIVE_CAP) return;
       const s = nextSituation(accountsRef.current, active);
       if (!s) return;
-      setAlerts((prev) => [...prev, s.alert]);
+
+      const country = countryOf(s.alert.account_id);
+      const existingIdx =
+        country !== null
+          ? findActiveInCountry(country, alertsRef.current)
+          : -1;
+
+      if (existingIdx < 0) {
+        // Fresh country — append the new situation as its own card.
+        setAlerts((prev) => [...prev, s.alert]);
+        if (s.transfer) {
+          setTransfers((prev) => [...prev, s.transfer!]);
+        }
+        return;
+      }
+
+      // Same-country duplicate — merge into the existing active card so
+      // the user sees the existing situation grow rather than a second
+      // near-identical row. Bump shortfall + (if applicable) transfer
+      // amount; upgrade severity if the new emission is worse; pull the
+      // breach date earlier if it lands sooner.
+      const ex = alertsRef.current[existingIdx];
+      const mergedSeverity =
+        SEV_RANK[s.alert.severity] > SEV_RANK[ex.severity]
+          ? s.alert.severity
+          : ex.severity;
+      const earlierDays = Math.min(ex.days_until_breach, s.alert.days_until_breach);
+      const mergedAlert: Alert = {
+        ...ex,
+        severity: mergedSeverity,
+        shortfall: ex.shortfall + s.alert.shortfall,
+        days_until_breach: earlierDays,
+        breach_date:
+          ex.days_until_breach <= s.alert.days_until_breach
+            ? ex.breach_date
+            : s.alert.breach_date,
+        projected_balance: ex.projected_balance - s.alert.shortfall,
+      };
+      setAlerts((prev) => {
+        const next = [...prev];
+        next[existingIdx] = mergedAlert;
+        return next;
+      });
+
+      // If the existing situation has a paired transfer, bump its amount.
+      // Migrate the actionStates key in the same batch because
+      // transferKey embeds amount — without migration the user's prior
+      // "queued"/"confirming" state would orphan and the card would
+      // reset to queued.
       if (s.transfer) {
-        setTransfers((prev) => [...prev, s.transfer!]);
+        const existingTr = transfersRef.current.find(
+          (t) => t.to_account === ex.account_id
+        );
+        if (existingTr) {
+          const oldKey = transferKey(existingTr);
+          const bumped: TransferSuggestion = {
+            ...existingTr,
+            amount: existingTr.amount + s.transfer.amount,
+          };
+          const newKey = transferKey(bumped);
+          setTransfers((prev) => {
+            const next = [...prev];
+            const idx = next.findIndex(
+              (t) => transferKey(t) === oldKey
+            );
+            if (idx < 0) return next;
+            next[idx] = bumped;
+            return next;
+          });
+          if (oldKey !== newKey) {
+            setActionStates((prev) => {
+              const meta = prev[oldKey];
+              if (!meta) return prev;
+              const next = { ...prev };
+              delete next[oldKey];
+              next[newKey] = meta;
+              writeActions(next);
+              return next;
+            });
+          }
+        } else {
+          // Existing situation was alert-only (INFO upgraded to
+          // CRITICAL/WARNING by this merge). Add the new transfer.
+          setTransfers((prev) => [...prev, s.transfer!]);
+        }
       }
     }, EMIT_INTERVAL_MS);
     return () => clearInterval(id);
-  }, [demoMode, activeRecipients]);
+  }, [demoMode, activeRecipients, countryOf, findActiveInCountry]);
 
   // Discard stale action-state keys for transfers no longer in the queue.
   // Keeps sessionStorage from growing unbounded as demo emissions churn.

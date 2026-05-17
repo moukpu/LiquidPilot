@@ -52,7 +52,12 @@ export default function AutopilotPage() {
           demoHint={showDemoHint}
         />
 
-        <AccountSummaryStrip accounts={accounts} alerts={alerts} />
+        <AccountSummaryStrip
+          accounts={accounts}
+          alerts={alerts}
+          transfers={transfers}
+          actionStates={actionStates}
+        />
 
         <main className="flex-1 min-h-0 p-6 pb-24 flex justify-center">
           <div className="w-full max-w-5xl h-full flex flex-col min-h-0">

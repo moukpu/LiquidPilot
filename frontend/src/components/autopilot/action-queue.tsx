@@ -75,7 +75,29 @@ export default function ActionQueue({
     return { key, transfer: tr, meta, alert: alertByAccount.get(tr.to_account) ?? null };
   });
 
-  const active = decorated.filter((d) => bucketOf(d.meta.state) === "active");
+  // Active cards are sorted by severity so the most urgent situation is
+  // always at the top — a treasurer scanning the queue should hit the
+  // CRITICAL before the WARNING, regardless of emission order. Unpaired
+  // transfers (no alert) sort to the bottom. AnimatePresence + Framer's
+  // `layout` prop on each card makes the reorder animate smoothly when
+  // a merge upgrades severity mid-queue.
+  const SEV_PRIORITY: Record<Alert["severity"], number> = {
+    CRITICAL: 3,
+    WARNING: 2,
+    INFO: 1,
+  };
+  const sortBySeverity = (
+    a: typeof decorated[number],
+    b: typeof decorated[number]
+  ) => {
+    const aS = a.alert ? SEV_PRIORITY[a.alert.severity] : 0;
+    const bS = b.alert ? SEV_PRIORITY[b.alert.severity] : 0;
+    return bS - aS;
+  };
+
+  const active = decorated
+    .filter((d) => bucketOf(d.meta.state) === "active")
+    .sort(sortBySeverity);
   const executed = decorated.filter((d) => bucketOf(d.meta.state) === "executed");
   const skipped = decorated.filter((d) => bucketOf(d.meta.state) === "skipped");
 

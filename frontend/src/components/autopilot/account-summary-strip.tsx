@@ -1,20 +1,39 @@
 "use client";
 
-import type { Account, Alert } from "@/types/api";
+import type { Account, Alert, TransferSuggestion } from "@/types/api";
 import { useT } from "@/i18n/locale-context";
 import { displayAccountLabel } from "@/lib/format";
+import { transferKey } from "@/lib/autopilot-synth";
+import type { ExecutedMeta } from "@/hooks/use-autopilot-state";
 
 export interface AccountSummaryStripProps {
   accounts: Account[];
   alerts: Alert[];
+  transfers: TransferSuggestion[];
+  actionStates: Record<string, ExecutedMeta>;
 }
 
 type Status = "red" | "amber" | "green";
 
-function statusFor(accountId: string, alerts: Alert[]): Status {
+// Only ACTIVE alerts color the dot. An alert is active when its paired
+// transfer (matched by recipient account) hasn't been executed or
+// skipped. Without this filter the dot stays red forever after the
+// treasurer has already handled the situation.
+function statusFor(
+  accountId: string,
+  alerts: Alert[],
+  transfers: TransferSuggestion[],
+  actionStates: Record<string, ExecutedMeta>
+): Status {
   let worst: Status = "green";
   for (const a of alerts) {
     if (a.account_id !== accountId) continue;
+    const tr = transfers.find((t) => t.to_account === a.account_id);
+    if (tr) {
+      const meta = actionStates[transferKey(tr)];
+      const state = meta?.state ?? "queued";
+      if (state === "executed" || state === "skipped") continue;
+    }
     if (a.severity === "CRITICAL") return "red";
     if (a.severity === "WARNING" && worst === "green") worst = "amber";
   }
@@ -35,6 +54,8 @@ const DOT_SHADOW = "shadow-[0_0_4px_currentColor]";
 export default function AccountSummaryStrip({
   accounts,
   alerts,
+  transfers,
+  actionStates,
 }: AccountSummaryStripProps) {
   const t = useT();
   return (
@@ -50,7 +71,7 @@ export default function AccountSummaryStrip({
             />
           ))
         : accounts.map((a) => {
-            const s = statusFor(a.account_id, alerts);
+            const s = statusFor(a.account_id, alerts, transfers, actionStates);
             return (
               <div
                 key={a.account_id}
