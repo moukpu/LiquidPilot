@@ -172,3 +172,41 @@ Devin'а. Не удаляй старые записи. Только дописы
 **Не трогать:** бэкенд (совсем), `auto-fill`, цвет delta (rose-500), stressColor для `applied===false` (там пунктирная серая), tooltip-либы.
 
 **Outcome:** Промпт **0007** в `/home/ubuntu/prompt_timemachine_card_readability.md` + копия в `.devin/prompts/0007-timemachine-card-readability.md`. INDEX обновлён: 0006 → SHIPPED `c198c57`, 0007 → HANDED TO USER. state.md: HEAD `c198c57`, Phase 6 round 2 done, прописан workflow direct-push-через-API. Push + auto-merge через API — после этого сообщения.
+
+---
+
+## 2026-05-17 09:15 UTC — methodology-was-overdeleted
+
+**User:** «методику почему убрал?»
+
+Контекст: 0006 удалил методологический аккордеон («Method» / «Методика») с карточек, владелец это отменил. Перечитал его исходную фразу из самой 0006 сессии: «убери всякие ненужные или объясняющие комментарии, что значит множитель оттока? стоит ли это писать прям так?» — это была критика **жаргона внутри** методики («Множитель», «Чистый отток/день»), а не ампутация фичи. Я растянул скоуп.
+
+**Devin:** Признал косяк в чате, спросил с user_question 3 опции: вернуть + переименовать с tooltip / вернуть как было / оставить удалённой.
+
+**Outcome:** Ждал ответа на question, в parallel пришёл новый месседж о ship'е 0007 + новый ask.
+
+---
+
+## 2026-05-17 09:17 UTC — timemachine-shipped-0007-and-new-asks
+
+**User-message-1 (custom answer на 3-opt):** «верни методику и все. также убрать надо логи типа: Стресс прошёл — ни один счёт не свалился под минимум. Попробуй жёстче: bank_holiday 5d.»
+
+**User-message-2 (через 2 минуты, со скрином):** «смотри там все криво, ладно теперь все хорошо видно, но когда много чисел и букв они друг над другом идут. это портит все»
+
+Скрин: 9 карточек bank_holiday US 1d. Легенда + emerald stress + footer-выравнивание из 0007 ВСЁ работает корректно. Новый баг: в footer'е числа двух соседних колонок сливаются — «EUR 887 010EUR 351 973», «USD 25,43 млнUSD 25,43 млн», «JPY 1,19 млрдJPY 1,05 млрд». Currency-префикс «EUR/USD/...» дублируется в каждой из 3 footer-ячеек и переполняет узкие 280px-карточки.
+
+**Параллельно — 0007 отшипился:** `02857e9` (rebase on top of 57fc32b). 4 файла +46/−7. stress emerald `#10b981` при no-breach / rose при breach, footer без `text-right` + `text-xs` + `font-semibold` + fallback `text-foreground`, легенда `LegendDot × 3` над сеткой, нативный `title` тултип на бэйдже BREACH + на «Новые пробои» с ключом `timemachine.breachTooltip`. lint/tsc/build/pytest — все зелёные. Bundle +0.16 kB на легенду.
+
+**Devin (план для 0008):** Три правки в одном PR:
+
+1. **Bug A — restore methodology.** Откат методологической части `c198c57`. Точный референс — `git show c198c57^:frontend/src/components/timemachine/result-card.tsx`. Возвращаем: `import { MessageKey }`, `translateReason()`, JSX-блок `<details>` после footer-грида, `MethodologyDetails`, `Row`, 13 ключей `timemachine.method.*` + `timemachine.methodologyLabel` + 5 ключей `timemachine.reason.*` в en/ru. **Без переименования** — owner буквально сказал «верни методику и всё».
+
+2. **Bug B — drop noBreaches advisory.** В `timemachine/page.tsx` удалить `{result.new_breach_count === 0 && (...)}` блок (~строки 106-112) + функцию `harderSuggestion()` (~строки 143-154). Удалить i18n ключ `timemachine.summary.noBreaches` из en/ru. Если `StressRequest` импорт станет unused — выкинуть из импорт-листа.
+
+3. **Bug C — footer overlap.** В `FooterStat` (result-card.tsx ~строки 197-203) выкинуть `{currency}` из видимого текста. Currency остаётся **только** в `title`-тултипе на ховер. account_id в шапке («EUR-Main», «USD-LA») и так показывает валюту — дублировать 3 раза в footer'е не нужно. Опционально: понизить порог `formatStatAmount` с 1M до 100K чтобы «887 010» стало «887K».
+
+**Не трогать:** бэкенд, `auto-fill`, цвета stress/delta из 0007, легенду из 0007, `breachTooltip` из 0007, никаких новых i18n ключей помимо реставрации.
+
+**Outcome:** Промпт **0008** в `/home/ubuntu/prompt_timemachine_methodology_and_overlap.md` + копия в `.devin/prompts/0008-timemachine-methodology-and-overlap.md`. INDEX: 0007 → SHIPPED `02857e9`, 0008 → HANDED TO USER. state.md: HEAD `02857e9`, Phase 6 round 3 done (легенда + цвета + tooltip), round 4 (методика + advisory + overlap) в flight как 0008. Push + auto-merge через API.
+
+**Lesson:** Когда owner критикует «лишние объяснения внутри фичи» — это про **формулировки**, не про ампутацию фичи. Если в фразе нет глагола «убери ХXX» с явным указанием на саму фичу — переспросить через user_question прежде чем удалять. Я потерял один цикл на перепрошивке.

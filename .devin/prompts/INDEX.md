@@ -11,7 +11,8 @@ per prompt. Status tracked in the table below. Numbered chronologically.
 | 0004 | ESLint: pin 8.57 + eslint-config-next 14.2         | `20e0982`  | SHIPPED    |
 | 0005 | Time Machine: bank_holiday monotonicity + UX bugs  | `dd61793`  | SHIPPED    |
 | 0006 | Time Machine polish: hide not-affected, fix card stretch, drop methodology | `c198c57` | SHIPPED        |
-| 0007 | Time Machine card readability: stress curve color, footer alignment, breach tooltip | — | HANDED TO USER |
+| 0007 | Time Machine card readability: stress curve color, footer alignment, breach tooltip | `02857e9` | SHIPPED        |
+| 0008 | Time Machine round 4: restore methodology, drop no-breach advisory, fix footer overlap | — | HANDED TO USER |
 
 ## How to add a new prompt
 

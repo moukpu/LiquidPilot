@@ -4,12 +4,17 @@
 
 ## Snapshot
 
-- **HEAD on main:** `c198c57` (TM polish round — 0006 shipped: hidden
-  not-affected badge, `auto-fit`→`auto-fill`, methodology accordion
-  dropped, 18 i18n keys removed, −203 lines net).
+- **HEAD on main:** `02857e9` (TM card readability — 0007 shipped:
+  stress curve emerald `#10b981` / rose on breach, footer labels &
+  numbers left-aligned with text-xs font-semibold, legend strip with
+  3 LegendDots above grid, native `title` tooltip on BREACH badge and
+  «Новые пробои» stat. 4 files +46/−7. lint/tsc/build/pytest green).
+  Previous: `57fc32b` (journal + prompt 0007 archived via API auto-merge).
+  Previous code: `c198c57` (TM polish 0006 — but **methodology accordion
+  was over-deleted** here; restoration in flight as 0008).
   Previous: `d44dd63` (PR #6 squash — journal + prompt 0006 archived).
   Previous code: `dd61793` (TM bug-fix, 5 UX bugs + monotonicity test).
-- **Last updated:** 17 May 2026, 09:05 UTC
+- **Last updated:** 17 May 2026, 09:18 UTC
 - **Memory live in repo:** YES — `.devin/` merged via PR #5 into `main`.
   Owner authorised direct push for docs only; system **hard-blocks**
   `git push origin main` (tested — error: «You should never push directly
