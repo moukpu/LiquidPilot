@@ -12,7 +12,8 @@ per prompt. Status tracked in the table below. Numbered chronologically.
 | 0005 | Time Machine: bank_holiday monotonicity + UX bugs  | `dd61793`  | SHIPPED    |
 | 0006 | Time Machine polish: hide not-affected, fix card stretch, drop methodology | `c198c57` | SHIPPED        |
 | 0007 | Time Machine card readability: stress curve color, footer alignment, breach tooltip | `02857e9` | SHIPPED        |
-| 0008 | Time Machine round 4: restore methodology, drop no-breach advisory, fix footer overlap | — | HANDED TO USER |
+| 0008 | Time Machine round 4: restore methodology, drop no-breach advisory, fix footer overlap | `059f0da` | SHIPPED        |
+| 0009 | Contagion Phase 5 backend: bilateral exposure graph + cascade simulator | — | HANDED TO USER |
 
 ## How to add a new prompt
 

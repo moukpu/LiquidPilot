@@ -224,3 +224,39 @@ Devin'а. Не удаляй старые записи. Только дописы
 **Outcome:** Промпт 0008 (исправленная редакция) отдан юзеру как файл-аттачмент. JOURNAL.md + 0008.md + state.md закоммичены через ветку `devin/<ts>-rehand-0008`, PR создан и squash-merge'нут в main через GitHub API + PAT. INDEX без изменений — 0008 как был `HANDED TO USER`, так и остался (тот же контент, более тщательный). state.md: HEAD обновлён до нового merge-SHA, last-updated → 2026-05-17 09:25 UTC.
 
 **Lesson:** При старте новой Devin-сессии — `git log --oneline` + `cat .devin/prompts/INDEX.md` ДО того как писать новый промпт. Тот же owner мог уже получить нужный промпт от предыдущей сессии, и задача сводится к re-hand + sanity-check кода, а не к генерации с нуля.
+
+---
+
+## 2026-05-17 09:50 UTC — 0009-contagion-phase-5-backend
+
+**User:** «Готово. 059f0da на main.» — отрапортовал отшипленный 0008 (TM round 4: методика возвращена, advisory снят, footer-overlap фикс'нут; 4 файла +188/−34, tsc/lint/build/pytest зелёные). Следом: «переходим к 5 фазе».
+
+**Devin (план):**
+- `git pull --ff-only` → подтвердил `059f0da` на main, diff в `timemachine/page.tsx`/`result-card.tsx`/`en.ts`/`ru.ts` совпадает с тем что 0008 просил.
+- Phase 5 по `state.md` была единственная целиком на заглушках (front 13 строк, back 9 строк, оба возвращают пустоту). Это `state.md` подсвечивал как «biggest risk» к дедлайну 20 мая. Оценка работ агента 5-7 ч — для одного PR слишком жирно (на этом проекте 7-часовые PR уже два раза давали over-delete'ы).
+- Решил **нарезать Phase 5 на два промпта**: `0009` бэкенд (граф + simulate), `0010` фронт (визуализация). Это даёт два чистых PR с наблюдаемыми acceptance, и `0010` зависит от ship'нутого `0009` контракта.
+- Изучил bekend: `backend/app/services/engine_state.py` (`state.transactions` / `state.daily_balances`), `backend/app/services/liquidity/config.py` (9 счетов, `FX_RATES_TO_USD`, `default_system_config()`), `backend/app/services/liquidity/data_generator.py` (схема tx). **Ключевое открытие:** транзакции у Азима НЕ содержат counterparty (только `account_id`, `direction`, `amount`, без `to_account`/`from_account`). Значит граф из ленты построить невозможно — нужна **статическая фикстура** bilateral exposures.
+- NetworkX 3.4 уже в `backend/pyproject.toml` (line 17). Никаких новых либ.
+
+**Что положил в 0009:**
+1. `data/fixtures/contagion_exposures.json` — 16 направленных рёбер в USD, все 9 нод покрыты, USD-Correspondent специально центральный hub (5 исходящих). На демо шок этого узла даст самый зрелищный каскад.
+2. `backend/app/services/liquidity/contagion.py` (NEW, **не Азимовское**) — `Exposure`/`NodeView`/`EdgeView`/`CascadeHop`/`CascadeResult` dataclasses, `load_exposures` с валидацией, `build_graph(nx.DiGraph)`, `network_snapshot` (read-only, safe pre-warmup), `simulate_cascade` (BFS с `HOP_DECAY=0.6`, `MAX_HOPS=4`, FX через `FX_RATES_TO_USD`). Детерминирован, без Monte Carlo. Опциональный `daily_balances=None` → fallback на opening_balance × FX (для тестов без warm-up).
+3. `backend/app/api/routes/contagion.py` — REPLACE 9-line stub: `GET /contagion/network` (без warm-up, fallback OK) + `POST /contagion/simulate` (требует warm-up, читает `state.daily_balances`). `ValueError` из service слоя → `HTTPException(400)`.
+4. `backend/tests/test_contagion.py` — 6 тестов: fleet match (все account_id из фикстуры в `default_system_config()`), hub-shock direct neighbours (USD-Correspondent intensity=1.0 ударяет всех 5 прямых), intensity monotonic (0.2/0.5/0.8/1.0 — total_loss_usd монотонно неубывающий), 9-node snapshot (`network_snapshot` возвращает 9 нод + 16 рёбер), invalid account ValueError, invalid intensity ValueError.
+
+**Зачем такая нарезка:**
+- `state.transactions` без counterparty полей = реконструкция графа из ленты бессмысленна. Hand-curated JSON фикстура **управляема**, легко править на демо, и реалистично — у mid-sized fintech bilateral exposures меняются медленно.
+- BFS, не DFS — нужен кратчайший hop-distance для UI side-panel'а в 0010.
+- `MAX_HOPS=4` ловит цикл `EUR-Main ↔ EUR-Berlin` (он там специально, для реализма) и обрывает.
+- Fallback `daily_balances=None` нужен чтобы `/contagion/network` работал на холодной странице (фронт начнёт рисовать ноды до того как Azim прогреется).
+
+**Что НЕ в 0009 (out of scope, явно прописано в anti-patterns):**
+- Любые правки фронта. Страница `/contagion` остаётся 13-строчной заглушкой до 0010.
+- Touching `data_generator.py`, `forecaster.py`, `feature_engineering.py`, `risk_manager.py`, `backtester.py` — Azim's territory.
+- `stress.py` — Time Machine, не наша территория в этом PR.
+- Monte Carlo / стохастика в каскаде.
+- Любые новые либы.
+
+**Outcome:** Промпт `0009-contagion-phase-5-backend.md` в `.devin/prompts/`. INDEX: 0008 → SHIPPED `059f0da`, 0009 → HANDED TO USER. state.md: HEAD `059f0da`, Phase 5 «IN FLIGHT — backend», Phase 6 «DONE round 4». Push + auto-merge через API. Файл отдан юзеру для копи-пейста в Kimi/Opus/Gemini.
+
+**Lesson:** Прежде чем планировать «граф из ленты» — ВСЕГДА открой схему транзакций. `state.transactions` иметь `counterparty` или `to_account` поля — это редко, в большинстве синтетических датасетов tx-ы односторонние. Если их нет — bilateral exposure всегда идёт через **статическую фикстуру** (или curated DB), а не через реконструкцию.

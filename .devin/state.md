@@ -4,20 +4,25 @@
 
 ## Snapshot
 
-- **HEAD on main:** `6dff903` (PR #8 squash — JOURNAL entries
-  09:15/09:17 UTC + prompt 0008 archived as HANDED TO USER. No code
-  change in this merge — docs only).
-  Previous code: `02857e9` (TM card readability — 0007 shipped:
-  stress curve emerald `#10b981` / rose on breach, footer labels &
-  numbers left-aligned with text-xs font-semibold, legend strip with
-  3 LegendDots above grid, native `title` tooltip on BREACH badge and
-  «Новые пробои» stat. 4 files +46/−7. lint/tsc/build/pytest green).
-  Previous: `57fc32b` (journal + prompt 0007 archived via API auto-merge).
-  Previous code: `c198c57` (TM polish 0006 — but **methodology accordion
-  was over-deleted** here; restoration in flight as 0008).
-  Previous: `d44dd63` (PR #6 squash — journal + prompt 0006 archived).
-  Previous code: `dd61793` (TM bug-fix, 5 UX bugs + monotonicity test).
-- **Last updated:** 17 May 2026, 09:25 UTC
+- **HEAD on main:** `059f0da` (TM round 4 — 0008 shipped: methodology
+  accordion `<details>` restored 1-to-1 from `c198c57^` including
+  `MethodologyDetails` + `Row` + `translateReason` + 13 ключей
+  `timemachine.method.*` / 5 ключей `timemachine.reason.*` /
+  `methodologyLabel` в en + ru; зелёная noBreaches-плашка и функция
+  `harderSuggestion` удалены из `page.tsx`; ключ
+  `timemachine.summary.noBreaches` снят; в `FooterStat` `{currency}`
+  убран из видимого текста — остался только в `title`-тултипе; порог
+  `formatStatAmount` понижен 1M → 100K → значения ≥ 100k идут как
+  `887K`/`352K`. 4 файла +188/−34. tsc 0 errors, lint clean, build
+  green, pytest 5 passed).
+  Previous: `b38635b` (PR #9 squash — docs-only re-hand 0008 +
+  journal 09:25).
+  Previous: `6dff903` (PR #8 squash — docs-only).
+  Previous code: `02857e9` (TM card readability — 0007 shipped).
+  Previous: `57fc32b` (journal + prompt 0007 archived).
+  Previous code: `c198c57` (TM polish 0006 — methodology over-deleted,
+  later restored in 0008).
+- **Last updated:** 17 May 2026, 09:50 UTC
 - **Memory live in repo:** YES — `.devin/` merged via PR #5 into `main`.
   Owner authorised direct push for docs only; system **hard-blocks**
   `git push origin main` (tested — error: «You should never push directly
@@ -52,42 +57,47 @@
 | 2.5 | Deploy fixes | DONE | `2302a99`, `10508c3`, `e3171c0`, `20e0982` |
 | 3 | Radar (ATC view) | DONE + polished | latest `cef9347` removed violet planes |
 | 4 | Autopilot | DONE + polished | latest `a09cb0d` synced alerts ↔ transfers |
-| 5 | Contagion | **NOT DONE** | only ~13-line stub; biggest risk |
-| 6 | Time Machine | DONE + polished round 2 | `dd61793` core (monotonicity + 5 UX bugs + 2 tests), then `c198c57` polish (no-aff badge / card stretch / methodology accordion). Round 3 (curve color / footer align / breach tooltip) in flight as prompt 0007. |
+| 5 | Contagion | **IN FLIGHT — backend** | Stubs were 13 lines each (front + back). Backend prompt 0009 handed to user 09:50 UTC: NetworkX graph from `data/fixtures/contagion_exposures.json` + BFS cascade simulator + `GET /contagion/network` + `POST /contagion/simulate` + 6 pytest. Frontend = separate prompt 0010 after 0009 ships. |
+| 6 | Time Machine | DONE round 4 (`059f0da`) | `dd61793` core (monotonicity + 5 UX bugs + 2 tests) → `c198c57` polish (no-aff badge / card stretch — methodology over-deleted here) → `02857e9` readable card (stress curve color / footer align / breach tooltip) → `059f0da` round 4 (methodology restored + advisory dropped + footer-overlap fix). No more TM rounds planned unless owner finds something. |
 | 7 | Branding / landing / 90s demo | PARTIAL | logo missing, scenario not rehearsed |
 | 8 | Submission | PENDING | one-pager, video, form |
 | 9 | Finals | PENDING | slides, rehearsals, Q&A |
 
 ## What's in flight right now
 
-- **Prompt 0008 — TM round 4 (methodology + advisory + overlap).**
-  Three asks from owner after he tested `02857e9`:
-  1. **Restore methodology.** Owner: «верни методику и всё». Откат
-     методологической части `c198c57` 1-в-1 — `<details>` блок,
-     `MethodologyDetails`, `Row`, `translateReason`, 13 ключей
-     `timemachine.method.*` + 5 ключей `timemachine.reason.*` + `methodologyLabel`.
-  2. **Drop noBreaches advisory.** Owner про «Стресс прошёл — попробуй
-     жёстче: bank_holiday 5d» — снисходительная плашка, режет ухо.
-     Удалить JSX-блок `{result.new_breach_count === 0 && (...)}` в
-     `page.tsx`, функцию `harderSuggestion()`, ключ `timemachine.summary.noBreaches`.
-  3. **Fix footer overlap.** На скрине 9-карточной сетки видно
-     слипание «EUR 887 010EUR 351 973» — currency-префикс дублируется
-     в каждой из 3 footer-ячеек и переполняет 280px-карточку. Выкинуть
-     `{currency}` из видимого текста в `FooterStat`, оставить только
-     в `title`-тултипе. Опционально понизить порог `formatStatAmount`
-     с 1M до 100K чтобы «887 010» стало «887K».
-  Re-hand'нул промпт в новой Devin-сессии 09:25 UTC (опечатка в шапке
-  и HEAD-якорь подкручены — содержательно тот же). Expect PR title:
-  `chore(timemachine): restore methodology, drop no-breach advisory, fix footer overlap`.
+- **Prompt 0009 — Contagion Phase 5, backend only.** Phase 5 был
+  единственной фазой целиком на заглушках (front + back). 09:50 UTC
+  отдан промпт на **backend-half** Phase 5, специально нарезанный
+  отдельно от фронта чтобы не словить over-delete на 7-часовом PR:
+  - `data/fixtures/contagion_exposures.json` — 16 направленных
+    bilateral exposures между 9 счетами в USD-numeraire. USD-Correspondent
+    специально центральный hub (5 исходящих) — самый зрелищный шок
+    на демо. Никаких counterparty-данных в `state.transactions`
+    нет, поэтому идём через статическую фикстуру, не через
+    реконструкцию из ленты.
+  - `backend/app/services/liquidity/contagion.py` (NEW) — `load_exposures`,
+    `build_graph(nx.DiGraph)`, `simulate_cascade(shocked, intensity,
+    horizon_days)` с BFS-каскадом и геометрическим decay 0.6 на хоп
+    (cap MAX_HOPS=4). FX через существующий `FX_RATES_TO_USD` из
+    `config.py`. **Не Азимовская территория** — новый модуль на
+    уровне `stress.py`.
+  - `backend/app/api/routes/contagion.py` (REPLACE 9-line stub):
+    `GET /contagion/network` (не требует warm-up, fallback на
+    opening_balance) + `POST /contagion/simulate` (требует
+    warm-up, читает `state.daily_balances`).
+  - `backend/tests/test_contagion.py` — 6 тестов: fleet match,
+    hub-shock direct neighbours, intensity monotonic, 9-node
+    snapshot, invalid account ValueError, invalid intensity
+    ValueError.
+  Expect PR title: `feat(contagion): bilateral exposure graph + cascade simulator (Phase 5 backend)`.
 
 ## What's queued, by priority for demo
 
-1. **Contagion Phase 5 from scratch** — biggest risk. Need graph
-   (NetworkX) over the 9 accounts + cascade simulation API
-   (`POST /contagion/simulate`) + frontend page with react-flow or
-   d3-force animation. No prompt yet. Estimated 5-7 h of agent work.
-   If owner can't fit it, fall back: hide `/contagion` from nav and
-   pitch as "3 of 4 modules demo-ready, 4th in progress."
+1. **0010 — Contagion Phase 5, frontend.** Только после shipping 0009.
+   d3-force (или нативный SVG) граф на `/contagion`, форма выбора
+   шокированного банка, ползунок intensity, side-panel пострадавших.
+   Зависит от `GET /contagion/network` и `POST /contagion/simulate`
+   из 0009. Без бэка фронт лепить нет смысла.
 2. Phase 7 — logo (text wordmark only today), 90-second connected demo
    script, landing polish.
 3. Phase 8 — one-pager PDF, 3-minute demo video, SynergyX submission form.
