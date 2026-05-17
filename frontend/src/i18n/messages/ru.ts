@@ -229,6 +229,14 @@ const ru: Record<keyof typeof en, string> = {
     "Движок ещё прогревается. Подождите ~30 секунд и нажмите Запустить снова.",
   "contagion.error.network":
     "Не удалось загрузить граф контагиона с бэкенда.",
+  "contagion.page.subtitle": "Симулятор каскада",
+  "contagion.metric.affected": "Затронуто",
+  "contagion.metric.breached": "Пробито",
+  "contagion.result.impactAnalysis": "Анализ ущерба",
+  "contagion.result.emptyState": "Запустите симуляцию каскада, чтобы увидеть цепную реакцию.",
+  "contagion.result.floorLabel": "Мин:",
+  "contagion.result.postLabel": "Остаток:",
+  "contagion.result.hopShort": "H{n}",
 };
 
 export default ru;

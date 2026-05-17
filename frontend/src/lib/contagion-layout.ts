@@ -80,6 +80,9 @@ export function edgePath(
   const b = positions[edge.to];
   if (!a || !b) return "";
 
+  const rA = edge.from === HUB_ACCOUNT_ID ? NODE_RADIUS * 1.3 : NODE_RADIUS;
+  const rB = edge.to === HUB_ACCOUNT_ID ? NODE_RADIUS * 1.3 : NODE_RADIUS;
+
   const dx = b.x - a.x;
   const dy = b.y - a.y;
   const len = Math.hypot(dx, dy);
@@ -88,25 +91,27 @@ export function edgePath(
   const ux = dx / len;
   const uy = dy / len;
 
-  // Shorten by NODE_RADIUS on both ends so the arrowhead sits outside
-  // the destination circle.
-  const x1 = a.x + ux * NODE_RADIUS;
-  const y1 = a.y + uy * NODE_RADIUS;
-  const x2 = b.x - ux * NODE_RADIUS;
-  const y2 = b.y - uy * NODE_RADIUS;
+  // Shorten by node radius + marker size so the arrowhead sits perfectly outside.
+  // We add ~12px to account for the marker width.
+  const paddingA = rA + 4;
+  const paddingB = rB + 16; 
 
-  if (!hasReverse(edge, edges)) {
-    return `M ${x1.toFixed(1)} ${y1.toFixed(1)} L ${x2.toFixed(1)} ${y2.toFixed(1)}`;
+  let x1 = a.x + ux * paddingA;
+  let y1 = a.y + uy * paddingA;
+  let x2 = b.x - ux * paddingB;
+  let y2 = b.y - uy * paddingB;
+
+  if (hasReverse(edge, edges)) {
+    // Parallel shift for bidirectional edges to prevent overlapping lines.
+    // Shift right relative to the edge direction.
+    const shift = 6;
+    x1 += -uy * shift;
+    y1 += ux * shift;
+    x2 += -uy * shift;
+    y2 += ux * shift;
   }
 
-  // Perpendicular offset for a bidirectional pair. The sign depends on
-  // whether the edge is in "forward" alphabetical direction so both
-  // halves get opposite-side arcs.
-  const forward = edge.from < edge.to;
-  const offset = forward ? 22 : -22;
-  const mx = (x1 + x2) / 2 + -uy * offset;
-  const my = (y1 + y2) / 2 + ux * offset;
-  return `M ${x1.toFixed(1)} ${y1.toFixed(1)} Q ${mx.toFixed(1)} ${my.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}`;
+  return `M ${x1.toFixed(1)} ${y1.toFixed(1)} L ${x2.toFixed(1)} ${y2.toFixed(1)}`;
 }
 
 export const HUB_RADIUS_MULTIPLIER = 1.4;

@@ -228,6 +228,14 @@ const en = {
     "Engine is still warming up. Wait ~30 seconds and click Run again.",
   "contagion.error.network":
     "Could not load contagion graph from backend.",
+  "contagion.page.subtitle": "Cascade Simulator",
+  "contagion.metric.affected": "Affected",
+  "contagion.metric.breached": "Breached",
+  "contagion.result.impactAnalysis": "Impact Analysis",
+  "contagion.result.emptyState": "Run a cascade simulation to see the downstream impact.",
+  "contagion.result.floorLabel": "Floor:",
+  "contagion.result.postLabel": "Post:",
+  "contagion.result.hopShort": "H{n}",
 } as const;
 
 export type MessageKey = keyof typeof en;

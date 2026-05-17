@@ -78,14 +78,15 @@ export default function NetworkGraph({ nodes, edges, result }: Props) {
             <marker
               key={state}
               id={`arrow-${state}`}
-              viewBox="0 0 10 10"
-              refX="9"
-              refY="5"
-              markerWidth="6"
-              markerHeight="6"
+              markerUnits="userSpaceOnUse"
+              viewBox="0 0 16 16"
+              refX="16"
+              refY="8"
+              markerWidth="16"
+              markerHeight="16"
               orient="auto-start-reverse"
             >
-              <path d="M 0 0 L 10 5 L 0 10 z" fill={EDGE_COLOR[state]} />
+              <path d="M 0 0 L 16 8 L 0 16 z" fill={EDGE_COLOR[state]} />
             </marker>
           )
         )}

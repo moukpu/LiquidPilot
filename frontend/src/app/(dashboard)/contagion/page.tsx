@@ -78,7 +78,7 @@ export default function ContagionPage() {
             {t("contagion.title")}
           </h1>
           <p className="text-[10px] text-slate-400 mt-1 mb-6 uppercase tracking-wider font-semibold">
-            Cascade Simulator
+            {t("contagion.page.subtitle")}
           </p>
           {network ? (
             <ShockForm
@@ -115,7 +115,7 @@ export default function ContagionPage() {
             </div>
             <div className="bg-white/80 backdrop-blur-xl border border-slate-100 px-5 py-3 rounded-2xl shadow-sm">
               <div className="text-[10px] uppercase text-slate-500 font-bold tracking-widest mb-0.5">
-                Affected
+                {t("contagion.metric.affected")}
               </div>
               <div className="text-2xl font-black text-slate-800 tabular-nums leading-none tracking-tight">
                 {result.affected.length}
@@ -123,7 +123,7 @@ export default function ContagionPage() {
             </div>
             <div className="bg-white/80 backdrop-blur-xl border border-slate-100 px-5 py-3 rounded-2xl shadow-sm">
               <div className="text-[10px] uppercase text-slate-500 font-bold tracking-widest mb-0.5">
-                Breached
+                {t("contagion.metric.breached")}
               </div>
               <div className="text-2xl font-black text-slate-800 tabular-nums leading-none tracking-tight">
                 {result.breached_count}
