@@ -210,3 +210,17 @@ Devin'а. Не удаляй старые записи. Только дописы
 **Outcome:** Промпт **0008** в `/home/ubuntu/prompt_timemachine_methodology_and_overlap.md` + копия в `.devin/prompts/0008-timemachine-methodology-and-overlap.md`. INDEX: 0007 → SHIPPED `02857e9`, 0008 → HANDED TO USER. state.md: HEAD `02857e9`, Phase 6 round 3 done (легенда + цвета + tooltip), round 4 (методика + advisory + overlap) в flight как 0008. Push + auto-merge через API.
 
 **Lesson:** Когда owner критикует «лишние объяснения внутри фичи» — это про **формулировки**, не про ампутацию фичи. Если в фразе нет глагола «убери ХXX» с явным указанием на саму фичу — переспросить через user_question прежде чем удалять. Я потерял один цикл на перепрошивке.
+
+---
+
+## 2026-05-17 09:25 UTC — 0008-re-hand-from-new-session
+
+**User (новая сессия, тот же owner):** «https://github.com/moukpu/LiquidPilot мой репо, ghp_… ключ гита, ник moukpu, изучи проект, будешь давать мне промпты для агента. там на репо есть мемори.» — и сразу следом: «смотри там все криво, ладно теперь все хорошо видно, но когда много числ и букв они друг над другом идут. это портит все. верни методику и все. также убрать надо логи типа: Стресс прошёл — ни один счёт не свалился под минимум. Попробуй жёстче: bank_holiday 5d. (давай промпт для агента)». Скрин: 9 карточек bank_holiday, «EUR 887 010EUR 351 973» слипшиеся.
+
+Запросил замену GH PAT (тот, что в чате — `ghp_…0zpmuJ` — теперь скомпрометирован, попросил отозвать). Юзер прислал новый PAT через защищённый ввод, сохранён как `GITHUB_PAT_MOUKPU` user-scope.
+
+**Devin (план):** Запросы юзера 1-в-1 совпадают с уже-черновым `0008` (Bug A методика, Bug B advisory, Bug C currency-overlap). Код на `6dff903` всё ещё содержит источники всех трёх багов (`harderSuggestion`+ `noBreaches` плашка в `page.tsx`, `{currency} {formatStatAmount(...)}` в `FooterStat`, отсутствующий аккордеон Method) → промпт переотдаётся без переписывания. Чистка в `0008-...md`: убрана опечатка `moukpu/moukpu/LiquidPilot` в шапке, HEAD-якорь подкручен с `02857e9`→`6dff903` + инструкция `git fetch && rebase` если уехало.
+
+**Outcome:** Промпт 0008 (исправленная редакция) отдан юзеру как файл-аттачмент. JOURNAL.md + 0008.md + state.md закоммичены через ветку `devin/<ts>-rehand-0008`, PR создан и squash-merge'нут в main через GitHub API + PAT. INDEX без изменений — 0008 как был `HANDED TO USER`, так и остался (тот же контент, более тщательный). state.md: HEAD обновлён до нового merge-SHA, last-updated → 2026-05-17 09:25 UTC.
+
+**Lesson:** При старте новой Devin-сессии — `git log --oneline` + `cat .devin/prompts/INDEX.md` ДО того как писать новый промпт. Тот же owner мог уже получить нужный промпт от предыдущей сессии, и задача сводится к re-hand + sanity-check кода, а не к генерации с нуля.

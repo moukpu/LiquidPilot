@@ -4,7 +4,10 @@
 
 ## Snapshot
 
-- **HEAD on main:** `02857e9` (TM card readability — 0007 shipped:
+- **HEAD on main:** `6dff903` (PR #8 squash — JOURNAL entries
+  09:15/09:17 UTC + prompt 0008 archived as HANDED TO USER. No code
+  change in this merge — docs only).
+  Previous code: `02857e9` (TM card readability — 0007 shipped:
   stress curve emerald `#10b981` / rose on breach, footer labels &
   numbers left-aligned with text-xs font-semibold, legend strip with
   3 LegendDots above grid, native `title` tooltip on BREACH badge and
@@ -14,7 +17,7 @@
   was over-deleted** here; restoration in flight as 0008).
   Previous: `d44dd63` (PR #6 squash — journal + prompt 0006 archived).
   Previous code: `dd61793` (TM bug-fix, 5 UX bugs + monotonicity test).
-- **Last updated:** 17 May 2026, 09:18 UTC
+- **Last updated:** 17 May 2026, 09:25 UTC
 - **Memory live in repo:** YES — `.devin/` merged via PR #5 into `main`.
   Owner authorised direct push for docs only; system **hard-blocks**
   `git push origin main` (tested — error: «You should never push directly
@@ -57,15 +60,25 @@
 
 ## What's in flight right now
 
-- **Prompt 0007 — TM card readability.** Three asks from owner after
-  he tested `c198c57`:
-  1. Baseline + stress curves both gray → make stress emerald (no
-     breach) or rose (breach) so they're distinguishable.
-  2. Footer numbers `text-right` but labels left-aligned → both left.
-  3. «Что значит пробои» — add `title` tooltip on the breach badge
-     + `newBreaches` stat, plus a one-line legend above the card grid.
-  Owner already passed prompt to Kimi/Opus. Expect PR title:
-  `chore(timemachine): readable card — stress curve color, footer alignment, breach tooltip`.
+- **Prompt 0008 — TM round 4 (methodology + advisory + overlap).**
+  Three asks from owner after he tested `02857e9`:
+  1. **Restore methodology.** Owner: «верни методику и всё». Откат
+     методологической части `c198c57` 1-в-1 — `<details>` блок,
+     `MethodologyDetails`, `Row`, `translateReason`, 13 ключей
+     `timemachine.method.*` + 5 ключей `timemachine.reason.*` + `methodologyLabel`.
+  2. **Drop noBreaches advisory.** Owner про «Стресс прошёл — попробуй
+     жёстче: bank_holiday 5d» — снисходительная плашка, режет ухо.
+     Удалить JSX-блок `{result.new_breach_count === 0 && (...)}` в
+     `page.tsx`, функцию `harderSuggestion()`, ключ `timemachine.summary.noBreaches`.
+  3. **Fix footer overlap.** На скрине 9-карточной сетки видно
+     слипание «EUR 887 010EUR 351 973» — currency-префикс дублируется
+     в каждой из 3 footer-ячеек и переполняет 280px-карточку. Выкинуть
+     `{currency}` из видимого текста в `FooterStat`, оставить только
+     в `title`-тултипе. Опционально понизить порог `formatStatAmount`
+     с 1M до 100K чтобы «887 010» стало «887K».
+  Re-hand'нул промпт в новой Devin-сессии 09:25 UTC (опечатка в шапке
+  и HEAD-якорь подкручены — содержательно тот же). Expect PR title:
+  `chore(timemachine): restore methodology, drop no-breach advisory, fix footer overlap`.
 
 ## What's queued, by priority for demo
 

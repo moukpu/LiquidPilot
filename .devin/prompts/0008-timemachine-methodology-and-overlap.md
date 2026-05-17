@@ -1,8 +1,7 @@
 # Time Machine — round 4: methodology back, advisory out, footer doesn't overlap
 
-**Repo:** https://github.com/moukpu/moukpu/LiquidPilot — actually
-https://github.com/moukpu/LiquidPilot
-**Base branch:** `main` (HEAD = `02857e9` или новее)
+**Repo:** https://github.com/moukpu/LiquidPilot
+**Base branch:** `main` (HEAD = `6dff903` — последний docs-only мерж; код на этом SHA = состояние после `02857e9`. Если у тебя стрельнёт чем-то новее — `git fetch && git rebase origin/main`)
 **Target PR title:** `chore(timemachine): restore methodology, drop no-breach advisory, fix footer overlap`
 
 Три правки, всё фронт, бэкенд не трогаем. Это пост-фактум:
