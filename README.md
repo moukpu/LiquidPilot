@@ -92,5 +92,11 @@ MIT — see [LICENSE](LICENSE).
 ---
 
 Built for **SynergyX Hackathon 2026 — FinTech track**. Deadline: May 20, 2026.
-test
-test2
+
+---
+
+## For AI agents
+
+This repo uses `.devin/` as cross-session memory for Devin agents. If
+you are an AI agent reading this, start with [`.devin/START.md`](.devin/START.md)
+and follow the reading order described there before making any changes.
