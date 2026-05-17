@@ -26,7 +26,7 @@
   Previous code: `059f0da` (TM round 4 — 0008 shipped).
   Previous: `b38635b` (PR #9 squash — docs-only re-hand 0008).
   Previous code: `02857e9` (TM card readability — 0007 shipped).
-- **Last updated:** 17 May 2026, 10:05 UTC
+- **Last updated:** 17 May 2026, 10:38 UTC
 - **Memory live in repo:** YES — `.devin/` merged via PR #5 into `main`.
   Owner authorised direct push for docs only; system **hard-blocks**
   `git push origin main` (tested — error: «You should never push directly
@@ -61,7 +61,7 @@
 | 2.5 | Deploy fixes | DONE | `2302a99`, `10508c3`, `e3171c0`, `20e0982` |
 | 3 | Radar (ATC view) | DONE + polished | latest `cef9347` removed violet planes |
 | 4 | Autopilot | DONE + polished | latest `a09cb0d` synced alerts ↔ transfers |
-| 5 | Contagion | **BACKEND DONE (`205e535`), FRONTEND PENDING OWNER DECISION** | Backend 0009 shipped: NetworkX DiGraph from `data/fixtures/contagion_exposures.json`, BFS cascade w/ geometric decay, `GET /contagion/network` (no warm-up needed) + `POST /contagion/simulate` (requires warm-up), 6 pytest. Cascade math validated (hub shock → 2 breached, $47.85M total loss, full BFS). Frontend (`/contagion` page is still 13-line stub) blocked on owner's 17-May 10:05 UTC question «что это вообще?» — explanation sent, awaiting "go 0010" or "skip and hide nav". |
+| 5 | Contagion | **BACKEND DONE (`205e535`), FRONTEND IN-FLIGHT (0010 handed out 10:38 UTC)** | Backend 0009 shipped: NetworkX DiGraph from `data/fixtures/contagion_exposures.json`, BFS cascade w/ geometric decay, `GET /contagion/network` (no warm-up needed) + `POST /contagion/simulate` (requires warm-up), 6 pytest. Cascade math validated (hub shock → 2 breached, $47.85M total loss, full BFS). Frontend prompt **0010 handed to owner 10:38 UTC** after «давай тогда промпт» go-ahead — native SVG radial layout (USD-Correspondent hub at center, 8 others on ring, alphabetical for reproducible screenshot), `framer-motion` pulse on shocked node, 9 files (4 NEW components/lib, 2 APPEND types/api, 2 APPEND i18n with 28 keys, 1 REPLACE page.tsx). No new deps. Awaiting agent ship + SHA. |
 | 6 | Time Machine | DONE round 4 (`059f0da`) | `dd61793` core (monotonicity + 5 UX bugs + 2 tests) → `c198c57` polish (no-aff badge / card stretch — methodology over-deleted here) → `02857e9` readable card (stress curve color / footer align / breach tooltip) → `059f0da` round 4 (methodology restored + advisory dropped + footer-overlap fix). No more TM rounds planned unless owner finds something. |
 | 7 | Branding / landing / 90s demo | PARTIAL | logo missing, scenario not rehearsed |
 | 8 | Submission | PENDING | one-pager, video, form |
@@ -84,23 +84,33 @@
   платежных каналов» (page 3, possible directions) and to brief's
   problem #4 «избыточные резервы как защита» (knowing the exposure
   map lets treasury reserve narrowly instead of holding $15M
-  blanket buffer). Awaiting owner verdict on whether to proceed to
-  prompt 0010 (Phase 5 frontend) or hide `/contagion` from nav and
-  pitch as 3-of-4 modules.
+  blanket buffer). Owner replied «давай тогда промпт» at 10:38 UTC
+  — go for 0010 frontend.
+- **Prompt 0010 (Contagion Phase 5 frontend) handed out 10:38 UTC.**
+  Native SVG radial layout (USD-Correspondent at center as visual
+  hub, 8 others alphabetically on radius=220 ring), `framer-motion`
+  pulse on shocked node, native SVG arrows via `<marker>` defs,
+  bidirectional pair detection w/ perpendicular Bezier offset to
+  avoid arrow overlap. 9 files: 5 NEW (`lib/contagion-layout.ts`,
+  `components/contagion/{shock-form,network-graph,result-panel}.tsx`,
+  `app/(dashboard)/contagion/page.tsx` is REPLACE not NEW), 2
+  APPEND (`types/api.ts` adds 7 interfaces, `lib/api.ts` adds 2
+  fetchers), 2 APPEND-i18n (28 keys `contagion.*` in both en.ts
+  and ru.ts). NO new deps (no d3-force, react-flow, cytoscape).
+  Default form values mirror 0009 curl-demo: USD-Correspondent /
+  100% / 7d → expected to reproduce $47.85M breach screenshot
+  out-of-the-box. Awaiting agent ship + SHA.
 
 ## What's queued, by priority for demo
 
-1. **Prompt 0010 — Contagion Phase 5 frontend.** **PENDING OWNER GO.**
-   Plan if owner says yes: d3-force (or native SVG, react-flow if
-   stable peer-deps allow — checked once, will recheck) graph on
-   `/contagion`, dropdown to pick shocked account, slider for
-   intensity 0..1, side-panel listing affected accounts with
-   post-shock balance / breach badge / contributor chain. Calls the
-   shipped `GET /network` + `POST /simulate`. Estimated 2-3 h agent
-   work. Without this the backend exists only as a curl-demo.
-   Alternative if owner skips: hide `/contagion` from nav, mention
-   the API in PDF one-pager («risk scoring of correspondents
-   available via `POST /contagion/simulate`»).
+1. **Prompt 0010 — Contagion Phase 5 frontend.** HANDED OUT 10:38 UTC.
+   Native SVG radial graph (no d3-force / react-flow — all SVG +
+   `framer-motion` for pulse), `ShockForm` left rail (dropdown +
+   intensity slider + horizon slider), `ResultPanel` right rail
+   (breached_count / total_loss / list of affected w/ hop badge +
+   breach pill). Default = USD-Correspondent / 100% / 7d to mirror
+   0009 verification curl. Estimated 2-3 h agent work. Awaiting
+   agent ship + SHA.
 2. Phase 7 — logo (text wordmark only today), 90-second connected demo
    script, landing polish.
 3. Phase 8 — one-pager PDF, 3-minute demo video, SynergyX submission form.
