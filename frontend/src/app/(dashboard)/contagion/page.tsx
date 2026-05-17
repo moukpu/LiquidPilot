@@ -70,35 +70,17 @@ export default function ContagionPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-4rem)]">
-      <div className="glass-card rounded-2xl px-5 py-3 mx-6 mt-4 shrink-0 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold leading-tight">
+    <div className="flex h-[calc(100vh-4rem)] p-4 gap-4 bg-slate-50/50">
+      {/* Left Sidebar: Controls + Results */}
+      <div className="w-[340px] flex flex-col gap-4 shrink-0 min-h-0">
+        <div className="glass-card rounded-3xl p-5 shadow-sm bg-white shrink-0">
+          <h1 className="text-xl font-bold tracking-tight text-slate-900">
             {t("contagion.title")}
           </h1>
-          <p className="text-xs text-muted-foreground mt-1 leading-snug">
-            {t("contagion.subtitle")}
+          <p className="text-[10px] text-slate-400 mt-1 mb-6 uppercase tracking-wider font-semibold">
+            Cascade Simulator
           </p>
-        </div>
-        {result && (
-          <div className="text-right">
-            <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-0.5">
-              {t("contagion.result.totalLoss")}
-            </div>
-            <div className="text-xl font-bold tabular-nums">
-              {t("contagion.hero.summary", {
-                loss: `$${formatMoneyCompact(result.total_loss_usd, intl)}`,
-                affected: String(result.affected.length),
-                breached: String(result.breached_count),
-              })}
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="flex-1 min-h-0 p-4 flex flex-col gap-4">
-        {network ? (
-          <div className="glass-card rounded-2xl px-5 py-3">
+          {network ? (
             <ShockForm
               nodes={network.nodes}
               value={req}
@@ -107,30 +89,60 @@ export default function ContagionPage() {
               onReset={reset}
               loading={loading}
             />
-          </div>
-        ) : (
-          <div className="glass-card rounded-2xl p-4 text-xs font-mono text-muted-foreground">
-            {networkError ?? "Loading network…"}
+          ) : (
+            <div className="text-xs font-mono text-slate-400 py-4 text-center">
+              {networkError ?? "Loading network..."}
+            </div>
+          )}
+        </div>
+
+        <div className="glass-card rounded-3xl shadow-sm bg-white flex-1 min-h-0 flex flex-col overflow-hidden">
+          <ResultPanel result={result} error={error} />
+        </div>
+      </div>
+
+      {/* Right Canvas: The Graph */}
+      <div className="flex-1 glass-card rounded-3xl shadow-sm bg-white relative overflow-hidden min-h-0 border border-slate-100">
+        {result && (
+          <div className="absolute top-6 left-6 z-10 flex gap-3 pointer-events-none">
+            <div className="bg-white/80 backdrop-blur-xl border border-slate-100 px-5 py-3 rounded-2xl shadow-sm">
+              <div className="text-[10px] uppercase text-slate-500 font-bold tracking-widest mb-0.5">
+                {t("contagion.result.totalLoss")}
+              </div>
+              <div className="text-2xl font-black text-rose-500 tabular-nums leading-none tracking-tight">
+                ${formatMoneyCompact(result.total_loss_usd, intl)}
+              </div>
+            </div>
+            <div className="bg-white/80 backdrop-blur-xl border border-slate-100 px-5 py-3 rounded-2xl shadow-sm">
+              <div className="text-[10px] uppercase text-slate-500 font-bold tracking-widest mb-0.5">
+                Affected
+              </div>
+              <div className="text-2xl font-black text-slate-800 tabular-nums leading-none tracking-tight">
+                {result.affected.length}
+              </div>
+            </div>
+            <div className="bg-white/80 backdrop-blur-xl border border-slate-100 px-5 py-3 rounded-2xl shadow-sm">
+              <div className="text-[10px] uppercase text-slate-500 font-bold tracking-widest mb-0.5">
+                Breached
+              </div>
+              <div className="text-2xl font-black text-slate-800 tabular-nums leading-none tracking-tight">
+                {result.breached_count}
+              </div>
+            </div>
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr,22rem] gap-4 h-full min-h-[480px]">
-          <div className="glass-card rounded-2xl p-4 flex items-center justify-center relative">
-            {network ? (
-              <NetworkGraph
-                nodes={network.nodes}
-                edges={network.edges}
-                result={result}
-              />
-            ) : (
-              <span className="text-xs font-mono text-muted-foreground">
-                {networkError ?? "Loading network…"}
-              </span>
-            )}
+        {network ? (
+          <NetworkGraph
+            nodes={network.nodes}
+            edges={network.edges}
+            result={result}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-slate-400 text-sm font-mono">
+            {networkError ?? "Loading network topology..."}
           </div>
-
-          <ResultPanel result={result} error={error} />
-        </div>
+        )}
       </div>
     </div>
   );

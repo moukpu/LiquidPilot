@@ -28,9 +28,9 @@ export default function ShockForm({
   );
 
   return (
-    <div className="flex flex-row items-center gap-3">
-      <div className="min-w-[14rem]">
-        <label className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground block mb-1">
+    <div className="space-y-5">
+      <div className="space-y-1.5">
+        <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
           {t("contagion.shock.account")}
         </label>
         <select
@@ -38,7 +38,7 @@ export default function ShockForm({
           onChange={(e) =>
             onChange({ ...value, shocked_account_id: e.target.value })
           }
-          className="w-full bg-slate-50 border border-slate-200 rounded-md px-2 py-1.5 font-mono text-xs"
+          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:border-slate-400 transition-colors"
         >
           {sorted.map((n) => (
             <option key={n.account_id} value={n.account_id}>
@@ -48,13 +48,15 @@ export default function ShockForm({
         </select>
       </div>
 
-      <div className="flex-1">
-        <label className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground block mb-1">
-          {t("contagion.shock.intensity")}:{" "}
-          <span className="text-foreground font-bold">
+      <div className="space-y-1.5">
+        <div className="flex justify-between items-center">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+            {t("contagion.shock.intensity")}
+          </label>
+          <span className="text-[11px] font-black text-slate-900 bg-slate-100 px-2 py-0.5 rounded">
             {Math.round(value.intensity * 100)}%
           </span>
-        </label>
+        </div>
         <input
           type="range"
           min={0}
@@ -64,15 +66,19 @@ export default function ShockForm({
           onChange={(e) =>
             onChange({ ...value, intensity: Number(e.target.value) })
           }
-          className="w-full"
+          className="w-full accent-slate-900"
         />
       </div>
 
-      <div className="flex-1">
-        <label className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground block mb-1">
-          {t("contagion.shock.horizon")}:{" "}
-          <span className="text-foreground font-bold">{value.horizon_days}</span>
-        </label>
+      <div className="space-y-1.5">
+        <div className="flex justify-between items-center">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+            {t("contagion.shock.horizon")}
+          </label>
+          <span className="text-[11px] font-black text-slate-900 bg-slate-100 px-2 py-0.5 rounded">
+            {value.horizon_days}d
+          </span>
+        </div>
         <input
           type="range"
           min={1}
@@ -81,29 +87,27 @@ export default function ShockForm({
           onChange={(e) =>
             onChange({ ...value, horizon_days: Number(e.target.value) })
           }
-          className="w-full"
+          className="w-full accent-slate-900"
         />
       </div>
 
-      <div className="flex items-end self-stretch pb-1">
+      <div className="flex gap-2 pt-2">
         <button
           type="button"
           onClick={onRun}
           disabled={loading || value.intensity === 0}
-          className="bg-primary text-primary-foreground rounded-md px-4 py-1.5 font-mono text-xs font-semibold uppercase tracking-widest hover:opacity-90 disabled:opacity-50 transition-opacity whitespace-nowrap"
+          className="flex-1 bg-slate-900 text-white rounded-lg py-3 text-xs font-bold uppercase tracking-widest hover:bg-slate-800 disabled:opacity-50 disabled:hover:bg-slate-900 transition-colors"
         >
           {loading ? t("contagion.shock.running") : t("contagion.shock.run")}
         </button>
-      </div>
-
-      <div className="flex items-end self-stretch pb-1">
         <button
           type="button"
           onClick={onReset}
           disabled={loading}
-          className="bg-slate-100 text-slate-700 rounded-md px-3 py-1.5 font-mono text-xs font-semibold uppercase tracking-widest hover:bg-slate-200 disabled:opacity-50 transition-colors whitespace-nowrap"
+          className="px-4 bg-slate-100 text-slate-600 rounded-lg text-lg font-bold uppercase tracking-widest hover:bg-slate-200 disabled:opacity-50 transition-colors"
+          title={t("contagion.shock.reset")}
         >
-          {t("contagion.shock.reset")}
+          ↺
         </button>
       </div>
     </div>
