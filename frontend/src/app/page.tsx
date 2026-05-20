@@ -86,7 +86,7 @@ export default function Home() {
           <Link href="/radar" className="inline-flex h-12 items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground shadow-lg transition-colors hover:bg-primary/90">
             {t("home.cta.enter")} <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
-          <Link href="https://github.com/moukpu/LiquidPilot" target="_blank" className="inline-flex h-12 items-center justify-center rounded-md border border-input glass px-8 text-sm font-medium hover:bg-white/10 hover:text-white transition-all">
+          <Link href="https://github.com/moukpu/LiquidPilot" target="_blank" className="inline-flex h-12 items-center justify-center rounded-md border border-input glass px-8 text-sm font-medium text-foreground hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all">
             {t("home.cta.source")}
           </Link>
         </motion.div>
