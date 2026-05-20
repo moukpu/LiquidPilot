@@ -32,6 +32,11 @@ class StressRequest(BaseModel):
     affected_rail: Optional[str] = None
     country: Optional[str] = None
     holiday_days: int = 0
+    fx_currency: Optional[str] = None
+    fx_shock_pct: float = 0.0
+    counterparty_account: Optional[str] = None
+    frozen_account: Optional[str] = None
+    freeze_days: int = 0
 
 
 @router.post("/simulate")
@@ -47,6 +52,11 @@ def simulate(req: StressRequest):
         affected_rail=req.affected_rail,
         country=req.country,
         holiday_days=req.holiday_days,
+        fx_currency=req.fx_currency,
+        fx_shock_pct=req.fx_shock_pct,
+        counterparty_account=req.counterparty_account,
+        frozen_account=req.frozen_account,
+        freeze_days=req.freeze_days,
     )
     result = apply_scenario(
         baseline_forecast=state.forecasts,

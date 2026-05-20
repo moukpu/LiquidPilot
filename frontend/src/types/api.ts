@@ -45,7 +45,13 @@ export interface RadarInsights {
   rail_reliability: Record<string, RailReliability>;
 }
 
-export type StressScenario = "rail_delay" | "volume_spike" | "bank_holiday";
+export type StressScenario =
+  | "rail_delay"
+  | "volume_spike"
+  | "bank_holiday"
+  | "fx_shock"
+  | "counterparty_default"
+  | "liquidity_freeze";
 
 export interface StressRequest {
   scenario: StressScenario;
@@ -55,6 +61,11 @@ export interface StressRequest {
   affected_rail?: string;
   country?: string;
   holiday_days?: number;
+  fx_currency?: string;
+  fx_shock_pct?: number;
+  counterparty_account?: string;
+  frozen_account?: string;
+  freeze_days?: number;
 }
 
 export interface ScenarioPoint {

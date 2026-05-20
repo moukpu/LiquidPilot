@@ -3,6 +3,31 @@ const en = {
   "app.description":
     "Air Traffic Control for your treasury. Radar, Autopilot, Contagion Risk, and Time Machine.",
 
+  "home.badge.live": "Live demo",
+  "home.title.line1": "Predictive Liquidity",
+  "home.title.line2": "Cockpit",
+  "home.subtitle":
+    "The ultimate treasury command center. Real-time radar, autonomous rebalancing, contagion risk analysis, and historical stress-testing.",
+  "home.cta.enter": "Enter Cockpit",
+  "home.cta.source": "View Source",
+  "home.feature.radar.title": "Radar",
+  "home.feature.radar.desc":
+    "Real-time air-traffic-control view of all money flows across accounts and banks.",
+  "home.feature.autopilot.title": "Autopilot",
+  "home.feature.autopilot.desc":
+    "Automated cash rebalancing that keeps liquidity optimal without manual intervention.",
+  "home.feature.contagion.title": "Contagion",
+  "home.feature.contagion.desc":
+    "Bank contagion risk scoring using network graph analytics and exposure maps.",
+  "home.feature.timemachine.title": "Time Machine",
+  "home.feature.timemachine.desc":
+    "Replay historical financial crises and stress-test your treasury against past events.",
+
+  "profile.menu.demo": "Demo account",
+  "profile.menu.settings": "Settings",
+  "profile.menu.signOut": "Sign out",
+  "profile.demoBadge": "Demo",
+
   "topbar.dashboard": "Dashboard",
   "nav.radar": "Radar",
   "nav.autopilot": "Autopilot",
@@ -68,6 +93,20 @@ const en = {
   "autopilot.demoMode": "Demo Mode",
   "autopilot.demoTooltip":
     "Synthesizes alerts and transfers from current account data for presentation purposes — no real backend trigger.",
+  "autopilot.autoMode": "AI Pilot",
+  "autopilot.autoTooltip":
+    "Autonomous mode: the AI executes transfers without waiting for your approval. Every action is logged below — toggle off to take back control.",
+  "autopilot.log.title": "AI decision log",
+  "autopilot.log.empty":
+    "Toggle AI Pilot on to let the engine execute transfers automatically. Each move appears here in real time.",
+  "autopilot.log.executed":
+    "Moved {amount} from {from} to {to} via {rail} — covers projected shortfall on {date}.",
+  "autopilot.log.skipped":
+    "Held back transfer {amount} {from} → {to}: rail {rail} reliability below safety threshold.",
+  "autopilot.log.noAction":
+    "Scanned {n} accounts — all balances above floor, no transfers needed.",
+  "autopilot.log.shown": "Showing last {n} actions",
+  "autopilot.log.clear": "Clear",
 
   "autopilot.alerts.inDays": "in {n}d",
   "autopilot.alerts.shortfall": "Shortfall",
@@ -125,6 +164,28 @@ const en = {
   "timemachine.scenarios.railDelay": "Rail clearing delay shock",
   "timemachine.scenarios.volumeSpike": "Outflow spike (chargebacks / payouts)",
   "timemachine.scenarios.bankHoliday": "Bank holiday",
+  "timemachine.scenarios.fxShock": "FX shock (cross-rate move)",
+  "timemachine.scenarios.counterpartyDefault": "Counterparty default",
+  "timemachine.scenarios.liquidityFreeze": "Account liquidity freeze",
+  "timemachine.fxCurrency": "Currency",
+  "timemachine.fxShockPct": "Shock magnitude (%)",
+  "timemachine.counterparty": "Counterparty account",
+  "timemachine.frozenAccount": "Frozen account",
+  "timemachine.freezeDays": "Freeze days",
+  "timemachine.hint.fxShock":
+    "FX Shock — a sudden devaluation of the selected currency cuts every account booked in it by the chosen magnitude. Example: EUR loses 5% vs USD on an ECB announcement.",
+  "timemachine.hint.counterpartyDefault":
+    "Counterparty Default — a specific counterparty stops honouring obligations. Inbound exposures to that account vanish over the horizon.",
+  "timemachine.hint.liquidityFreeze":
+    "Liquidity Freeze — a single account is fully frozen (sanctions, fraud hold). All inbound/outbound stops, balance held flat then dragged by ongoing obligations.",
+  "timemachine.method.fxShockPct": "Shock %",
+  "timemachine.method.fxAffectedAccounts": "Accounts in currency",
+  "timemachine.method.frozenAccount": "Frozen account",
+  "timemachine.method.freezeDays": "Freeze days",
+  "timemachine.method.exposureUsd": "Exposure (USD)",
+  "timemachine.reason.currencyMismatch": "account currency does not match shock currency",
+  "timemachine.reason.notFrozenAccount": "not the frozen account",
+  "timemachine.reason.zeroShock": "shock magnitude is 0 — no effect",
   "timemachine.rail": "Rail",
   "timemachine.extraDays": "Extra clearing days",
   "timemachine.multiplier": "Outflow multiplier",
@@ -228,6 +289,21 @@ const en = {
     "Engine is still warming up. Wait ~30 seconds and click Run again.",
   "contagion.error.network":
     "Could not load contagion graph from backend.",
+  "contagion.tip.clickNode":
+    "Tip: click any node on the graph to drop that counterparty.",
+  "contagion.edge.detail.title": "Exposure detail",
+  "contagion.edge.detail.from": "From",
+  "contagion.edge.detail.to": "To",
+  "contagion.edge.detail.amount": "Bilateral exposure",
+  "contagion.edge.detail.kind": "Type",
+  "contagion.edge.detail.why":
+    "If the source counterparty halts payments, this exposure converts into a same-day liquidity loss for the recipient.",
+  "contagion.edge.detail.close": "Close",
+  "contagion.node.detail.title": "Account detail",
+  "contagion.node.detail.balance": "Current balance",
+  "contagion.node.detail.floor": "Floor",
+  "contagion.node.detail.outDeg": "Outbound exposures",
+  "contagion.node.detail.inDeg": "Inbound exposures",
   "contagion.page.subtitle": "Cascade Simulator",
   "contagion.metric.affected": "Affected",
   "contagion.metric.breached": "Breached",

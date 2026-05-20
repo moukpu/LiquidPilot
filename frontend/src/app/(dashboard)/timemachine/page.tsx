@@ -170,7 +170,13 @@ function ScenarioHint({ scenario }: { scenario: StressScenario }) {
       ? "timemachine.hint.railDelay"
       : scenario === "volume_spike"
       ? "timemachine.hint.volumeSpike"
-      : "timemachine.hint.bankHoliday";
+      : scenario === "bank_holiday"
+      ? "timemachine.hint.bankHoliday"
+      : scenario === "fx_shock"
+      ? "timemachine.hint.fxShock"
+      : scenario === "counterparty_default"
+      ? "timemachine.hint.counterpartyDefault"
+      : "timemachine.hint.liquidityFreeze";
   return (
     <div className="glass-card rounded-2xl p-5 flex flex-col gap-2 justify-center">
       <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
@@ -200,9 +206,15 @@ function EmptyApplied({
       ? t("timemachine.empty.railNotUsed", { rail: String(req.rail ?? "") })
       : scenario === "volume_spike"
       ? t("timemachine.empty.noOutbound")
-      : t("timemachine.empty.noCountryAccount", {
+      : scenario === "bank_holiday"
+      ? t("timemachine.empty.noCountryAccount", {
           country: String(req.country ?? ""),
-        });
+        })
+      : scenario === "fx_shock"
+      ? t("timemachine.reason.currencyMismatch")
+      : scenario === "counterparty_default"
+      ? t("timemachine.empty.noOutbound")
+      : t("timemachine.reason.notFrozenAccount");
   return (
     <div className="glass-card rounded-2xl p-5 flex flex-col gap-2">
       <div className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">

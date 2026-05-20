@@ -1,6 +1,6 @@
 "use client";
 
-import { Sparkles } from "lucide-react";
+import { Bot, Sparkles } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import {
   Tooltip,
@@ -14,6 +14,8 @@ import { useLocale, localeToIntl } from "@/i18n/locale-context";
 export interface AutopilotHeaderProps {
   demoMode: boolean;
   onToggleDemoMode: (on: boolean) => void;
+  autoMode: boolean;
+  onToggleAutoMode: (on: boolean) => void;
   lastSync: Date | null;
   error: string | null;
   counts: {
@@ -23,15 +25,14 @@ export interface AutopilotHeaderProps {
     executed: number;
     skipped: number;
   };
-  /** When true, draws a soft pulsing primary-coloured ring around the
-   *  Demo Mode switch. Used to nudge the user when the queue is empty
-   *  because Demo is off but accounts have loaded. */
   demoHint?: boolean;
 }
 
 export default function AutopilotHeader({
   demoMode,
   onToggleDemoMode,
+  autoMode,
+  onToggleAutoMode,
   lastSync,
   error,
   counts,
@@ -40,7 +41,7 @@ export default function AutopilotHeader({
   const { t, locale } = useLocale();
   const intl = localeToIntl(locale);
   return (
-    <header className="h-16 shrink-0 glass border-x-0 border-t-0 flex items-center px-8 gap-8 relative z-20 shadow-sm">
+    <header className="h-20 shrink-0 glass border-x-0 border-t-0 flex items-end pb-3 px-8 gap-8 relative z-20 shadow-sm">
       <div className="flex flex-col leading-tight">
         <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/80 mb-0.5">
           {t("autopilot.eyebrow")}
@@ -48,7 +49,7 @@ export default function AutopilotHeader({
         <span className="text-lg font-display font-semibold text-slate-800 tracking-tight">{t("autopilot.title")}</span>
       </div>
 
-      <div className="flex-1 flex items-center justify-center gap-4 text-[11px] font-mono">
+      <div className="flex-1 flex items-end justify-center gap-4 text-[11px] font-mono pb-0.5">
         <span className="text-muted-foreground">
           {t("status.lastSync")} <span className="text-foreground">{formatTime(lastSync, intl)}</span>
         </span>
@@ -59,7 +60,7 @@ export default function AutopilotHeader({
         )}
       </div>
 
-      <div className="flex items-center gap-5">
+      <div className="flex items-end gap-5 pb-0.5">
         <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground tabular-nums">
           {t("autopilot.header.statusLine", {
             pending: counts.queued + counts.confirming + counts.executing,
@@ -94,6 +95,33 @@ export default function AutopilotHeader({
             </TooltipTrigger>
             <TooltipContent className="max-w-xs">
               {t("autopilot.demoTooltip")}
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <label
+                className={`flex items-center gap-2 cursor-pointer select-none rounded-full px-2 py-1 ${
+                  autoMode ? "bg-primary/5 ring-1 ring-primary/30" : ""
+                }`}
+              >
+                <Bot
+                  className={`w-3.5 h-3.5 ${
+                    autoMode ? "text-primary" : "text-muted-foreground"
+                  }`}
+                />
+                <span className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
+                  {t("autopilot.autoMode")}
+                </span>
+                <Switch
+                  checked={autoMode}
+                  onCheckedChange={onToggleAutoMode}
+                  aria-label={t("autopilot.autoMode")}
+                />
+              </label>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs">
+              {t("autopilot.autoTooltip")}
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

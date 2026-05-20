@@ -5,6 +5,7 @@ import { LocaleProvider } from "@/i18n/locale-context";
 import Logo from "@/components/brand/logo";
 import Link from "next/link";
 import LocaleSwitcher from "@/components/locale-switcher";
+import ProfileMenu from "@/components/profile-menu";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const jetbrainsMono = JetBrains_Mono({
@@ -47,7 +48,7 @@ export default function RootLayout({
             <div className="flex items-center gap-6">
                <LocaleSwitcher />
                <div className="flex items-center gap-4 border-l border-white/10 pl-6">
-                 <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary border border-primary/30">LP</div>
+                 <ProfileMenu />
                </div>
             </div>
           </header>

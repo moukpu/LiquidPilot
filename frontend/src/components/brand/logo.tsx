@@ -7,26 +7,42 @@ export default function Logo({ className }: { className?: string }) {
       className={className}
     >
       <defs>
-        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="64">
+        <linearGradient id="lp-drop" x1="0" y1="0" x2="0" y2="64">
           <stop offset="0%" stopColor="#38bdf8" />
-          <stop offset="100%" stopColor="#0ea5e9" />
+          <stop offset="100%" stopColor="#0369a1" />
+        </linearGradient>
+        <linearGradient id="lp-plane" x1="0" y1="0" x2="64" y2="64">
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="100%" stopColor="#e0f2fe" />
         </linearGradient>
       </defs>
+      {/* outer water drop — the liquid */}
       <path
-        d="M52 28c-2-12-12-20-20-20S10 16 8 28c-1 6 1 12 4 16 2 3 6 5 10 6 4 1 8 2 12 2s8-1 12-2c4-1 8-3 10-6 3-4 5-10 4-16z"
-        fill="url(#sky)"
-        opacity="0.25"
+        d="M32 4 C16 22 10 32 10 42 a22 22 0 0 0 44 0 c0 -10 -6 -20 -22 -38 z"
+        fill="url(#lp-drop)"
       />
+      {/* gloss highlight on the drop */}
       <path
-        d="M32 8c-2 0-4 1-5 3l-8 14c-1 2-1 4 0 6l4 8c1 2 3 3 5 3h8c2 0 4-1 5-3l4-8c1-2 1-4 0-6l-8-14c-1-2-3-3-5-3z"
-        fill="url(#sky)"
-      />
-      <path
-        d="M32 44v12M28 52l4 4 4-4"
-        stroke="url(#sky)"
-        strokeWidth="3"
+        d="M22 30 C20 36 21 42 25 46"
+        stroke="#bae6fd"
+        strokeWidth="2.5"
         strokeLinecap="round"
+        fill="none"
+        opacity="0.65"
+      />
+      {/* paper plane silhouette riding the drop */}
+      <path
+        d="M22 42 L46 30 L34 44 L34 38 Z"
+        fill="url(#lp-plane)"
+        stroke="#0c4a6e"
+        strokeWidth="0.6"
         strokeLinejoin="round"
+      />
+      <path
+        d="M34 38 L46 30"
+        stroke="#0c4a6e"
+        strokeWidth="0.8"
+        strokeLinecap="round"
       />
     </svg>
   );

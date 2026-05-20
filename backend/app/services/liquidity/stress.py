@@ -26,6 +26,9 @@ class Scenario(str, Enum):
     RAIL_DELAY = "rail_delay"
     VOLUME_SPIKE = "volume_spike"
     BANK_HOLIDAY = "bank_holiday"
+    FX_SHOCK = "fx_shock"
+    COUNTERPARTY_DEFAULT = "counterparty_default"
+    LIQUIDITY_FREEZE = "liquidity_freeze"
 
 
 @dataclass
@@ -40,6 +43,16 @@ class StressParams:
     # bank_holiday
     country: Optional[str] = None  # "DE" / "US" / "GB"
     holiday_days: int = 0  # 1..5
+    # fx_shock — currency_code is the *quote* currency that gets shocked;
+    # shock_pct is a signed % move (e.g. -5.0 = currency loses 5% vs USD).
+    fx_currency: Optional[str] = None  # "EUR" / "JPY" / "KZT"
+    fx_shock_pct: float = 0.0  # -50.0 .. 50.0
+    # counterparty_default — a specific account stops honouring obligations.
+    # Affected: every other account loses its bilateral exposure to it.
+    counterparty_account: Optional[str] = None
+    # liquidity_freeze — single-account full freeze.
+    frozen_account: Optional[str] = None
+    freeze_days: int = 0  # 1..5
 
 
 @dataclass
@@ -323,6 +336,178 @@ def _transform(
             "flat_value": flat_value,
             "daily_net_outflow": daily_net_outflow,
             "deferred_outflow": deferred,
+            "amplification": AMPLIFICATION,
+            "sample_size": int(len(recent)),
+            "sample_days": int(sample_days),
+            "applied": True,
+        }
+
+    if params.scenario == Scenario.FX_SHOCK:
+        target_ccy = (params.fx_currency or "").upper()
+        if not target_ccy or account.currency.upper() != target_ccy:
+            return list(baseline), {
+                "scenario": "fx_shock",
+                "fx_currency": target_ccy,
+                "fx_shock_pct": params.fx_shock_pct,
+                "applied": False,
+                "reason": "account currency does not match shock currency",
+            }
+        # Stress engine invariant: a scenario can never improve the
+        # trajectory. Treat fx_shock as a devaluation magnitude — the
+        # absolute value of the input is applied as a downward move.
+        # A positive input ("+5%") therefore models "EUR weakens 5%
+        # vs USD" — bad for an account booked in EUR.
+        magnitude = abs(params.fx_shock_pct)
+        if magnitude < 1e-6:
+            return list(baseline), {
+                "scenario": "fx_shock",
+                "fx_currency": target_ccy,
+                "fx_shock_pct": params.fx_shock_pct,
+                "applied": False,
+                "reason": "shock magnitude is 0",
+            }
+        factor = 1.0 - (magnitude / 100.0)
+        out = [v * factor for v in baseline]
+        return out, {
+            "scenario": "fx_shock",
+            "fx_currency": target_ccy,
+            "fx_shock_pct": params.fx_shock_pct,
+            "magnitude": magnitude,
+            "factor": factor,
+            "applied": True,
+        }
+
+    if params.scenario == Scenario.COUNTERPARTY_DEFAULT:
+        cp = params.counterparty_account
+        if not cp:
+            return list(baseline), {
+                "scenario": "counterparty_default",
+                "applied": False,
+                "reason": "no counterparty selected",
+            }
+        if cp == account.account_id:
+            # The defaulted counterparty itself loses all outbound
+            # ability — model that as a steep, immediate drop equal to
+            # its remaining outflow capacity (sample avg outflow x
+            # horizon). The account "exists" but is functionally dead.
+            outs = transactions[
+                (transactions["account_id"] == account.account_id)
+                & (transactions["direction"] == "OUT")
+            ]
+            if outs.empty:
+                return list(baseline), {
+                    "scenario": "counterparty_default",
+                    "counterparty_account": cp,
+                    "applied": True,
+                    "self_default": True,
+                    "reason": "no historical OUT flow — flat trajectory",
+                }
+            recent = outs.tail(50)
+            sample_days = max(1, int(recent["booking_date"].nunique()))
+            daily_out = float(recent["amount"].sum()) / sample_days
+            out = [baseline[i] - daily_out * (i + 1) for i in range(n)]
+            return out, {
+                "scenario": "counterparty_default",
+                "counterparty_account": cp,
+                "daily_outflow": daily_out,
+                "sample_size": int(len(recent)),
+                "applied": True,
+                "self_default": True,
+            }
+
+        # Other accounts: lose every inbound transaction that previously
+        # came from the defaulted counterparty. The data generator does
+        # not track explicit counterparty per tx, so use INBOUND on the
+        # corresponding rail family as a proxy. To keep things simple
+        # we drop a fixed % of inbound volume proportional to how often
+        # this account historically interacts with the same currency/
+        # country group.
+        in_tx = transactions[
+            (transactions["account_id"] == account.account_id)
+            & (transactions["direction"] == "IN")
+        ]
+        if in_tx.empty:
+            return list(baseline), {
+                "scenario": "counterparty_default",
+                "counterparty_account": cp,
+                "applied": False,
+                "reason": "no inbound transactions on this account",
+            }
+        recent = in_tx.tail(50)
+        sample_days = max(1, int(recent["booking_date"].nunique()))
+        daily_in = float(recent["amount"].sum()) / sample_days
+        # Heuristic: assume 25% of inbound comes from the defaulted
+        # counterparty for non-self accounts. Treasurers in the demo
+        # can read this number off the methodology card.
+        EXPOSURE_FRAC = 0.25
+        loss_per_day = daily_in * EXPOSURE_FRAC
+        out = [baseline[i] - loss_per_day * (i + 1) for i in range(n)]
+        return out, {
+            "scenario": "counterparty_default",
+            "counterparty_account": cp,
+            "exposure_fraction": EXPOSURE_FRAC,
+            "daily_inflow": daily_in,
+            "loss_per_day": loss_per_day,
+            "sample_size": int(len(recent)),
+            "applied": True,
+            "self_default": False,
+        }
+
+    if params.scenario == Scenario.LIQUIDITY_FREEZE:
+        frozen = params.frozen_account
+        if not frozen:
+            return list(baseline), {
+                "scenario": "liquidity_freeze",
+                "applied": False,
+                "reason": "no frozen account selected",
+            }
+        if frozen != account.account_id:
+            return list(baseline), {
+                "scenario": "liquidity_freeze",
+                "frozen_account": frozen,
+                "applied": False,
+                "reason": "not the frozen account",
+            }
+        d = max(0, min(params.freeze_days, n - 1))
+        if d == 0:
+            return list(baseline), {
+                "scenario": "liquidity_freeze",
+                "frozen_account": frozen,
+                "applied": False,
+                "reason": "freeze_days=0",
+            }
+        # During the freeze the balance is held flat at the pre-freeze
+        # value while ongoing obligations accumulate as a queued drag.
+        # When the freeze ends, that drag releases as a cliff.
+        acct_tx = transactions[transactions["account_id"] == account.account_id]
+        recent = acct_tx.tail(200)
+        sample_days = max(1, int(recent["booking_date"].nunique()))
+        out_amt = float(recent.loc[recent["direction"] == "OUT", "amount"].sum())
+        in_amt = float(recent.loc[recent["direction"] == "IN", "amount"].sum())
+        daily_net_outflow = max(0.0, (out_amt - in_amt) / sample_days)
+        if daily_net_outflow == 0.0:
+            daily_net_outflow = max(1.0, abs(baseline[0]) * 0.01)
+
+        out = list(baseline)
+        flat = float(baseline[0])
+        for i in range(min(d, n)):
+            out[i] = flat
+        AMPLIFICATION = 1.2
+        queued = d * daily_net_outflow * AMPLIFICATION
+        if d < n:
+            out[d] = baseline[d] - queued
+            remaining = n - d - 1
+            if remaining > 0:
+                for i in range(d + 1, n):
+                    fade = (i - d) / (remaining + 1)
+                    out[i] = baseline[i] - queued * (1.0 - fade)
+        out = [min(out[i], baseline[i]) for i in range(n)]
+        return out, {
+            "scenario": "liquidity_freeze",
+            "frozen_account": frozen,
+            "freeze_days": params.freeze_days,
+            "daily_net_outflow": daily_net_outflow,
+            "queued_drag": queued,
             "amplification": AMPLIFICATION,
             "sample_size": int(len(recent)),
             "sample_days": int(sample_days),

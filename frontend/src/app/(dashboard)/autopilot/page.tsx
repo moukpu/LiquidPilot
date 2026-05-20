@@ -6,6 +6,7 @@ import { transferKey } from "@/lib/autopilot-synth";
 import AutopilotHeader from "@/components/autopilot/autopilot-header";
 import AccountSummaryStrip from "@/components/autopilot/account-summary-strip";
 import ActionQueue from "@/components/autopilot/action-queue";
+import DecisionLog from "@/components/autopilot/decision-log";
 import SessionSummary from "@/components/autopilot/session-summary";
 
 export default function AutopilotPage() {
@@ -17,6 +18,10 @@ export default function AutopilotPage() {
     setActionState,
     demoMode,
     toggleDemoMode,
+    autoMode,
+    toggleAutoMode,
+    decisionLog,
+    clearLog,
     lastSync,
     error,
   } = useAutopilotState(2000);
@@ -31,14 +36,10 @@ export default function AutopilotPage() {
     return c;
   }, [transfers, actionStates]);
 
-  // Pulse the demo-mode pill when the page has loaded but the user
-  // hasn't flipped Demo on yet — without it the queue is permanently
-  // empty and the empty-state copy already prompts toggling Demo Mode.
   const showDemoHint = !demoMode && accounts.length > 0;
 
   return (
     <div className="-mx-6 -mt-6 min-h-[calc(100vh-4rem)] flex flex-col relative overflow-hidden bg-slate-50/50">
-      {/* Background blobs */}
       <div className="absolute top-0 left-1/4 w-[800px] h-[800px] bg-primary/10 rounded-full blur-[120px] -translate-y-1/2 pointer-events-none animate-blob" />
       <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-emerald-500/10 rounded-full blur-[100px] translate-y-1/3 pointer-events-none animate-blob" style={{ animationDelay: '2s' }} />
 
@@ -46,6 +47,8 @@ export default function AutopilotPage() {
         <AutopilotHeader
           demoMode={demoMode}
           onToggleDemoMode={toggleDemoMode}
+          autoMode={autoMode}
+          onToggleAutoMode={toggleAutoMode}
           lastSync={lastSync}
           error={error}
           counts={counts}
@@ -60,13 +63,21 @@ export default function AutopilotPage() {
         />
 
         <main className="flex-1 min-h-0 p-6 pb-24 flex justify-center">
-          <div className="w-full max-w-5xl h-full flex flex-col min-h-0">
-            <ActionQueue
-              transfers={transfers}
-              alerts={alerts}
-              actionStates={actionStates}
-              onChange={setActionState}
-              showEmptyState={!demoMode}
+          <div className="w-full max-w-5xl h-full flex flex-col min-h-0 gap-4">
+            <div className="flex-1 min-h-0">
+              <ActionQueue
+                transfers={transfers}
+                alerts={alerts}
+                actionStates={actionStates}
+                onChange={setActionState}
+                showEmptyState={!demoMode}
+                autoMode={autoMode}
+              />
+            </div>
+            <DecisionLog
+              entries={decisionLog}
+              autoMode={autoMode}
+              onClear={clearLog}
             />
           </div>
         </main>

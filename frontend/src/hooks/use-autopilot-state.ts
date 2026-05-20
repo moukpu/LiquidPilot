@@ -23,6 +23,28 @@ export interface ExecutedMeta {
 
 const ACTIONS_KEY = "autopilot-actions";
 const DEMO_KEY = "autopilot-demo-mode";
+const AUTO_KEY = "autopilot-auto-mode";
+
+// Cadence at which AI Pilot scans the queue and executes the highest-
+// priority pending transfer. 4s feels alive without overwhelming the eye.
+const AUTO_TICK_MS = 4000;
+
+// Hard cap on the log so a long demo session doesn't blow sessionStorage.
+const LOG_LIMIT = 50;
+
+export interface DecisionLogEntry {
+  id: string;
+  at: string;
+  kind: "executed" | "skipped" | "noAction";
+  /** Optional transfer fields for executed/skipped. */
+  amount?: number;
+  currency?: string;
+  from?: string;
+  to?: string;
+  rail?: string;
+  date?: string;
+  scannedAccounts?: number;
+}
 
 // Initial situations dropped into the queue the moment demo flips on, so
 // the user sees a populated queue immediately rather than waiting for the
@@ -86,6 +108,24 @@ function writeDemoMode(on: boolean) {
   }
 }
 
+function readAutoMode(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.sessionStorage.getItem(AUTO_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function writeAutoMode(on: boolean) {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(AUTO_KEY, on ? "1" : "0");
+  } catch {
+    /* ignore */
+  }
+}
+
 export interface AutopilotState {
   accounts: Account[];
   alerts: Alert[];
@@ -94,6 +134,10 @@ export interface AutopilotState {
   setActionState: (key: string, state: ActionState) => void;
   demoMode: boolean;
   toggleDemoMode: (on: boolean) => void;
+  autoMode: boolean;
+  toggleAutoMode: (on: boolean) => void;
+  decisionLog: DecisionLogEntry[];
+  clearLog: () => void;
   lastSync: Date | null;
   error: string | null;
   loading: boolean;
@@ -108,6 +152,8 @@ export function useAutopilotState(interval = 2000): AutopilotState {
     {}
   );
   const [demoMode, setDemoMode] = useState(false);
+  const [autoMode, setAutoMode] = useState(false);
+  const [decisionLog, setDecisionLog] = useState<DecisionLogEntry[]>([]);
 
   // Demo situations live in component state (not derived) so newly emitted
   // ones stick around until the user resolves them, and successive emissions
@@ -145,6 +191,7 @@ export function useAutopilotState(interval = 2000): AutopilotState {
   useEffect(() => {
     setActionStates(readActions());
     setDemoMode(readDemoMode());
+    setAutoMode(readAutoMode());
   }, []);
 
   const setActionState = useCallback((key: string, state: ActionState) => {
@@ -170,6 +217,23 @@ export function useAutopilotState(interval = 2000): AutopilotState {
       setTransfers([]);
       hasSeededRef.current = false;
     }
+  }, []);
+
+  const toggleAutoMode = useCallback((on: boolean) => {
+    setAutoMode(on);
+    writeAutoMode(on);
+  }, []);
+
+  const clearLog = useCallback(() => {
+    setDecisionLog([]);
+  }, []);
+
+  const appendLog = useCallback((entry: DecisionLogEntry) => {
+    setDecisionLog((prev) => {
+      const next = [entry, ...prev];
+      if (next.length > LOG_LIMIT) next.length = LOG_LIMIT;
+      return next;
+    });
   }, []);
 
   const poll = useCallback(async () => {
@@ -405,6 +469,79 @@ export function useAutopilotState(interval = 2000): AutopilotState {
     });
   }, [transfers]);
 
+  // Mirror autoMode + log triggers into refs so the AI loop reads
+  // current values without re-creating its interval every render.
+  const autoModeRef = useRef(false);
+  const decisionLogRef = useRef<DecisionLogEntry[]>([]);
+  useEffect(() => {
+    autoModeRef.current = autoMode;
+  }, [autoMode]);
+  useEffect(() => {
+    decisionLogRef.current = decisionLog;
+  }, [decisionLog]);
+
+  // AI Pilot loop: every AUTO_TICK_MS, pick the highest-severity active
+  // transfer in the queue and push it to "executing". The action card's
+  // own effect will then auto-advance it to "executed" after its
+  // animation finishes. We log the decision so the operator can audit
+  // what the AI did.
+  useEffect(() => {
+    if (!autoMode) return;
+    const id = setInterval(() => {
+      const states = actionStatesRef.current;
+      const trs = transfersRef.current;
+      const als = alertsRef.current;
+
+      // Find highest-severity queued transfer.
+      const candidates = trs
+        .map((tr) => {
+          const meta = states[transferKey(tr)];
+          const state = meta?.state ?? "queued";
+          if (state !== "queued" && state !== "confirming") return null;
+          const alert = als.find((a) => a.account_id === tr.to_account);
+          const sev = alert ? SEV_RANK[alert.severity] : 0;
+          return { tr, sev, alert };
+        })
+        .filter((x): x is { tr: TransferSuggestion; sev: number; alert: Alert | undefined } => x !== null)
+        .sort((a, b) => b.sev - a.sev);
+
+      if (candidates.length === 0) {
+        // Only log idle ticks occasionally so the log doesn't fill with
+        // "noAction" entries during a long quiet stretch.
+        const last = decisionLogRef.current[0];
+        if (!last || last.kind !== "noAction") {
+          appendLog({
+            id: `noaction-${Date.now()}`,
+            at: new Date().toISOString(),
+            kind: "noAction",
+            scannedAccounts: accountsRef.current.length,
+          });
+        }
+        return;
+      }
+
+      const winner = candidates[0];
+      const key = transferKey(winner.tr);
+      setActionStates((prev) => {
+        const next = { ...prev, [key]: { state: "executing" as ActionState } };
+        writeActions(next);
+        return next;
+      });
+      appendLog({
+        id: `${key}-${Date.now()}`,
+        at: new Date().toISOString(),
+        kind: "executed",
+        amount: winner.tr.amount,
+        currency: winner.tr.currency_from,
+        from: winner.tr.from_account,
+        to: winner.tr.to_account,
+        rail: winner.tr.rail,
+        date: winner.alert?.breach_date,
+      });
+    }, AUTO_TICK_MS);
+    return () => clearInterval(id);
+  }, [autoMode, appendLog]);
+
   return {
     accounts,
     alerts,
@@ -413,6 +550,10 @@ export function useAutopilotState(interval = 2000): AutopilotState {
     setActionState,
     demoMode,
     toggleDemoMode,
+    autoMode,
+    toggleAutoMode,
+    decisionLog,
+    clearLog,
     lastSync,
     error,
     loading,

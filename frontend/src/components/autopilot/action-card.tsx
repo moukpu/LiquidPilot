@@ -32,6 +32,9 @@ export interface ActionCardProps {
   /** Optional alert paired to this transfer (rendered as a banner above the
    *  transfer rows). When null the card shows just the proposed action. */
   alert?: Alert | null;
+  /** When true, manual Execute/Skip buttons are hidden — the AI Pilot is
+   *  driving the queue and the operator should not race the bot. */
+  autoMode?: boolean;
 }
 
 // Light-theme readable banner colours. The original `text-rose-300`
@@ -72,6 +75,7 @@ export default function ActionCard({
   meta,
   onChange,
   alert = null,
+  autoMode = false,
 }: ActionCardProps) {
   const { t, locale } = useLocale();
   const intl = localeToIntl(locale);
@@ -200,7 +204,7 @@ export default function ActionCard({
         </div>
       )}
 
-      {state === "queued" && (
+      {state === "queued" && !autoMode && (
         <div className="flex items-center gap-2 pt-1">
           <Button
             size="sm"
@@ -219,6 +223,13 @@ export default function ActionCard({
             <X className="w-3.5 h-3.5" />
             {t("action.skip")}
           </Button>
+        </div>
+      )}
+
+      {state === "queued" && autoMode && (
+        <div className="flex items-center gap-2 pt-1 text-[10px] font-mono uppercase tracking-wider text-primary/80">
+          <Loader2 className="w-3 h-3 animate-spin" />
+          <span>{t("autopilot.autoMode")}</span>
         </div>
       )}
 

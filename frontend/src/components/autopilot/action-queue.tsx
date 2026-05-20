@@ -21,6 +21,7 @@ export interface ActionQueueProps {
   actionStates: Record<string, ExecutedMeta>;
   onChange: (key: string, state: ActionState) => void;
   showEmptyState: boolean;
+  autoMode?: boolean;
 }
 
 function bucketOf(state: ActionState): "active" | "executed" | "skipped" {
@@ -47,6 +48,7 @@ export default function ActionQueue({
   actionStates,
   onChange,
   showEmptyState,
+  autoMode = false,
 }: ActionQueueProps) {
   const { t, locale } = useLocale();
   const intl = localeToIntl(locale);
@@ -142,6 +144,7 @@ export default function ActionQueue({
                   meta={d.meta}
                   alert={d.alert}
                   onChange={(s) => onChange(d.key, s)}
+                  autoMode={autoMode}
                 />
               ))}
             </AnimatePresence>

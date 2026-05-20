@@ -5,6 +5,31 @@ const ru: Record<keyof typeof en, string> = {
   "app.description":
     "Управление воздушным движением для вашей казны. Радар, Автопилот, Сетевой риск и Машина времени.",
 
+  "home.badge.live": "Живая демка",
+  "home.title.line1": "Прогнозный кокпит",
+  "home.title.line2": "ликвидности",
+  "home.subtitle":
+    "Главный командный центр казначейства. Радар в реальном времени, автономная балансировка, анализ сетевых рисков и исторические стресс-тесты.",
+  "home.cta.enter": "Войти в кокпит",
+  "home.cta.source": "Открыть исходники",
+  "home.feature.radar.title": "Радар",
+  "home.feature.radar.desc":
+    "Диспетчерская вышка для всех денежных потоков по счетам и банкам — в реальном времени.",
+  "home.feature.autopilot.title": "Автопилот",
+  "home.feature.autopilot.desc":
+    "Автоматическая балансировка ликвидности — без ручных операций, всегда в зелёной зоне.",
+  "home.feature.contagion.title": "Сетевой риск",
+  "home.feature.contagion.desc":
+    "Скоринг сетевого контагиона на графе bilateral exposures между банками.",
+  "home.feature.timemachine.title": "Машина времени",
+  "home.feature.timemachine.desc":
+    "Воспроизведение исторических кризисов и стресс-тест казны против прошлых событий.",
+
+  "profile.menu.demo": "Демо-аккаунт",
+  "profile.menu.settings": "Настройки",
+  "profile.menu.signOut": "Выйти",
+  "profile.demoBadge": "Демо",
+
   "topbar.dashboard": "Панель",
   "nav.radar": "Радар",
   "nav.autopilot": "Автопилот",
@@ -69,6 +94,20 @@ const ru: Record<keyof typeof en, string> = {
   "autopilot.demoMode": "Демо-режим",
   "autopilot.demoTooltip":
     "Синтезирует алёрты и переводы из текущих данных счетов для презентации — реальные действия с бэкендом не выполняются.",
+  "autopilot.autoMode": "ИИ-пилот",
+  "autopilot.autoTooltip":
+    "Автономный режим: ИИ сам исполняет переводы, не дожидаясь подтверждения. Каждое действие логируется ниже — выключите тумблер, чтобы взять управление обратно.",
+  "autopilot.log.title": "Журнал решений ИИ",
+  "autopilot.log.empty":
+    "Включите ИИ-пилот, чтобы движок начал автоматически выполнять переводы. Все действия будут отображаться здесь.",
+  "autopilot.log.executed":
+    "Переведено {amount} с {from} на {to} через {rail} — закрывает прогнозируемый дефицит на {date}.",
+  "autopilot.log.skipped":
+    "Отложен перевод {amount} {from} → {to}: надёжность рельса {rail} ниже порога.",
+  "autopilot.log.noAction":
+    "Сканировано счетов: {n} — все балансы выше минимума, переводы не требуются.",
+  "autopilot.log.shown": "Показаны последние {n} действий",
+  "autopilot.log.clear": "Очистить",
 
   "autopilot.alerts.inDays": "через {n}д.",
   "autopilot.alerts.shortfall": "Нехватка",
@@ -126,6 +165,28 @@ const ru: Record<keyof typeof en, string> = {
   "timemachine.scenarios.railDelay": "Задержка клиринга рельса",
   "timemachine.scenarios.volumeSpike": "Всплеск расхода (чарджбеки / выплаты)",
   "timemachine.scenarios.bankHoliday": "Банковский выходной",
+  "timemachine.scenarios.fxShock": "FX-шок (движение кросс-курса)",
+  "timemachine.scenarios.counterpartyDefault": "Дефолт контрагента",
+  "timemachine.scenarios.liquidityFreeze": "Заморозка счёта",
+  "timemachine.fxCurrency": "Валюта",
+  "timemachine.fxShockPct": "Магнитуда шока (%)",
+  "timemachine.counterparty": "Счёт-контрагент",
+  "timemachine.frozenAccount": "Замороженный счёт",
+  "timemachine.freezeDays": "Дней заморозки",
+  "timemachine.hint.fxShock":
+    "FX Shock — резкая девальвация выбранной валюты режет каждый счёт в ней на заданную магнитуду. Пример: EUR теряет 5% к USD после заявления ЕЦБ.",
+  "timemachine.hint.counterpartyDefault":
+    "Counterparty Default — конкретный контрагент перестаёт исполнять обязательства. Входящие потоки от этого счёта обнуляются на горизонте.",
+  "timemachine.hint.liquidityFreeze":
+    "Liquidity Freeze — один счёт полностью заморожен (санкции, fraud-hold). Все входящие/исходящие останавливаются, баланс стоит, а затем уходит вниз под исходящими обязательствами.",
+  "timemachine.method.fxShockPct": "Шок %",
+  "timemachine.method.fxAffectedAccounts": "Счетов в валюте",
+  "timemachine.method.frozenAccount": "Замороженный счёт",
+  "timemachine.method.freezeDays": "Дней заморозки",
+  "timemachine.method.exposureUsd": "Экспозиция (USD)",
+  "timemachine.reason.currencyMismatch": "валюта счёта не совпадает с валютой шока",
+  "timemachine.reason.notFrozenAccount": "это не замороженный счёт",
+  "timemachine.reason.zeroShock": "магнитуда шока равна 0 — эффекта нет",
   "timemachine.rail": "Рельс",
   "timemachine.extraDays": "Доп. дней клиринга",
   "timemachine.multiplier": "Множитель оттока",
@@ -229,6 +290,21 @@ const ru: Record<keyof typeof en, string> = {
     "Движок ещё прогревается. Подождите ~30 секунд и нажмите Запустить снова.",
   "contagion.error.network":
     "Не удалось загрузить граф контагиона с бэкенда.",
+  "contagion.tip.clickNode":
+    "Подсказка: кликните по узлу на графе — он автоматически выберется как контрагент.",
+  "contagion.edge.detail.title": "Детали экспозиции",
+  "contagion.edge.detail.from": "От",
+  "contagion.edge.detail.to": "К",
+  "contagion.edge.detail.amount": "Bilateral exposure",
+  "contagion.edge.detail.kind": "Тип",
+  "contagion.edge.detail.why":
+    "Если счёт-источник перестаёт платить, эта экспозиция превращается в моментальную потерю ликвидности у получателя.",
+  "contagion.edge.detail.close": "Закрыть",
+  "contagion.node.detail.title": "Карточка счёта",
+  "contagion.node.detail.balance": "Текущий баланс",
+  "contagion.node.detail.floor": "Минимум",
+  "contagion.node.detail.outDeg": "Исходящих экспозиций",
+  "contagion.node.detail.inDeg": "Входящих экспозиций",
   "contagion.page.subtitle": "Симулятор каскада",
   "contagion.metric.affected": "Затронуто",
   "contagion.metric.breached": "Пробито",

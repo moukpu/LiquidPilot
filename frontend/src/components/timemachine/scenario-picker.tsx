@@ -12,6 +12,18 @@ interface Props {
 
 const RAILS = ["INTERNAL", "SEPA", "ACH", "CARD", "SWIFT"] as const;
 const COUNTRIES = ["DE", "US", "GB", "CH", "JP", "SG", "KZ"] as const;
+const CURRENCIES = ["EUR", "USD", "GBP", "CHF", "JPY", "SGD", "KZT"] as const;
+const ACCOUNTS = [
+  "EUR-Main",
+  "EUR-Berlin",
+  "USD-Correspondent",
+  "USD-LA",
+  "GBP-Local",
+  "CHF-Zurich",
+  "JPY-Tokyo",
+  "SGD-Singapore",
+  "KZT-Almaty",
+] as const;
 
 export default function ScenarioPicker({
   value,
@@ -26,8 +38,14 @@ export default function ScenarioPicker({
       onChange({ scenario: s, rail: "SWIFT", extra_days: 3 });
     } else if (s === "volume_spike") {
       onChange({ scenario: s, multiplier: 1.3, affected_rail: undefined });
-    } else {
+    } else if (s === "bank_holiday") {
       onChange({ scenario: s, country: "DE", holiday_days: 2 });
+    } else if (s === "fx_shock") {
+      onChange({ scenario: s, fx_currency: "EUR", fx_shock_pct: 5 });
+    } else if (s === "counterparty_default") {
+      onChange({ scenario: s, counterparty_account: "USD-Correspondent" });
+    } else {
+      onChange({ scenario: s, frozen_account: "EUR-Main", freeze_days: 2 });
     }
   };
 
@@ -45,6 +63,13 @@ export default function ScenarioPicker({
           <option value="rail_delay">{t("timemachine.scenarios.railDelay")}</option>
           <option value="volume_spike">{t("timemachine.scenarios.volumeSpike")}</option>
           <option value="bank_holiday">{t("timemachine.scenarios.bankHoliday")}</option>
+          <option value="fx_shock">{t("timemachine.scenarios.fxShock")}</option>
+          <option value="counterparty_default">
+            {t("timemachine.scenarios.counterpartyDefault")}
+          </option>
+          <option value="liquidity_freeze">
+            {t("timemachine.scenarios.liquidityFreeze")}
+          </option>
         </select>
       </div>
 
@@ -137,6 +162,108 @@ export default function ScenarioPicker({
               value={value.holiday_days ?? 2}
               onChange={(e) =>
                 onChange({ ...value, holiday_days: Number(e.target.value) })
+              }
+              className="w-full"
+            />
+          </div>
+        </div>
+      )}
+
+      {value.scenario === "fx_shock" && (
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-[9px] font-mono uppercase tracking-widest text-muted-foreground block mb-1">
+              {t("timemachine.fxCurrency")}
+            </label>
+            <select
+              value={value.fx_currency ?? "EUR"}
+              onChange={(e) =>
+                onChange({ ...value, fx_currency: e.target.value })
+              }
+              className="w-full bg-slate-50 border border-slate-200 rounded-md px-2 py-1.5 font-mono text-xs"
+            >
+              {CURRENCIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-[9px] font-mono uppercase tracking-widest text-muted-foreground block mb-1">
+              {t("timemachine.fxShockPct")}:{" "}
+              <span className="text-foreground font-bold">
+                {(value.fx_shock_pct ?? 0).toFixed(1)}%
+              </span>
+            </label>
+            <input
+              type="range"
+              min={0}
+              max={20}
+              step={0.5}
+              value={value.fx_shock_pct ?? 0}
+              onChange={(e) =>
+                onChange({ ...value, fx_shock_pct: Number(e.target.value) })
+              }
+              className="w-full"
+            />
+          </div>
+        </div>
+      )}
+
+      {value.scenario === "counterparty_default" && (
+        <div>
+          <label className="text-[9px] font-mono uppercase tracking-widest text-muted-foreground block mb-1">
+            {t("timemachine.counterparty")}
+          </label>
+          <select
+            value={value.counterparty_account ?? "USD-Correspondent"}
+            onChange={(e) =>
+              onChange({ ...value, counterparty_account: e.target.value })
+            }
+            className="w-full bg-slate-50 border border-slate-200 rounded-md px-2 py-1.5 font-mono text-xs"
+          >
+            {ACCOUNTS.map((a) => (
+              <option key={a} value={a}>
+                {a}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {value.scenario === "liquidity_freeze" && (
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-[9px] font-mono uppercase tracking-widest text-muted-foreground block mb-1">
+              {t("timemachine.frozenAccount")}
+            </label>
+            <select
+              value={value.frozen_account ?? "EUR-Main"}
+              onChange={(e) =>
+                onChange({ ...value, frozen_account: e.target.value })
+              }
+              className="w-full bg-slate-50 border border-slate-200 rounded-md px-2 py-1.5 font-mono text-xs"
+            >
+              {ACCOUNTS.map((a) => (
+                <option key={a} value={a}>
+                  {a}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-[9px] font-mono uppercase tracking-widest text-muted-foreground block mb-1">
+              {t("timemachine.freezeDays")}:{" "}
+              <span className="text-foreground font-bold">{value.freeze_days}</span>
+            </label>
+            <input
+              type="range"
+              min={1}
+              max={5}
+              value={value.freeze_days ?? 2}
+              onChange={(e) =>
+                onChange({ ...value, freeze_days: Number(e.target.value) })
               }
               className="w-full"
             />

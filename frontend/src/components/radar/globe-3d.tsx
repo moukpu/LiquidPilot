@@ -578,35 +578,97 @@ function SpriteLabel({
 //   nose at +X, wings span Z, up = +Y. Externally scaled by `size`.
 // ---------------------------------------------------------------------------
 function PlaneModel({ color, size }: { color: string; size: number }) {
-  const mat = useMemo(
-    () => new THREE.MeshStandardMaterial({ color, roughness: 0.4, metalness: 0.1 }),
+  const body = useMemo(
+    () =>
+      new THREE.MeshStandardMaterial({
+        color,
+        roughness: 0.32,
+        metalness: 0.35,
+      }),
     [color]
   );
+  // Slightly darker tone for the wings so they read distinct from the
+  // fuselage in flight — same hue family, just dropped luminance.
+  const wing = useMemo(() => {
+    const c = new THREE.Color(color);
+    c.offsetHSL(0, 0, -0.08);
+    return new THREE.MeshStandardMaterial({
+      color: c,
+      roughness: 0.45,
+      metalness: 0.25,
+    });
+  }, [color]);
+  const canopy = useMemo(
+    () =>
+      new THREE.MeshStandardMaterial({
+        color: "#0f172a",
+        roughness: 0.15,
+        metalness: 0.7,
+        emissive: "#1e293b",
+        emissiveIntensity: 0.3,
+      }),
+    []
+  );
+  const engine = useMemo(
+    () =>
+      new THREE.MeshStandardMaterial({
+        color: "#1f2937",
+        roughness: 0.55,
+        metalness: 0.6,
+      }),
+    []
+  );
+
   return (
     <group scale={[size, size, size]}>
-      {/* fuselage — cylinder lying along X */}
-      <mesh material={mat} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.5, 0.5, 4, 12]} />
+      {/* fuselage — tapered cylinder lying along X */}
+      <mesh material={body} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.42, 0.55, 4.2, 16]} />
       </mesh>
-      {/* nose cone */}
-      <mesh material={mat} position={[2.4, 0, 0]} rotation={[0, 0, -Math.PI / 2]}>
-        <coneGeometry args={[0.5, 0.8, 12]} />
+      {/* rounded nose */}
+      <mesh material={body} position={[2.4, 0, 0]} rotation={[0, 0, -Math.PI / 2]}>
+        <coneGeometry args={[0.42, 1.1, 16]} />
       </mesh>
-      {/* main wings — thin box along Z */}
-      <mesh material={mat} position={[0.2, 0, 0]}>
-        <boxGeometry args={[1.4, 0.15, 5.5]} />
+      {/* tail cone behind the fuselage */}
+      <mesh material={body} position={[-2.4, 0.05, 0]} rotation={[0, 0, Math.PI / 2]}>
+        <coneGeometry args={[0.42, 0.9, 16]} />
       </mesh>
+
+      {/* swept main wings — slight Z-Y dihedral via rotation on X */}
+      <mesh material={wing} position={[0.1, -0.08, 1.4]} rotation={[0, 0, 0.08]}>
+        <boxGeometry args={[1.6, 0.12, 2.6]} />
+      </mesh>
+      <mesh material={wing} position={[0.1, -0.08, -1.4]} rotation={[0, 0, -0.08]}>
+        <boxGeometry args={[1.6, 0.12, 2.6]} />
+      </mesh>
+
+      {/* wing-mounted engines */}
+      <mesh material={engine} position={[0.0, -0.22, 1.5]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.18, 0.18, 0.7, 12]} />
+      </mesh>
+      <mesh material={engine} position={[0.0, -0.22, -1.5]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.18, 0.18, 0.7, 12]} />
+      </mesh>
+
       {/* horizontal stabilizer (rear small wings) */}
-      <mesh material={mat} position={[-1.6, 0, 0]}>
-        <boxGeometry args={[0.6, 0.1, 2.0]} />
+      <mesh material={wing} position={[-1.9, 0.05, 0.7]}>
+        <boxGeometry args={[0.7, 0.08, 0.9]} />
       </mesh>
-      {/* vertical stabilizer (tail fin) */}
-      <mesh material={mat} position={[-1.6, 0.7, 0]}>
-        <boxGeometry args={[0.6, 1.0, 0.1]} />
+      <mesh material={wing} position={[-1.9, 0.05, -0.7]}>
+        <boxGeometry args={[0.7, 0.08, 0.9]} />
       </mesh>
-      {/* cockpit hint — squashed sphere */}
-      <mesh material={mat} position={[1.2, 0.35, 0]} scale={[0.8, 0.4, 0.4]}>
-        <sphereGeometry args={[0.5, 12, 12]} />
+
+      {/* vertical stabilizer (tail fin) — tapered via two stacked boxes */}
+      <mesh material={wing} position={[-1.9, 0.5, 0]}>
+        <boxGeometry args={[0.7, 0.7, 0.08]} />
+      </mesh>
+      <mesh material={wing} position={[-2.1, 0.85, 0]}>
+        <boxGeometry args={[0.35, 0.35, 0.06]} />
+      </mesh>
+
+      {/* cockpit canopy — slim dark window strip on top of the nose */}
+      <mesh material={canopy} position={[1.4, 0.32, 0]} scale={[1.4, 0.18, 0.5]}>
+        <sphereGeometry args={[0.5, 16, 12]} />
       </mesh>
     </group>
   );

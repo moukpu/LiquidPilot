@@ -1,6 +1,6 @@
 "use client";
 
-import { useLocale } from "@/i18n/locale-context";
+import { useState } from "react";
 import {
   CENTER_X,
   CENTER_Y,
@@ -32,21 +32,13 @@ const EDGE_COLOR = {
   idle: "#e2e8f0",
 };
 
-const STATE_SEVERITY: Record<NodeState, number> = {
-  shocked: 4,
-  breached: 3,
-  affected: 2,
-  idle: 1,
-};
-
-function getWorstState(s1: NodeState, s2: NodeState): NodeState {
-  return STATE_SEVERITY[s1] > STATE_SEVERITY[s2] ? s1 : s2;
-}
-
 interface Props {
   nodes: ContagionNode[];
   edges: ContagionEdge[];
   result: CascadeResult | null;
+  selectedAccount?: string | null;
+  onSelectAccount?: (accountId: string) => void;
+  onSelectEdge?: (edge: ContagionEdge) => void;
 }
 
 function nodeState(
@@ -61,45 +53,18 @@ function nodeState(
   return "affected";
 }
 
-export default function NetworkGraph({ nodes, edges, result }: Props) {
+export default function NetworkGraph({
+  nodes,
+  edges,
+  result,
+  selectedAccount,
+  onSelectAccount,
+  onSelectEdge,
+}: Props) {
   const positions = accountPositions(nodes);
-  // Reference CENTER_X/Y so unused-export linters don't complain when
-  // the layout module's constants are tree-shaken in tests.
+  const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   void CENTER_X;
   void CENTER_Y;
-
-  // Deduplicate bidirectional edges to draw them as a single line with two arrows
-  const visualEdges = [];
-  const seenEdges = new Set<string>();
-
-  for (const e of edges) {
-    const key1 = `${e.from}->${e.to}`;
-    const key2 = `${e.to}->${e.from}`;
-    if (seenEdges.has(key1) || seenEdges.has(key2)) continue;
-
-    const reverseEdge = edges.find((r) => r.from === e.to && r.to === e.from);
-    seenEdges.add(key1);
-    if (reverseEdge) seenEdges.add(key2);
-
-    const forwardState = nodeState(e.to, result);
-    const reverseState = reverseEdge ? nodeState(reverseEdge.to, result) : "idle";
-
-    visualEdges.push({
-      from: e.from,
-      to: e.to,
-      exposure_usd: Math.max(e.exposure_usd, reverseEdge?.exposure_usd || 0),
-      kind: e.kind,
-      description: e.description,
-      isBidirectional: !!reverseEdge,
-      overallState: getWorstState(forwardState, reverseState),
-    });
-  }
-
-  // Sort edges so active ones are drawn on top
-  visualEdges.sort((a, b) => {
-    const weight = (s: NodeState) => s === "idle" ? 0 : 1;
-    return weight(a.overallState) - weight(b.overallState);
-  });
 
   return (
     <svg
@@ -135,10 +100,8 @@ export default function NetworkGraph({ nodes, edges, result }: Props) {
         )}
       </defs>
 
-      {/* Background Grid */}
       <rect width="100%" height="100%" fill="url(#dotGrid)" />
 
-      {/* Edges */}
       <g>
         {[...edges].sort((a, b) => {
           const aState = nodeState(a.to, result);
@@ -150,36 +113,47 @@ export default function NetworkGraph({ nodes, edges, result }: Props) {
           const d = edgePath({ from: e.from, to: e.to }, positions);
           const isIdle = dstState === "idle";
           const strokeColor = EDGE_COLOR[dstState];
-          
+
           return (
-            <path
-              key={`${e.from}->${e.to}`}
-              d={d}
-              fill="none"
-              stroke={strokeColor}
-              strokeWidth={isIdle ? 1.5 : 2.5}
-              markerEnd={`url(#arrow-${dstState})`}
-              opacity={isIdle ? 0.6 : 1}
-            >
-              <title>
-                {e.from} → {e.to} · {(e.exposure_usd / 1_000_000).toFixed(1)}M
-                · {e.kind}
-                {"\n"}
-                {e.description}
-              </title>
-            </path>
+            <g key={`${e.from}->${e.to}`} className="cursor-pointer">
+              <path
+                d={d}
+                fill="none"
+                stroke={strokeColor}
+                strokeWidth={isIdle ? 1.5 : 2.5}
+                markerEnd={`url(#arrow-${dstState})`}
+                opacity={isIdle ? 0.6 : 1}
+              />
+              <path
+                d={d}
+                fill="none"
+                stroke="transparent"
+                strokeWidth={14}
+                onClick={() => onSelectEdge?.(e)}
+                style={{ cursor: "pointer" }}
+              >
+                <title>
+                  {e.from} → {e.to} · {(e.exposure_usd / 1_000_000).toFixed(1)}M
+                  · {e.kind}
+                  {"\n"}
+                  {e.description}
+                </title>
+              </path>
+            </g>
           );
         })}
       </g>
 
-      {/* Nodes */}
       <g>
         {nodes.map((n) => {
           const pos = positions[n.account_id];
           if (!pos) return null;
           const state = nodeState(n.account_id, result);
           const isHub = n.account_id === HUB_ACCOUNT_ID;
-          const r = isHub ? NODE_RADIUS * 1.3 : NODE_RADIUS;
+          const isSelected = selectedAccount === n.account_id;
+          const isHovered = hoveredNode === n.account_id;
+          const baseR = isHub ? NODE_RADIUS * 1.3 : NODE_RADIUS;
+          const r = isHovered ? baseR + 3 : baseR;
           const theme = THEME[state];
           const hasGlow = state !== "idle";
 
@@ -187,7 +161,26 @@ export default function NetworkGraph({ nodes, edges, result }: Props) {
           const parts = label.split(" · ");
 
           return (
-            <g key={n.account_id} transform={`translate(${pos.x},${pos.y})`}>
+            <g
+              key={n.account_id}
+              transform={`translate(${pos.x},${pos.y})`}
+              style={{ cursor: "pointer" }}
+              onClick={() => onSelectAccount?.(n.account_id)}
+              onMouseEnter={() => setHoveredNode(n.account_id)}
+              onMouseLeave={() => setHoveredNode(null)}
+            >
+              {isSelected && (
+                <circle
+                  cx={0}
+                  cy={0}
+                  r={r + 6}
+                  fill="none"
+                  stroke="#0f172a"
+                  strokeWidth={2}
+                  strokeDasharray="3 3"
+                  opacity={0.55}
+                />
+              )}
               <circle
                 cx={0}
                 cy={0}
@@ -223,7 +216,7 @@ export default function NetworkGraph({ nodes, edges, result }: Props) {
                 fontSize={12}
                 fontWeight={800}
                 fill={theme.text}
-                className="select-none"
+                className="select-none pointer-events-none"
               >
                 {parts[0]}
               </text>
@@ -237,7 +230,7 @@ export default function NetworkGraph({ nodes, edges, result }: Props) {
                   fontSize={9}
                   fontWeight={700}
                   fill={theme.text}
-                  className="select-none"
+                  className="select-none pointer-events-none"
                   opacity={0.7}
                 >
                   {parts[1]}
