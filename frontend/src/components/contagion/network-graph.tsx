@@ -32,6 +32,17 @@ const EDGE_COLOR = {
   idle: "#e2e8f0",
 };
 
+const STATE_SEVERITY: Record<NodeState, number> = {
+  shocked: 4,
+  breached: 3,
+  affected: 2,
+  idle: 1,
+};
+
+function worstState(a: NodeState, b: NodeState): NodeState {
+  return STATE_SEVERITY[a] >= STATE_SEVERITY[b] ? a : b;
+}
+
 interface Props {
   nodes: ContagionNode[];
   edges: ContagionEdge[];
@@ -103,45 +114,85 @@ export default function NetworkGraph({
       <rect width="100%" height="100%" fill="url(#dotGrid)" />
 
       <g>
-        {[...edges].sort((a, b) => {
-          const aState = nodeState(a.to, result);
-          const bState = nodeState(b.to, result);
-          const weight = (s: NodeState) => s === "idle" ? 0 : 1;
-          return weight(aState) - weight(bState);
-        }).map((e) => {
-          const dstState = nodeState(e.to, result);
-          const d = edgePath({ from: e.from, to: e.to }, positions);
-          const isIdle = dstState === "idle";
-          const strokeColor = EDGE_COLOR[dstState];
-
-          return (
-            <g key={`${e.from}->${e.to}`} className="cursor-pointer">
-              <path
-                d={d}
-                fill="none"
-                stroke={strokeColor}
-                strokeWidth={isIdle ? 1.5 : 2.5}
-                markerEnd={`url(#arrow-${dstState})`}
-                opacity={isIdle ? 0.6 : 1}
-              />
-              <path
-                d={d}
-                fill="none"
-                stroke="transparent"
-                strokeWidth={14}
-                onClick={() => onSelectEdge?.(e)}
-                style={{ cursor: "pointer" }}
-              >
-                <title>
-                  {e.from} → {e.to} · {(e.exposure_usd / 1_000_000).toFixed(1)}M
-                  · {e.kind}
-                  {"\n"}
-                  {e.description}
-                </title>
-              </path>
-            </g>
+        {(() => {
+          // Bidirectional pairs (A→B and B→A) sit on the same SVG path
+          // and paint over each other, so a red shocked-side arrow and
+          // an orange breached-side arrow on the same pair would smear
+          // into one half-and-half line. Collapse each pair into one
+          // visual edge coloured by the worst state on either end, and
+          // mark both endpoints with arrowheads when bidirectional.
+          const seen = new Set<string>();
+          const visuals: Array<{
+            edge: ContagionEdge;
+            isBi: boolean;
+            forwardState: NodeState;
+            reverseState: NodeState;
+            worst: NodeState;
+          }> = [];
+          for (const e of edges) {
+            const k1 = `${e.from}->${e.to}`;
+            const k2 = `${e.to}->${e.from}`;
+            if (seen.has(k1) || seen.has(k2)) continue;
+            const reverse = edges.find(
+              (r) => r.from === e.to && r.to === e.from
+            );
+            seen.add(k1);
+            if (reverse) seen.add(k2);
+            const forwardState = nodeState(e.to, result);
+            const reverseState = reverse
+              ? nodeState(reverse.to, result)
+              : "idle";
+            visuals.push({
+              edge: e,
+              isBi: !!reverse,
+              forwardState,
+              reverseState,
+              worst: worstState(forwardState, reverseState),
+            });
+          }
+          // Draw idle first so active edges sit on top.
+          visuals.sort(
+            (a, b) => STATE_SEVERITY[a.worst] - STATE_SEVERITY[b.worst]
           );
-        })}
+          return visuals.map(({ edge: e, isBi, forwardState, reverseState, worst }) => {
+            const d = edgePath({ from: e.from, to: e.to }, positions);
+            const isIdle = worst === "idle";
+            const strokeColor = EDGE_COLOR[worst];
+            const markerEndState = forwardState !== "idle" ? forwardState : worst;
+            const markerStartState =
+              isBi && reverseState !== "idle" ? reverseState : worst;
+            return (
+              <g key={`${e.from}-${e.to}`} className="cursor-pointer">
+                <path
+                  d={d}
+                  fill="none"
+                  stroke={strokeColor}
+                  strokeWidth={isIdle ? 1.5 : 2.5}
+                  markerEnd={`url(#arrow-${markerEndState})`}
+                  markerStart={
+                    isBi ? `url(#arrow-${markerStartState})` : undefined
+                  }
+                  opacity={isIdle ? 0.6 : 1}
+                />
+                <path
+                  d={d}
+                  fill="none"
+                  stroke="transparent"
+                  strokeWidth={14}
+                  onClick={() => onSelectEdge?.(e)}
+                  style={{ cursor: "pointer" }}
+                >
+                  <title>
+                    {e.from} → {e.to} · {(e.exposure_usd / 1_000_000).toFixed(1)}M
+                    · {e.kind}
+                    {"\n"}
+                    {e.description}
+                  </title>
+                </path>
+              </g>
+            );
+          });
+        })()}
       </g>
 
       <g>
