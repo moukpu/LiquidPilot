@@ -101,7 +101,7 @@ export default function Home() {
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
                 <div className="relative z-10">
-                  <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                  <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all duration-300">
                     <feature.icon className="h-6 w-6" />
                   </div>
                   <h3 className="text-lg font-semibold mb-2 font-display text-foreground transition-all">{t(feature.titleKey)}</h3>
