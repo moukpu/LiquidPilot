@@ -111,11 +111,22 @@ def apply_scenario(
         fc = baseline_forecast.get(acc.account_id)
         if fc is None or fc.forecast.empty:
             continue
-        baseline = [float(v) for v in fc.forecast["predicted_ledger_balance_p50"].tolist()]
+        raw_baseline = [float(v) for v in fc.forecast["predicted_ledger_balance_p50"].tolist()]
+        # CLAMP: a real bank account cannot have negative balance without
+        # an explicit overdraft facility (not modelled here). Clamp at 0
+        # so the UI doesn't show absurd "-€14M" projections. Flag the
+        # account if any raw point was negative — UI shows a warning.
+        baseline = [max(0.0, v) for v in raw_baseline]
+        baseline_was_clamped = any(v < 0 for v in raw_baseline)
         dates = fc.forecast["date"].dt.strftime("%Y-%m-%d").tolist()
         stress, methodology_inputs = _transform(
             baseline, dates, acc, transactions, params
         )
+        stress = [max(0.0, v) for v in stress]
+        # Inject clamp flag into methodology_inputs so the UI can render
+        # a warning badge.
+        if baseline_was_clamped:
+            methodology_inputs["baseline_clamped_at_zero"] = True
 
         points = [
             ScenarioPoint(
@@ -133,7 +144,12 @@ def apply_scenario(
         stress_breaches = sum(1 for v in stress if v < acc.min_balance)
         if stress_breaches > baseline_breaches:
             new_breaches += 1
-        total_delta_usd += delta_min * FX_RATES_TO_USD.get(acc.currency, 1.0)
+        # CHANGED: use integrated area (sum of daily deltas) instead of just
+        # the difference of minimums. This has a clearer financial meaning:
+        # "total $ value of the dip across the full horizon".
+        fx = FX_RATES_TO_USD.get(acc.currency, 1.0)
+        integrated_delta = sum(p.delta for p in points)
+        total_delta_usd += integrated_delta * fx
 
         accounts_results.append(
             AccountStressResult(
