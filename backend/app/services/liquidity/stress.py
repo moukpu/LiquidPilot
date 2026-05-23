@@ -133,7 +133,12 @@ def apply_scenario(
         stress_breaches = sum(1 for v in stress if v < acc.min_balance)
         if stress_breaches > baseline_breaches:
             new_breaches += 1
-        total_delta_usd += delta_min * FX_RATES_TO_USD.get(acc.currency, 1.0)
+        # CHANGED: use integrated area (sum of daily deltas) instead of just
+        # the difference of minimums. This has a clearer financial meaning:
+        # "total $ value of the dip across the full horizon".
+        fx = FX_RATES_TO_USD.get(acc.currency, 1.0)
+        integrated_delta = sum(p.delta for p in points)
+        total_delta_usd += integrated_delta * fx
 
         accounts_results.append(
             AccountStressResult(
