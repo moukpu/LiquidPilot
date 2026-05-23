@@ -258,8 +258,6 @@ const en = {
     "No account is booked in {country}. Pick a country where the fleet has presence.",
   "timemachine.empty.hint":
     "The simulation ran successfully but produced no impact for any account under these parameters.",
-  "timemachine.baselineClampedBadge": "Baseline clamped",
-  "timemachine.baselineClampedTooltip": "Raw forecast went negative — clamped to 0 for display. Real account would hit min_balance and trigger emergency funding before this point.",
   "timemachine.skippedAccounts": "{n} accounts skipped (scenario not applicable)",
   "autopilot.queue.infoSectionHint": "Forecasted breaches the engine cannot auto-resolve — no donor account has surplus. Manual treasurer action: arrange credit line / FX swap / repo.",
   "radar.legend.totalInFlight": "{n} in flight",

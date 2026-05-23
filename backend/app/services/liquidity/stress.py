@@ -111,22 +111,11 @@ def apply_scenario(
         fc = baseline_forecast.get(acc.account_id)
         if fc is None or fc.forecast.empty:
             continue
-        raw_baseline = [float(v) for v in fc.forecast["predicted_ledger_balance_p50"].tolist()]
-        # CLAMP: a real bank account cannot have negative balance without
-        # an explicit overdraft facility (not modelled here). Clamp at 0
-        # so the UI doesn't show absurd "-€14M" projections. Flag the
-        # account if any raw point was negative — UI shows a warning.
-        baseline = [max(0.0, v) for v in raw_baseline]
-        baseline_was_clamped = any(v < 0 for v in raw_baseline)
+        baseline = [float(v) for v in fc.forecast["predicted_ledger_balance_p50"].tolist()]
         dates = fc.forecast["date"].dt.strftime("%Y-%m-%d").tolist()
         stress, methodology_inputs = _transform(
             baseline, dates, acc, transactions, params
         )
-        stress = [max(0.0, v) for v in stress]
-        # Inject clamp flag into methodology_inputs so the UI can render
-        # a warning badge.
-        if baseline_was_clamped:
-            methodology_inputs["baseline_clamped_at_zero"] = True
 
         points = [
             ScenarioPoint(

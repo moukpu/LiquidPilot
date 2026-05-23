@@ -139,24 +139,14 @@ export default function ResultCard({ result, intl }: Props) {
     <div className="glass-card rounded-xl p-3">
       <div className="flex items-center justify-between mb-2">
         <span className="font-mono text-xs font-semibold">{result.account_id}</span>
-        <div className="flex items-center">
-          {breachWorsened && (
-            <span
-              className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-500 border border-rose-500/30 cursor-help"
-              title={t("timemachine.breachTooltip")}
-            >
-              {t("timemachine.breach")}
-            </span>
-          )}
-          {(result.methodology_inputs as Record<string, unknown>)?.baseline_clamped_at_zero === true && (
-            <span
-              className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-500 border border-amber-500/30 cursor-help ml-1"
-              title={t("timemachine.baselineClampedTooltip")}
-            >
-              {t("timemachine.baselineClampedBadge")}
-            </span>
-          )}
-        </div>
+        {breachWorsened && (
+          <span
+            className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-500 border border-rose-500/30 cursor-help"
+            title={t("timemachine.breachTooltip")}
+          >
+            {t("timemachine.breach")}
+          </span>
+        )}
       </div>
 
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-12 mb-2">

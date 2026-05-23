@@ -259,8 +259,6 @@ const ru: Record<keyof typeof en, string> = {
     "Нет счетов, открытых в стране {country}. Выберите страну, где портфель присутствует.",
   "timemachine.empty.hint":
     "Симуляция отработала успешно, но при этих параметрах эффект на счета не возникает.",
-  "timemachine.baselineClampedBadge": "Прогноз зажат",
-  "timemachine.baselineClampedTooltip": "Сырой прогноз ушёл в минус — зажат на 0 для отображения. Реальный счёт пробил бы минимум и запустил emergency funding раньше этой точки.",
   "timemachine.skippedAccounts": "{n} счетов пропущено (сценарий неприменим)",
   "autopilot.queue.infoSectionHint": "Прогнозируемые пробои, которые движок не может закрыть автоматически — нет счёта-донора с излишком. Решает казначей вручную: кредитная линия / FX-своп / репо.",
   "radar.legend.totalInFlight": "{n} в полёте",
