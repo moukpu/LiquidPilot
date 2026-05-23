@@ -186,14 +186,24 @@ export default function ResultCard({ result, intl }: Props) {
           intl={intl}
         />
         {applied && (
-          <FooterStat
-            label={t("timemachine.delta")}
-            currency={result.currency}
-            amount={result.delta_min_p50}
-            intl={intl}
-            highlight={result.delta_min_p50 < 0 ? "negative" : undefined}
-            showSign
-          />
+          <div className="space-y-1">
+            <FooterStat
+              label={t("timemachine.delta")}
+              currency={result.currency}
+              amount={result.delta_min_p50}
+              intl={intl}
+              highlight={result.delta_min_p50 < 0 ? "negative" : undefined}
+              showSign
+            />
+            <FooterStat
+              label={t("timemachine.loss")}
+              currency={result.currency}
+              amount={result.integrated_delta_p50}
+              intl={intl}
+              highlight={result.integrated_delta_p50 < 0 ? "negative" : undefined}
+              showSign
+            />
+          </div>
         )}
       </div>
 

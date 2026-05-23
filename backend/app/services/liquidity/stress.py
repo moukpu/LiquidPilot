@@ -71,6 +71,11 @@ class AccountStressResult:
     baseline_min_p50: float
     stress_min_p50: float
     delta_min_p50: float
+    # Sum of daily deltas across the full horizon, in native currency.
+    # Captures cumulative shortfall (vs delta_min_p50 which is just
+    # the worst-day gap). Used by the UI as "Убыток" / "Loss" and by
+    # total_delta_usd aggregation.
+    integrated_delta_p50: float
     floor: float
     baseline_breaches: int  # days where baseline_p50 < floor
     stress_breaches: int    # days where stress_p50 < floor
@@ -86,7 +91,7 @@ class StressResult:
     scenario: Scenario
     params: StressParams
     accounts: List[AccountStressResult] = field(default_factory=list)
-    total_delta_usd: float = 0.0  # sum of (delta_min_p50 * fx) over accounts
+    total_delta_usd: float = 0.0  # sum of (integrated_delta_p50 * fx) over accounts
     new_breach_count: int = 0     # accounts that newly breach floor under stress
 
 
@@ -129,11 +134,17 @@ def apply_scenario(
         baseline_min = min(baseline)
         stress_min = min(stress)
         delta_min = stress_min - baseline_min
+        # Cumulative shortfall across the full horizon. For scenarios that
+        # "depress" the trajectory across multiple days (rail_delay,
+        # bank_holiday) this captures total $-value of the dip even when
+        # the per-day minimum overlaps with an unaffected day and delta_min
+        # would otherwise be 0.
+        integrated_delta = sum(p.delta for p in points)
         baseline_breaches = sum(1 for v in baseline if v < acc.min_balance)
         stress_breaches = sum(1 for v in stress if v < acc.min_balance)
         if stress_breaches > baseline_breaches:
             new_breaches += 1
-        total_delta_usd += delta_min * FX_RATES_TO_USD.get(acc.currency, 1.0)
+        total_delta_usd += integrated_delta * FX_RATES_TO_USD.get(acc.currency, 1.0)
 
         accounts_results.append(
             AccountStressResult(
@@ -143,6 +154,7 @@ def apply_scenario(
                 baseline_min_p50=baseline_min,
                 stress_min_p50=stress_min,
                 delta_min_p50=delta_min,
+                integrated_delta_p50=integrated_delta,
                 floor=float(acc.min_balance),
                 baseline_breaches=baseline_breaches,
                 stress_breaches=stress_breaches,
