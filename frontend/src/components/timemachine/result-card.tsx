@@ -22,11 +22,22 @@ function translateReason(
   t: (k: MessageKey) => string
 ): string {
   const s = String(raw ?? "");
-  if (s.includes("no inbound")) return t("timemachine.reason.noInboundOnRail");
-  if (s.includes("no outbound")) return t("timemachine.reason.noOutboundOnRail");
-  if (s.includes("country") && s.includes("not"))
-    return t("timemachine.reason.countryMismatch");
+  // Order matters: more specific patterns first.
+  if (s.includes("no inbound transactions on this rail")) return t("timemachine.reason.noInboundOnRail");
+  if (s.includes("no outbound transactions on this rail")) return t("timemachine.reason.noOutboundOnRail");
+  if (s.includes("no outbound transactions match")) return t("timemachine.reason.noFilterMatch");
+  if (s.includes("no inbound transactions on this account")) return t("timemachine.reason.noInbound");
+  if (s.includes("no historical OUT")) return t("timemachine.reason.noOutbound");
+  if (s.includes("country") && s.includes("not")) return t("timemachine.reason.countryMismatch");
+  if (s.includes("currency does not match")) return t("timemachine.reason.currencyMismatch");
   if (s.includes("multiplier")) return t("timemachine.reason.zeroMultiplier");
+  if (s.includes("shock magnitude is 0")) return t("timemachine.reason.zeroShock");
+  if (s.includes("no counterparty selected")) return t("timemachine.reason.noCounterpartySelected");
+  if (s.includes("no frozen account selected")) return t("timemachine.reason.noFrozenSelected");
+  if (s.includes("not the frozen account")) return t("timemachine.reason.notFrozenAccount");
+  if (s.includes("freeze_days=0")) return t("timemachine.reason.zeroFreezeDays");
+  if (s.includes("holiday_days=0")) return t("timemachine.reason.zeroHolidayDays");
+  if (s.includes("empty horizon")) return t("timemachine.reason.emptyHorizon");
   return t("timemachine.reason.unknown");
 }
 
@@ -327,6 +338,101 @@ function MethodologyDetails({
         <Row
           label={t("timemachine.method.deferred")}
           value={`−${currency} ${formatNumber(Number(inputs.deferred_outflow), 0, intl)}`}
+          highlight
+        />
+      </>
+    );
+  }
+
+  if (scenario === "fx_shock") {
+    return (
+      <>
+        <Row
+          label={t("timemachine.method.fxShockPct")}
+          value={`${Number(inputs.fx_shock_pct ?? 0).toFixed(2)}%`}
+        />
+        <Row
+          label={t("timemachine.method.fxMagnitude")}
+          value={`${Number(inputs.magnitude ?? 0).toFixed(2)}%`}
+        />
+        <Row
+          label={t("timemachine.method.fxFactor")}
+          value={`×${Number(inputs.factor ?? 1).toFixed(4)}`}
+          highlight
+        />
+      </>
+    );
+  }
+
+  if (scenario === "counterparty_default") {
+    if (inputs.self_default) {
+      return (
+        <>
+          <Row
+            label={t("timemachine.method.counterparty")}
+            value={`${String(inputs.counterparty_account)} · ${t("timemachine.method.selfDefault")}`}
+          />
+          <Row
+            label={t("timemachine.method.sample")}
+            value={`${inputs.sample_size} tx`}
+          />
+          <Row
+            label={t("timemachine.method.dailyOutflow")}
+            value={`−${currency} ${formatNumber(Number(inputs.daily_outflow ?? 0), 0, intl)}/d`}
+            highlight
+          />
+        </>
+      );
+    }
+    return (
+      <>
+        <Row
+          label={t("timemachine.method.counterparty")}
+          value={String(inputs.counterparty_account ?? "")}
+        />
+        <Row
+          label={t("timemachine.method.sample")}
+          value={`${inputs.sample_size} tx`}
+        />
+        <Row
+          label={t("timemachine.method.dailyInflow")}
+          value={`${currency} ${formatNumber(Number(inputs.daily_inflow ?? 0), 0, intl)}/d`}
+        />
+        <Row
+          label={t("timemachine.method.exposureFrac")}
+          value={`${(Number(inputs.exposure_fraction ?? 0) * 100).toFixed(0)}%`}
+        />
+        <Row
+          label={t("timemachine.method.lossPerDay")}
+          value={`−${currency} ${formatNumber(Number(inputs.loss_per_day ?? 0), 0, intl)}/d`}
+          highlight
+        />
+      </>
+    );
+  }
+
+  if (scenario === "liquidity_freeze") {
+    return (
+      <>
+        <Row
+          label={t("timemachine.method.frozenAccount")}
+          value={`${String(inputs.frozen_account)} · ${inputs.freeze_days} ${t("timemachine.method.days")}`}
+        />
+        <Row
+          label={t("timemachine.method.sample")}
+          value={`${inputs.sample_size} tx · ${inputs.sample_days} ${t("timemachine.method.days")}`}
+        />
+        <Row
+          label={t("timemachine.method.dailyNetOutflow")}
+          value={`${currency} ${formatNumber(Number(inputs.daily_net_outflow ?? 0), 0, intl)}/d`}
+        />
+        <Row
+          label={t("timemachine.method.amplification")}
+          value={`×${Number(inputs.amplification ?? 1.1).toFixed(2)}`}
+        />
+        <Row
+          label={t("timemachine.method.queuedDrag")}
+          value={`−${currency} ${formatNumber(Number(inputs.queued_drag ?? 0), 0, intl)}`}
           highlight
         />
       </>
