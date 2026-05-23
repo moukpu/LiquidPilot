@@ -82,6 +82,10 @@ export interface AccountStressResult {
   baseline_min_p50: number;
   stress_min_p50: number;
   delta_min_p50: number;
+  /** Sum of daily deltas across the full forecast horizon (native currency).
+   *  Captures cumulative shortfall vs `delta_min_p50` which is only the
+   *  worst-day gap. Rendered as the "Убыток" row in result cards. */
+  integrated_delta_p50: number;
   floor: number;
   baseline_breaches: number;
   stress_breaches: number;

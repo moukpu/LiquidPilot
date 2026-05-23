@@ -206,6 +206,8 @@ const ru: Record<keyof typeof en, string> = {
   "timemachine.baselineMin": "Базовый минимум",
   "timemachine.stressMin": "Стрессовый минимум",
   "timemachine.delta": "Дельта",
+  "timemachine.loss": "Убыток",
+  "timemachine.lossTooltip": "Накопленный недобор за весь горизонт прогноза. Показывает общий $-эффект просадки даже когда дельта минимумов равна 0 (потому что минимум обеих кривых попал на неаффектированный день).",
   "timemachine.methodologyLabel": "Методика",
   "timemachine.method.notApplied": "Не применимо",
   "timemachine.method.sample": "Выборка",

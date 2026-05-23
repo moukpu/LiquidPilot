@@ -205,6 +205,8 @@ const en = {
   "timemachine.baselineMin": "Baseline min",
   "timemachine.stressMin": "Stress min",
   "timemachine.delta": "Delta",
+  "timemachine.loss": "Loss",
+  "timemachine.lossTooltip": "Cumulative shortfall summed across all days of the forecast horizon. Captures total $ value of the dip, even when min-of-min delta is 0 because the lowest day falls outside the affected window.",
   "timemachine.methodologyLabel": "Method",
   "timemachine.method.notApplied": "Not applied",
   "timemachine.method.sample": "Sample",
